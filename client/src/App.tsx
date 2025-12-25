@@ -11,12 +11,14 @@ import Analytics from "@/pages/dashboard/analytics";
 import Settings from "@/pages/dashboard/settings";
 import Onboarding from "@/pages/onboarding";
 import ComparePage from "@/pages/compare";
+import LoginPage from "@/pages/login";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home}/>
       <Route path="/compare" component={ComparePage}/>
+      <Route path="/login" component={LoginPage}/>
       <Route path="/onboarding" component={Onboarding}/>
       <Route path="/dashboard" component={DashboardWebsites}/>
       <Route path="/dashboard/websites" component={DashboardWebsites}/>
