@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConsentEase Banner Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #726CEA; }
+    .info {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .btn {
+      background: #726CEA;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .btn:hover { opacity: 0.9; }
+    #log {
+      background: #1e1e1e;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>ConsentEase Banner Test Page</h1>
+  
+  <div class="info">
+    <p><strong>Instructions:</strong></p>
+    <ol>
+      <li>Open your browser's Developer Tools (F12 or right-click → Inspect)</li>
+      <li>Go to the Console tab</li>
+      <li>Look for messages starting with [ConsentEase]</li>
+      <li>The consent banner should appear at the bottom of this page</li>
+    </ol>
+  </div>
+
+  <div class="info">
+    <p><strong>Debug Controls:</strong></p>
+    <button class="btn" onclick="clearConsent()">Clear Stored Consent</button>
+    <button class="btn" onclick="showBanner()">Force Show Banner</button>
+    <button class="btn" onclick="checkConsent()">Check Consent Status</button>
+  </div>
+
+  <div class="info">
+    <p><strong>Console Output:</strong></p>
+    <div id="log">Waiting for script to load...</div>
+  </div>
+
+  <script>
+    // Capture console.log for display
+    var logDiv = document.getElementById('log');
+    var originalLog = console.log;
+    console.log = function() {
+      originalLog.apply(console, arguments);
+      var msg = Array.from(arguments).join(' ');
+      if (msg.includes('ConsentEase')) {
+        logDiv.innerHTML += msg + '<br>';
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+    };
+
+    function clearConsent() {
+      var keys = Object.keys(localStorage).filter(k => k.startsWith('ce_consent_'));
+      keys.forEach(k => localStorage.removeItem(k));
+      logDiv.innerHTML += '[Test] Cleared all ConsentEase consent from localStorage<br>';
+      location.reload();
+    }
+
+    function showBanner() {
+      if (window.ConsentEase) {
+        window.ConsentEase.showBanner();
+        logDiv.innerHTML += '[Test] Called ConsentEase.showBanner()<br>';
+      } else {
+        logDiv.innerHTML += '[Test] ConsentEase not loaded yet<br>';
+      }
+    }
+
+    function checkConsent() {
+      if (window.ConsentEase) {
+        var consent = window.ConsentEase.getConsent();
+        logDiv.innerHTML += '[Test] Current consent: ' + (consent || 'none') + '<br>';
+      } else {
+        logDiv.innerHTML += '[Test] ConsentEase not loaded yet<br>';
+      }
+    }
+  </script>
+
+  <!-- ConsentEase Banner Script - uses test publicId -->
+  <script>
+    // Dynamically load the script with a test publicId
+    var s = document.createElement('script');
+    s.src = '/api/consent/gzagudlnqkeq/script.js';
+    s.async = true;
+    s.onerror = function() {
+      document.getElementById('log').innerHTML += '[Error] Failed to load ConsentEase script<br>';
+    };
+    s.onload = function() {
+      document.getElementById('log').innerHTML += '[Success] Script loaded<br>';
+    };
+    document.head.appendChild(s);
+  </script>
+</body>
+</html>
