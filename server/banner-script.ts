@@ -33,6 +33,29 @@ export function generateBannerScript(config: any, publicId: string): string {
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
   
+  // Initialize gtag and dataLayer for Google Consent Mode
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { window.dataLayer.push(arguments); }
+  
+  // Set default consent state - deny all until user makes a choice
+  // This must run before Google tags load for proper consent mode support
+  gtag('consent', 'default', {
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage': 'denied',
+    'functionality_storage': 'denied',
+    'personalization_storage': 'denied',
+    'security_storage': 'granted',
+    'wait_for_update': 500
+  });
+  
+  // Enable ads data redaction when consent is denied
+  gtag('set', 'ads_data_redaction', true);
+  
+  // Enable URL passthrough for conversion tracking without cookies
+  gtag('set', 'url_passthrough', true);
+  
   function getStoredConsent() {
     try {
       var stored = localStorage.getItem(CONSENT_KEY);
@@ -67,6 +90,42 @@ export function generateBannerScript(config: any, publicId: string): string {
         })
       });
     } catch (e) {}
+  }
+  
+  // Update Google Consent Mode based on user choice
+  function updateGoogleConsent(consent) {
+    if (consent === 'accept') {
+      gtag('consent', 'update', {
+        'ad_storage': 'granted',
+        'ad_user_data': 'granted',
+        'ad_personalization': 'granted',
+        'analytics_storage': 'granted',
+        'functionality_storage': 'granted',
+        'personalization_storage': 'granted',
+        'security_storage': 'granted'
+      });
+    } else {
+      gtag('consent', 'update', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied',
+        'functionality_storage': 'denied',
+        'personalization_storage': 'denied',
+        'security_storage': 'granted'
+      });
+    }
+    
+    // Dispatch custom event for third-party integrations
+    window.dispatchEvent(new CustomEvent('consentEaseUpdate', {
+      detail: { consent: consent }
+    }));
+  }
+  
+  // Check for existing consent and apply it immediately
+  var existingConsent = getStoredConsent();
+  if (existingConsent) {
+    updateGoogleConsent(existingConsent);
   }
   
   function injectStyles() {
@@ -229,6 +288,10 @@ export function generateBannerScript(config: any, publicId: string): string {
   function handleConsent(consent) {
     storeConsent(consent);
     trackEvent(consent);
+    
+    // Update Google Consent Mode
+    updateGoogleConsent(consent);
+    
     var banner = document.getElementById('ce-consent-banner');
     if (banner) {
       banner.style.transition = 'opacity 0.3s';
@@ -237,18 +300,23 @@ export function generateBannerScript(config: any, publicId: string): string {
         banner.remove();
       }, 300);
     }
-    
-    if (consent === 'accept') {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        'event': 'consent_update',
-        'analytics_storage': 'granted',
-        'ad_storage': 'granted',
-        'ad_user_data': 'granted',
-        'ad_personalization': 'granted'
-      });
-    }
   }
+  
+  // Expose ConsentEase API for programmatic access
+  window.ConsentEase = {
+    getConsent: getStoredConsent,
+    updateConsent: function(consent) {
+      storeConsent(consent);
+      updateGoogleConsent(consent);
+      trackEvent(consent);
+    },
+    showBanner: function() {
+      if (!document.getElementById('ce-consent-banner')) {
+        injectStyles();
+        createBanner();
+      }
+    }
+  };
   
   function init() {
     if (getStoredConsent()) {

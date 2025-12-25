@@ -200,6 +200,61 @@ export default function EmbedCode() {
           </CardContent>
         </Card>
 
+        <Card className="mt-6 border-green-200 bg-green-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <Check className="w-5 h-5" />
+              Google Consent Mode v2 Included
+            </CardTitle>
+            <CardDescription className="text-green-600">
+              Works automatically with Google Analytics, Google Ads, and Google Tag Manager
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p className="text-green-700">
+              Our script automatically integrates with <strong>Google Consent Mode v2</strong>, 
+              which is required for running Google Ads in the EU/EEA since March 2024.
+            </p>
+            <div className="bg-white rounded-lg p-4 border border-green-200">
+              <p className="font-medium text-slate-700 mb-2">Consent types managed:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>ad_storage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>ad_user_data</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>ad_personalization</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>analytics_storage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>functionality_storage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>personalization_storage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>security_storage</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-muted-foreground">
+              The script sets default consent to "denied" and updates it when users make their choice.
+              URL passthrough and ads data redaction are enabled for enhanced privacy.
+            </p>
+          </CardContent>
+        </Card>
+
         <div className="mt-6 flex justify-center">
           <Button variant="outline" onClick={() => setLocation("/dashboard/banner")}>
             <ExternalLink className="w-4 h-4 mr-2" />

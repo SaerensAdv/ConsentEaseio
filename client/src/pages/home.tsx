@@ -308,13 +308,11 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid md:grid-cols-4 gap-12 mb-12">
               <div className="col-span-2">
-                <Link href="/">
-                  <a className="text-xl font-display font-bold flex items-center gap-2 mb-4">
-                    <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
-                      <Shield className="w-3 h-3 fill-current" />
-                    </div>
-                    ConsentEase
-                  </a>
+                <Link href="/" className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
+                    <Shield className="w-3 h-3 fill-current" />
+                  </div>
+                  ConsentEase
                 </Link>
                 <p className="text-muted-foreground max-w-xs">
                   The privacy compliance platform built for business owners, not compliance officers.
