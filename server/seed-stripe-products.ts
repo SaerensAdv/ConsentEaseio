@@ -5,65 +5,65 @@ async function seedProducts() {
 
   console.log('Creating ConsentEase subscription products...');
 
-  const starterProduct = await stripe.products.create({
-    name: 'Starter',
-    description: 'Perfect for small websites and blogs. Up to 3 websites, 10,000 monthly visitors.',
+  const soloProduct = await stripe.products.create({
+    name: 'Solo',
+    description: 'Perfect for personal sites. 1 website, 10,000 monthly views.',
     metadata: {
-      tier: 'starter',
-      websites: '3',
+      tier: 'solo',
+      websites: '1',
       visitors: '10000',
-      features: 'basic_analytics,email_support'
+      features: 'basic_customization,email_support'
     }
   });
 
   await stripe.prices.create({
-    product: starterProduct.id,
-    unit_amount: 1200,
+    product: soloProduct.id,
+    unit_amount: 500,
     currency: 'eur',
     recurring: { interval: 'month' },
   });
 
-  console.log('Created Starter plan:', starterProduct.id);
+  console.log('Created Solo plan:', soloProduct.id);
 
   const proProduct = await stripe.products.create({
     name: 'Pro',
-    description: 'For growing businesses. Up to 10 websites, 100,000 monthly visitors.',
+    description: 'For growing businesses. 5 websites, 100,000 monthly views.',
     metadata: {
       tier: 'pro',
-      websites: '10',
+      websites: '5',
       visitors: '100000',
-      features: 'advanced_analytics,priority_support,custom_branding,geo_targeting'
+      features: 'full_customization,priority_support,remove_branding'
     }
   });
 
   await stripe.prices.create({
     product: proProduct.id,
-    unit_amount: 3900,
+    unit_amount: 1200,
     currency: 'eur',
     recurring: { interval: 'month' },
   });
 
   console.log('Created Pro plan:', proProduct.id);
 
-  const enterpriseProduct = await stripe.products.create({
-    name: 'Enterprise',
-    description: 'For large organizations. Unlimited websites and visitors.',
+  const agencyProduct = await stripe.products.create({
+    name: 'Agency',
+    description: 'Manage multiple clients. Unlimited websites, 1M monthly views.',
     metadata: {
-      tier: 'enterprise',
+      tier: 'agency',
       websites: 'unlimited',
-      visitors: 'unlimited',
-      features: 'all_features,dedicated_support,sla,white_label,api_access'
+      visitors: '1000000',
+      features: 'white_label,api_access,client_management'
     }
   });
 
   await stripe.prices.create({
-    product: enterpriseProduct.id,
-    unit_amount: 9900,
+    product: agencyProduct.id,
+    unit_amount: 3900,
     currency: 'eur',
     recurring: { interval: 'month' },
   });
 
-  console.log('Created Enterprise plan:', enterpriseProduct.id);
+  console.log('Created Agency plan:', agencyProduct.id);
   console.log('All products created successfully!');
 }
 

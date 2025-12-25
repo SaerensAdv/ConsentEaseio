@@ -97,8 +97,12 @@ export default function Home() {
             <a href="#pricing" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>Pricing</a>
             <a href="#about" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>About</a>
             <hr className="border-border" />
-            <Button variant="outline" className="w-full justify-center">Log in</Button>
-            <Button className="w-full justify-center">Start Free Trial</Button>
+            <Link href="/login">
+              <Button variant="outline" className="w-full justify-center">Log in</Button>
+            </Link>
+            <Link href="/onboarding">
+              <Button className="w-full justify-center">Start Free Trial</Button>
+            </Link>
           </div>
         )}
       </nav>
@@ -292,13 +296,65 @@ export default function Home() {
                       </ul>
                     </CardContent>
                     <CardFooter>
-                      <Button className={`w-full ${plan.popular ? 'bg-primary' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
-                        {plan.cta}
-                      </Button>
+                      <Link href="/onboarding" className="w-full">
+                        <Button 
+                          className={`w-full ${plan.popular ? 'bg-primary' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+                          data-testid={`button-pricing-${plan.name.toLowerCase()}`}
+                        >
+                          {plan.cta}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </Link>
                     </CardFooter>
                   </Card>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* About Section */}
+        <section id="about" className="py-24 bg-secondary/30">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">Built by people who understand your frustration.</h2>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  We started ConsentEase after being quoted €25,000 for a "basic" consent management setup. 
+                  That's when we realized: privacy compliance shouldn't require a mortgage.
+                </p>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  Our mission is simple: make GDPR compliance accessible to every business, 
+                  from solo entrepreneurs to growing agencies.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Based in Belgium</p>
+                    <p className="text-sm text-muted-foreground">EU-first, privacy-focused</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-background p-6 rounded-xl shadow-sm border">
+                  <p className="text-4xl font-bold font-display text-primary mb-2">1,000+</p>
+                  <p className="text-muted-foreground">Active websites</p>
+                </div>
+                <div className="bg-background p-6 rounded-xl shadow-sm border">
+                  <p className="text-4xl font-bold font-display text-primary mb-2">50M+</p>
+                  <p className="text-muted-foreground">Consents managed</p>
+                </div>
+                <div className="bg-background p-6 rounded-xl shadow-sm border">
+                  <p className="text-4xl font-bold font-display text-primary mb-2">99.9%</p>
+                  <p className="text-muted-foreground">Uptime</p>
+                </div>
+                <div className="bg-background p-6 rounded-xl shadow-sm border">
+                  <p className="text-4xl font-bold font-display text-primary mb-2">2 min</p>
+                  <p className="text-muted-foreground">Average setup time</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -321,10 +377,10 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><a href="#" className="hover:text-primary">Features</a></li>
-                  <li><a href="#" className="hover:text-primary">Pricing</a></li>
-                  <li><a href="#" className="hover:text-primary">Changelog</a></li>
-                  <li><a href="#" className="hover:text-primary">Documentation</a></li>
+                  <li><a href="#features" className="hover:text-primary">Features</a></li>
+                  <li><a href="#pricing" className="hover:text-primary">Pricing</a></li>
+                  <li><a href="#about" className="hover:text-primary">About Us</a></li>
+                  <li><Link href="/compare" className="hover:text-primary">Compare to OneTrust</Link></li>
                 </ul>
               </div>
               <div>
@@ -333,7 +389,6 @@ export default function Home() {
                   <li><a href="#" className="hover:text-primary">Privacy Policy</a></li>
                   <li><a href="#" className="hover:text-primary">Terms of Service</a></li>
                   <li><a href="#" className="hover:text-primary">Cookie Policy</a></li>
-                  <li><a href="#" className="hover:text-primary">DPA</a></li>
                 </ul>
               </div>
             </div>

@@ -3,7 +3,7 @@
 ## Overview
 ConsentEase is a simplified consent banner management platform positioned as an affordable alternative to enterprise solutions like OneTrust. Target market is small business owners who need compliance without the complexity or cost of enterprise tools.
 
-**Value Proposition:** "€12/month vs $30k/year, 2-minute setup vs 2-week implementation."
+**Value Proposition:** "€5/month vs $30k/year, 2-minute setup vs 2-week implementation."
 
 ## Current State
 The platform is a full-stack application with:
@@ -19,9 +19,9 @@ The platform is a full-stack application with:
 - Password: demo123
 
 ## Subscription Plans (Stripe)
-- Starter: €12/month - 3 websites, 10K visitors
-- Pro: €39/month - 10 websites, 100K visitors
-- Enterprise: €99/month - Unlimited
+- Solo: €5/month - 1 website, 10K views
+- Pro: €12/month - 5 websites, 100K views
+- Agency: €39/month - Unlimited websites, 1M views
 
 ## Project Architecture
 
@@ -76,6 +76,10 @@ The platform is a full-stack application with:
 - Products synced from Stripe to local database
 
 ## Recent Changes
+- December 25, 2025: Fixed Stripe checkout integration with plan selection modal
+- December 25, 2025: Added About section to landing page
+- December 25, 2025: Updated pricing to Solo €5, Pro €12, Agency €39
+- December 25, 2025: Added Google Consent Mode v2 support with proper initialization order
 - December 25, 2025: Added Stripe payment integration
 - December 25, 2025: Created embed code page and script generation
 - December 25, 2025: Connected banner configurator to API

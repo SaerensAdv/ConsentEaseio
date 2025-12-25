@@ -298,11 +298,8 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { priceId } = req.body;
-      if (!priceId) {
-        return res.status(400).json({ error: "Price ID required" });
-      }
-
+      const { planId, priceId } = req.body;
+      
       const user = await storage.getUser(req.user.id);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -315,10 +312,34 @@ export async function registerRoutes(
         customerId = customer.id;
       }
 
+      let finalPriceId = priceId;
+      
+      if (!finalPriceId && planId) {
+        const planPrices: Record<string, number> = {
+          solo: 500,
+          pro: 1200,
+          agency: 3900,
+        };
+        const targetAmount = planPrices[planId];
+        
+        if (targetAmount) {
+          const stripe = await import('./stripeClient').then(m => m.getStripeClient());
+          const prices = await stripe.prices.list({ active: true, limit: 100 });
+          const matchingPrice = prices.data.find(
+            p => p.unit_amount === targetAmount && p.currency === 'eur' && p.recurring?.interval === 'month'
+          );
+          finalPriceId = matchingPrice?.id;
+        }
+      }
+      
+      if (!finalPriceId) {
+        return res.status(400).json({ error: "No valid price found for this plan" });
+      }
+
       const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
       const session = await stripeService.createCheckoutSession(
         customerId,
-        priceId,
+        finalPriceId,
         `${baseUrl}/dashboard/settings?success=true`,
         `${baseUrl}/dashboard/settings?canceled=true`
       );

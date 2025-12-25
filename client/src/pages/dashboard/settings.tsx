@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import DashboardLayout from "./layout";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CreditCard, User, Mail, Shield, Check, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -19,9 +20,42 @@ interface AuthUser {
   plan: string;
 }
 
+const plans = [
+  {
+    id: "solo",
+    name: "Solo",
+    price: "€5",
+    priceAmount: 5,
+    websites: 1,
+    views: "10k",
+    features: ["1 Website", "10,000 Views/mo", "Basic Customization", "Email Support"],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "€12",
+    priceAmount: 12,
+    websites: 5,
+    views: "100k",
+    features: ["5 Websites", "100,000 Views/mo", "Full Customization", "Priority Support", "Remove Branding"],
+    popular: true,
+  },
+  {
+    id: "agency",
+    name: "Agency",
+    price: "€39",
+    priceAmount: 39,
+    websites: "Unlimited",
+    views: "1M",
+    features: ["Unlimited Websites", "1M Views/mo", "White Label", "API Access", "Client Management"],
+  },
+];
+
 export default function Settings() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"profile" | "billing">("profile");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const { data: user, isLoading } = useQuery<AuthUser>({
     queryKey: ["/api/auth/me"],
@@ -40,6 +74,54 @@ export default function Settings() {
     await logout();
     toast.success("Logged out successfully");
     setLocation("/login");
+  };
+
+  const checkoutMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ planId }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to create checkout");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const portalMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to open billing portal");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: () => {
+      toast.error("Failed to open billing portal");
+    },
+  });
+
+  const handleUpgrade = (planId: string) => {
+    setSelectedPlan(planId);
+    checkoutMutation.mutate(planId);
   };
 
   const getInitials = () => {
@@ -213,8 +295,22 @@ export default function Settings() {
                   </div>
                   
                   <div className="flex justify-end gap-3">
-                    <Button variant="outline">Cancel Subscription</Button>
-                    <Button>Upgrade Plan</Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => portalMutation.mutate()}
+                      disabled={portalMutation.isPending}
+                      data-testid="button-manage-subscription"
+                    >
+                      {portalMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Manage Subscription
+                    </Button>
+                    <Button 
+                      onClick={() => setShowUpgradeModal(true)}
+                      data-testid="button-upgrade-plan"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Upgrade Plan
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -278,6 +374,73 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display">Upgrade Your Plan</DialogTitle>
+            <DialogDescription>
+              Choose a plan that fits your needs. You can change or cancel anytime.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid md:grid-cols-3 gap-4 mt-4">
+            {plans.map((plan) => {
+              const isCurrentPlan = user?.plan === plan.id;
+              const isUpgrade = plans.findIndex(p => p.id === user?.plan) < plans.findIndex(p => p.id === plan.id);
+              
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative p-5 rounded-xl border-2 transition-all ${
+                    plan.popular 
+                      ? 'border-primary shadow-lg shadow-primary/10' 
+                      : 'border-border hover:border-primary/50'
+                  } ${isCurrentPlan ? 'bg-primary/5' : ''}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                      Most Popular
+                    </div>
+                  )}
+                  <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1 mb-3">
+                    <span className="text-3xl font-bold font-display">{plan.price}</span>
+                    <span className="text-muted-foreground">/mo</span>
+                  </div>
+                  <ul className="space-y-2 mb-4 text-sm">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-primary shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {isCurrentPlan ? (
+                    <Button disabled className="w-full" variant="outline">
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => handleUpgrade(plan.id)}
+                      disabled={checkoutMutation.isPending && selectedPlan === plan.id}
+                      data-testid={`button-select-plan-${plan.id}`}
+                    >
+                      {checkoutMutation.isPending && selectedPlan === plan.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                      )}
+                      {isUpgrade ? 'Upgrade' : 'Switch'}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
