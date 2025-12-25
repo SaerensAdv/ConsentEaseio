@@ -186,6 +186,13 @@ export default function Settings() {
                       { date: "Oct 25, 2025", amount: "€12.00", status: "Paid" },
                       { date: "Sep 25, 2025", amount: "€12.00", status: "Paid" },
                       { date: "Aug 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Jul 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Jun 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "May 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Apr 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Mar 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Feb 25, 2025", amount: "€5.00", status: "Paid" },
+                      { date: "Jan 25, 2025", amount: "€5.00", status: "Paid" },
                     ].map((invoice, i) => (
                       <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
                         <div>

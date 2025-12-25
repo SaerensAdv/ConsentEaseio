@@ -9,23 +9,34 @@ export default function Analytics() {
   const data = [
     { name: "Mon", accepted: 400, rejected: 240 },
     { name: "Tue", accepted: 300, rejected: 139 },
-    { name: "Wed", accepted: 200, rejected: 980 },
-    { name: "Thu", accepted: 278, rejected: 390 },
-    { name: "Fri", accepted: 189, rejected: 480 },
-    { name: "Sat", accepted: 239, rejected: 380 },
-    { name: "Sun", accepted: 349, rejected: 430 },
+    { name: "Wed", accepted: 550, rejected: 180 },
+    { name: "Thu", accepted: 480, rejected: 210 },
+    { name: "Fri", accepted: 620, rejected: 250 },
+    { name: "Sat", accepted: 380, rejected: 190 },
+    { name: "Sun", accepted: 410, rejected: 160 },
+    { name: "Mon", accepted: 520, rejected: 220 },
+    { name: "Tue", accepted: 490, rejected: 195 },
+    { name: "Wed", accepted: 580, rejected: 205 },
+    { name: "Thu", accepted: 610, rejected: 230 },
+    { name: "Fri", accepted: 590, rejected: 240 },
+    { name: "Sat", accepted: 420, rejected: 180 },
+    { name: "Sun", accepted: 450, rejected: 170 },
   ];
 
   const consentData = [
-    { name: "Accepted", value: 65, color: "#22c55e" },
-    { name: "Rejected", value: 35, color: "#ef4444" },
+    { name: "Accepted", value: 72, color: "#22c55e" },
+    { name: "Rejected", value: 28, color: "#ef4444" },
   ];
 
   const locationData = [
-    { country: "United States", visitors: 12450, percentage: 45 },
-    { country: "Germany", visitors: 8320, percentage: 32 },
-    { country: "United Kingdom", visitors: 4100, percentage: 15 },
-    { country: "France", visitors: 1540, percentage: 8 },
+    { country: "United States", visitors: 12450, percentage: 35 },
+    { country: "Germany", visitors: 8320, percentage: 22 },
+    { country: "United Kingdom", visitors: 5100, percentage: 14 },
+    { country: "France", visitors: 3540, percentage: 9 },
+    { country: "Netherlands", visitors: 2800, percentage: 8 },
+    { country: "Belgium", visitors: 2100, percentage: 6 },
+    { country: "Canada", visitors: 1200, percentage: 3 },
+    { country: "Australia", visitors: 980, percentage: 3 },
   ];
 
   return (

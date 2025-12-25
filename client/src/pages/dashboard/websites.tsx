@@ -26,6 +26,11 @@ export default function DashboardWebsites() {
   const websites = [
     { id: "83xh5b9n0we3", domain: "saerensadvertising.com", status: "compliant", lastScan: "2 mins ago", visitors: "12.4k" },
     { id: "92yk2m1p4rq9", domain: "shop.saerens.com", status: "attention", lastScan: "1 day ago", visitors: "3.2k" },
+    { id: "71zm3k8j2lw5", domain: "blog.saerens.com", status: "compliant", lastScan: "3 hours ago", visitors: "8.1k" },
+    { id: "45vb6n7m8kp2", domain: "app.saerens.com", status: "compliant", lastScan: "5 mins ago", visitors: "45.6k" },
+    { id: "19xc4v5b6nm7", domain: "dev.saerens.com", status: "scanning", lastScan: "Just now", visitors: "120" },
+    { id: "33as2d4f5gh6", domain: "staging.saerens.com", status: "attention", lastScan: "2 days ago", visitors: "450" },
+    { id: "66ty7u8i9op0", domain: "careers.saerens.com", status: "compliant", lastScan: "1 week ago", visitors: "2.3k" },
   ];
 
   const handleCopy = () => {
