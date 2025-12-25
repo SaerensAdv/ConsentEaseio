@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Check, Undo2, Save, Monitor, Smartphone, Palette, Layout, Type } from "lucide-react";
+import { Check, Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function BannerConfigurator() {
