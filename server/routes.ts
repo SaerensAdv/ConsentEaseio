@@ -162,9 +162,22 @@ export async function registerRoutes(
     }
   });
 
+  // CORS preflight for analytics endpoint
+  app.options("/api/analytics/event", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+  });
+
   // Public endpoint for recording consent events (no auth needed)
   // Accepts publicId and resolves to internal websiteId
   app.post("/api/analytics/event", async (req, res) => {
+    // Allow cross-origin requests for analytics tracking
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
     try {
       const { websiteId: publicId, eventType, country } = req.body;
       
@@ -192,21 +205,27 @@ export async function registerRoutes(
 
   // Public endpoint to serve the consent banner script
   app.get("/api/consent/:publicId/script.js", async (req, res) => {
+    // Allow cross-origin requests for the banner script
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+    
     try {
       const website = await storage.getWebsiteByPublicId(req.params.publicId);
       if (!website) {
-        return res.status(404).type('text/plain').send('// Website not found');
+        return res.status(404).type('application/javascript').send('// ConsentEase: Website not found. Please check your publicId.');
       }
       
       const config = await storage.getBannerConfigByWebsiteId(website.id);
       if (!config) {
-        return res.status(404).type('text/plain').send('// Banner config not found');
+        return res.status(404).type('application/javascript').send('// ConsentEase: Banner config not found. Please configure your banner first.');
       }
       
       const script = generateBannerScript(config, website.publicId);
       res.type('application/javascript').send(script);
     } catch (error) {
-      res.status(500).type('text/plain').send('// Error loading banner script');
+      console.error('Error generating banner script:', error);
+      res.status(500).type('application/javascript').send('// ConsentEase: Error loading banner script');
     }
   });
 
