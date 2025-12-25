@@ -33,28 +33,12 @@ export function generateBannerScript(config: any, publicId: string): string {
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
   
-  // Initialize gtag and dataLayer for Google Consent Mode
+  // Use existing gtag function (set up by inline script) or create if missing
   window.dataLayer = window.dataLayer || [];
-  function gtag() { window.dataLayer.push(arguments); }
-  
-  // Set default consent state - deny all until user makes a choice
-  // This must run before Google tags load for proper consent mode support
-  gtag('consent', 'default', {
-    'ad_storage': 'denied',
-    'ad_user_data': 'denied',
-    'ad_personalization': 'denied',
-    'analytics_storage': 'denied',
-    'functionality_storage': 'denied',
-    'personalization_storage': 'denied',
-    'security_storage': 'granted',
-    'wait_for_update': 500
-  });
-  
-  // Enable ads data redaction when consent is denied
-  gtag('set', 'ads_data_redaction', true);
-  
-  // Enable URL passthrough for conversion tracking without cookies
-  gtag('set', 'url_passthrough', true);
+  if (typeof window.gtag !== 'function') {
+    window.gtag = function() { window.dataLayer.push(arguments); };
+  }
+  var gtag = window.gtag;
   
   function getStoredConsent() {
     try {

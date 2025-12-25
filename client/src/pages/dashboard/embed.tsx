@@ -37,8 +37,27 @@ export default function EmbedCode() {
     ? `${window.location.origin}/api/consent/${activeWebsite.publicId}/script.js`
     : '';
   
+  // Full embed code with inline consent default (must run BEFORE GTM)
   const embedCode = activeWebsite 
-    ? `<script src="${scriptUrl}" async></script>`
+    ? `<!-- ConsentEase: Set default consent BEFORE Google Tag Manager -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'denied',
+  'personalization_storage': 'denied',
+  'security_storage': 'granted',
+  'wait_for_update': 500
+});
+gtag('set', 'ads_data_redaction', true);
+gtag('set', 'url_passthrough', true);
+</script>
+<!-- ConsentEase: Load consent banner (handles user interaction) -->
+<script src="${scriptUrl}" async></script>`
     : '';
 
   const handleCopy = () => {
@@ -171,27 +190,33 @@ export default function EmbedCode() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="border-amber-200 bg-amber-50/50">
           <CardHeader>
-            <CardTitle>Installation Instructions</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-amber-700">
+              <Zap className="w-5 h-5" />
+              Installation Instructions
+            </CardTitle>
+            <CardDescription className="text-amber-600">
+              Important: The code must be placed BEFORE Google Tag Manager or Google Analytics
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex gap-4">
-              <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold">1</div>
+              <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 font-semibold">1</div>
               <div>
                 <p className="font-medium">Copy the embed code above</p>
-                <p className="text-muted-foreground">Click the copy button to copy the script tag.</p>
+                <p className="text-muted-foreground">This includes both the consent defaults and the banner script.</p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold">2</div>
+              <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 font-semibold">2</div>
               <div>
-                <p className="font-medium">Paste it in your website's &lt;head&gt; section</p>
-                <p className="text-muted-foreground">Add it before other tracking scripts like Google Analytics.</p>
+                <p className="font-medium">Paste it at the TOP of your &lt;head&gt; section</p>
+                <p className="text-muted-foreground"><strong>Must come BEFORE</strong> Google Tag Manager, Google Analytics, or any other tracking scripts.</p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold">3</div>
+              <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 font-semibold">3</div>
               <div>
                 <p className="font-medium">That's it!</p>
                 <p className="text-muted-foreground">The banner will appear automatically. Customize it anytime from the Banner Design page.</p>
