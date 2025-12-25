@@ -2,9 +2,9 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
-import IntroPage from "@/pages/intro";
 import DashboardWebsites from "@/pages/dashboard/websites";
 import BannerConfigurator from "@/pages/dashboard/banner";
 import Analytics from "@/pages/dashboard/analytics";
@@ -16,8 +16,7 @@ import LoginPage from "@/pages/login";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={IntroPage}/>
-      <Route path="/home" component={Home}/>
+      <Route path="/" component={Home}/>
       <Route path="/compare" component={ComparePage}/>
       <Route path="/login" component={LoginPage}/>
       <Route path="/onboarding" component={Onboarding}/>

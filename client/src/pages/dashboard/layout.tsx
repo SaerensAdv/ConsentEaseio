@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <div className="h-full flex flex-col">
           <div className="h-16 flex items-center px-6 border-b border-border">
-            <Link href="/home" className="text-xl font-display font-bold flex items-center gap-2">
+            <Link href="/" className="text-xl font-display font-bold flex items-center gap-2">
               <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
                 <Shield className="w-3.5 h-3.5 fill-current" />
               </div>
@@ -134,7 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 md:ml-64 min-w-0">
         <div className="h-16 bg-background border-b border-border flex items-center justify-between px-6 md:hidden sticky top-0 z-30">
-          <Link href="/home" className="text-lg font-bold flex items-center gap-2">
+          <Link href="/" className="text-lg font-bold flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
               <Shield className="w-3.5 h-3.5 fill-current" />
             </div>
