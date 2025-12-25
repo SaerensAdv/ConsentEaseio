@@ -1,21 +1,38 @@
 import { useState } from "react";
 import DashboardLayout from "./layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, MoreHorizontal, Globe, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Plus, MoreHorizontal, Globe, CheckCircle2, AlertCircle, ExternalLink, Code2, Copy, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function DashboardWebsites() {
+  const [copied, setCopied] = useState(false);
+
   // Mock data
   const websites = [
     { id: "83xh5b9n0we3", domain: "saerensadvertising.com", status: "compliant", lastScan: "2 mins ago", visitors: "12.4k" },
     { id: "92yk2m1p4rq9", domain: "shop.saerens.com", status: "attention", lastScan: "1 day ago", visitors: "3.2k" },
   ];
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText('<script src="https://cdn.consentease.com/banner.js" data-id="83xh5b9n0we3"></script>');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <DashboardLayout>
@@ -65,7 +82,55 @@ export default function DashboardWebsites() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button variant="outline">Configure Banner</Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Code2 className="w-4 h-4" />
+                      Get Code
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Install Consent Banner</DialogTitle>
+                      <DialogDescription>
+                        Copy and paste this code into the &lt;head&gt; of your website.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Tabs defaultValue="html" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="html">HTML</TabsTrigger>
+                        <TabsTrigger value="wordpress">WordPress</TabsTrigger>
+                        <TabsTrigger value="shopify">Shopify</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="html" className="mt-4">
+                        <div className="relative rounded-md bg-muted p-4 font-mono text-sm break-all">
+                          <code className="text-muted-foreground">
+                            &lt;script src="https://cdn.consentease.com/banner.js" data-id="{site.id}"&gt;&lt;/script&gt;
+                          </code>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="absolute top-2 right-2 h-8 w-8 hover:bg-background"
+                            onClick={handleCopy}
+                          >
+                            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="wordpress" className="mt-4 text-sm text-muted-foreground">
+                        <p>1. Download the ConsentEase plugin.</p>
+                        <p>2. Go to Settings {'>'} ConsentEase.</p>
+                        <p>3. Enter your Site ID: <strong className="text-foreground">{site.id}</strong></p>
+                      </TabsContent>
+                       <TabsContent value="shopify" className="mt-4 text-sm text-muted-foreground">
+                        <p>1. Open Online Store {'>'} Themes.</p>
+                        <p>2. Edit Code {'>'} theme.liquid.</p>
+                        <p>3. Paste the HTML snippet before the closing &lt;/head&gt; tag.</p>
+                      </TabsContent>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -75,7 +140,6 @@ export default function DashboardWebsites() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Re-scan Cookies</DropdownMenuItem>
                     <DropdownMenuItem>View Report</DropdownMenuItem>
-                    <DropdownMenuItem>Get Embed Code</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">Remove Domain</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
