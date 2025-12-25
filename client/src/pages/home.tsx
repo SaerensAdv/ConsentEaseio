@@ -62,13 +62,11 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/">
-            <a className="text-2xl font-display font-bold flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-                <Shield className="w-5 h-5 fill-current" />
-              </div>
-              ConsentEase
-            </a>
+          <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
+              <Shield className="w-5 h-5 fill-current" />
+            </div>
+            ConsentEase
           </Link>
 
           {/* Desktop Nav */}
@@ -77,7 +75,9 @@ export default function Home() {
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
             <div className="flex items-center gap-4 ml-4">
-              <Button variant="ghost" className="font-medium">Log in</Button>
+              <Link href="/login">
+                <Button variant="ghost" className="font-medium">Log in</Button>
+              </Link>
               <Link href="/onboarding">
                 <Button className="font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">Start Free Trial</Button>
               </Link>

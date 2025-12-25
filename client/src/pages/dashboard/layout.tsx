@@ -1,12 +1,56 @@
 import { Link, useLocation } from "wouter";
-import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { logout } from "@/lib/auth";
+import { toast } from "sonner";
+
+interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  plan: string;
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const { data: user } = useQuery<AuthUser>({
+    queryKey: ["/api/auth/me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (res.status === 401) {
+        setLocation("/login");
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+  });
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged out successfully");
+    setLocation("/login");
+  };
+
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`;
+    }
+    return user?.email?.[0]?.toUpperCase() || "U";
+  };
+
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.email?.split("@")[0] || "User";
+  };
 
   const navItems = [
     { icon: Globe, label: "Websites", href: "/dashboard" },
@@ -25,29 +69,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <div className="h-full flex flex-col">
           <div className="h-16 flex items-center px-6 border-b border-border">
-            <Link href="/">
-              <a className="text-xl font-display font-bold flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
-                  <Shield className="w-3.5 h-3.5 fill-current" />
-                </div>
-                ConsentEase
-              </a>
+            <Link href="/" className="text-xl font-display font-bold flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
+                <Shield className="w-3.5 h-3.5 fill-current" />
+              </div>
+              ConsentEase
             </Link>
           </div>
 
           <div className="flex-1 py-6 px-3 space-y-1">
             {navItems.map((item) => {
-              const isActive = location === item.href;
+              const isActive = location === item.href || (item.href === "/dashboard" && location === "/dashboard/websites");
               return (
-                <Link key={item.href} href={item.href}>
-                  <a className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive 
                       ? "bg-primary/10 text-primary" 
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}>
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
-                  </a>
+                  }`}
+                  data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
                 </Link>
               );
             })}
@@ -56,15 +101,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="w-9 h-9 border border-border">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || "default"}`} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">john@example.com</p>
+                <p className="text-sm font-medium truncate" data-testid="text-user-name">{getDisplayName()}</p>
+                <p className="text-xs text-muted-foreground truncate" data-testid="text-user-email">{user?.email}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              onClick={handleLogout}
+              data-testid="button-sidebar-logout"
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Log out
             </Button>
@@ -83,13 +134,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 md:ml-64 min-w-0">
         <div className="h-16 bg-background border-b border-border flex items-center justify-between px-6 md:hidden sticky top-0 z-30">
-          <Link href="/">
-            <a className="text-lg font-bold flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
-                <Shield className="w-3.5 h-3.5 fill-current" />
-              </div>
-              ConsentEase
-            </a>
+          <Link href="/" className="text-lg font-bold flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
+              <Shield className="w-3.5 h-3.5 fill-current" />
+            </div>
+            ConsentEase
           </Link>
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="w-5 h-5" />

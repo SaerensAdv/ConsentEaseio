@@ -1,43 +1,88 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import DashboardLayout from "./layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Pie, PieChart } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Users, CheckCircle2, XCircle, MousePointerClick } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Pie, PieChart } from "recharts";
+import { ArrowUpRight, ArrowDownRight, Users, CheckCircle2, XCircle, MousePointerClick, Loader2 } from "lucide-react";
+
+interface Website {
+  id: string;
+  domain: string;
+  publicId: string;
+}
+
+interface AnalyticsSummary {
+  totalViews: number;
+  acceptRate: number;
+  rejectRate: number;
+  dailyStats: Array<{ date: string; views: number; accepts: number; rejects: number }>;
+  countryBreakdown: Array<{ country: string; count: number }>;
+}
 
 export default function Analytics() {
-  // Mock Data
-  const data = [
-    { name: "Mon", accepted: 400, rejected: 240 },
-    { name: "Tue", accepted: 300, rejected: 139 },
-    { name: "Wed", accepted: 550, rejected: 180 },
-    { name: "Thu", accepted: 480, rejected: 210 },
-    { name: "Fri", accepted: 620, rejected: 250 },
-    { name: "Sat", accepted: 380, rejected: 190 },
-    { name: "Sun", accepted: 410, rejected: 160 },
-    { name: "Mon", accepted: 520, rejected: 220 },
-    { name: "Tue", accepted: 490, rejected: 195 },
-    { name: "Wed", accepted: 580, rejected: 205 },
-    { name: "Thu", accepted: 610, rejected: 230 },
-    { name: "Fri", accepted: 590, rejected: 240 },
-    { name: "Sat", accepted: 420, rejected: 180 },
-    { name: "Sun", accepted: 450, rejected: 170 },
-  ];
+  const [, setLocation] = useLocation();
+  const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState("14");
+
+  const { data: websites = [] } = useQuery<Website[]>({
+    queryKey: ["/api/websites"],
+    queryFn: async () => {
+      const res = await fetch("/api/websites", { credentials: "include" });
+      if (res.status === 401) {
+        setLocation("/login");
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) throw new Error("Failed to fetch websites");
+      return res.json();
+    },
+  });
+
+  const activeWebsiteId = selectedWebsite || websites[0]?.id;
+
+  const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
+    queryKey: ["/api/websites", activeWebsiteId, "analytics", dateRange],
+    queryFn: async () => {
+      if (!activeWebsiteId) return null;
+      const res = await fetch(`/api/websites/${activeWebsiteId}/analytics?days=${dateRange}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch analytics");
+      return res.json();
+    },
+    enabled: !!activeWebsiteId,
+  });
+
+  const chartData = analytics?.dailyStats?.map((stat) => ({
+    name: new Date(stat.date).toLocaleDateString("en-US", { weekday: "short" }),
+    accepted: stat.accepts,
+    rejected: stat.rejects,
+  })) || [];
 
   const consentData = [
-    { name: "Accepted", value: 72, color: "#22c55e" },
-    { name: "Rejected", value: 28, color: "#ef4444" },
+    { name: "Accepted", value: Math.round(analytics?.acceptRate || 0), color: "#22c55e" },
+    { name: "Rejected", value: Math.round(analytics?.rejectRate || 0), color: "#ef4444" },
   ];
 
-  const locationData = [
-    { country: "United States", visitors: 12450, percentage: 35 },
-    { country: "Germany", visitors: 8320, percentage: 22 },
-    { country: "United Kingdom", visitors: 5100, percentage: 14 },
-    { country: "France", visitors: 3540, percentage: 9 },
-    { country: "Netherlands", visitors: 2800, percentage: 8 },
-    { country: "Belgium", visitors: 2100, percentage: 6 },
-    { country: "Canada", visitors: 1200, percentage: 3 },
-    { country: "Australia", visitors: 980, percentage: 3 },
-  ];
+  const locationData = analytics?.countryBreakdown?.slice(0, 8).map((item, index, arr) => {
+    const maxCount = arr[0]?.count || 1;
+    return {
+      country: item.country,
+      visitors: item.count,
+      percentage: Math.round((item.count / maxCount) * 100),
+    };
+  }) || [];
+
+  if (isLoading && !analytics) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -46,17 +91,33 @@ export default function Analytics() {
           <h1 className="text-2xl font-display font-bold">Analytics</h1>
           <p className="text-muted-foreground">Monitor your consent rates and compliance metrics.</p>
         </div>
-        <Select defaultValue="7d">
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="24h">Last 24 hours</SelectItem>
-            <SelectItem value="7d">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-            <SelectItem value="90d">Last 3 months</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3">
+          {websites.length > 1 && (
+            <Select value={selectedWebsite || websites[0]?.id} onValueChange={setSelectedWebsite}>
+              <SelectTrigger className="w-[200px]" data-testid="select-website">
+                <SelectValue placeholder="Select website" />
+              </SelectTrigger>
+              <SelectContent>
+                {websites.map((site) => (
+                  <SelectItem key={site.id} value={site.id}>
+                    {site.domain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[180px]" data-testid="select-date-range">
+              <SelectValue placeholder="Select range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Last 24 hours</SelectItem>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="14">Last 14 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -67,9 +128,11 @@ export default function Analytics() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45,231</div>
+            <div className="text-2xl font-bold" data-testid="stat-total-sessions">
+              {analytics?.totalViews?.toLocaleString() || 0}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> +20.1%</span> from last month
+              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> Banner views</span>
             </p>
           </CardContent>
         </Card>
@@ -79,9 +142,11 @@ export default function Analytics() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">65.2%</div>
+            <div className="text-2xl font-bold" data-testid="stat-consent-rate">
+              {(analytics?.acceptRate || 0).toFixed(1)}%
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> +4.3%</span> from last month
+              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> Accepted cookies</span>
             </p>
           </CardContent>
         </Card>
@@ -91,9 +156,11 @@ export default function Analytics() {
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">34.8%</div>
+            <div className="text-2xl font-bold" data-testid="stat-rejection-rate">
+              {(analytics?.rejectRate || 0).toFixed(1)}%
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-red-500 flex items-center"><ArrowDownRight className="h-3 w-3" /> -1.2%</span> from last month
+              <span className="text-red-500 flex items-center"><ArrowDownRight className="h-3 w-3" /> Rejected cookies</span>
             </p>
           </CardContent>
         </Card>
@@ -103,9 +170,11 @@ export default function Analytics() {
             <MousePointerClick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,234</div>
+            <div className="text-2xl font-bold" data-testid="stat-interactions">
+              {analytics?.dailyStats?.reduce((acc, stat) => acc + stat.accepts + stat.rejects, 0)?.toLocaleString() || 0}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> +12%</span> from last month
+              <span className="text-green-500 flex items-center"><ArrowUpRight className="h-3 w-3" /> Total clicks</span>
             </p>
           </CardContent>
         </Card>
@@ -120,29 +189,35 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorAccepted" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorRejected" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Area type="monotone" dataKey="accepted" stroke="#22c55e" fillOpacity={1} fill="url(#colorAccepted)" />
-                  <Area type="monotone" dataKey="rejected" stroke="#ef4444" fillOpacity={1} fill="url(#colorRejected)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorAccepted" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorRejected" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Area type="monotone" dataKey="accepted" stroke="#22c55e" fillOpacity={1} fill="url(#colorAccepted)" />
+                    <Area type="monotone" dataKey="rejected" stroke="#ef4444" fillOpacity={1} fill="url(#colorRejected)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data available for this period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -176,7 +251,9 @@ export default function Analytics() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                <span className="text-3xl font-bold">65%</span>
+                <span className="text-3xl font-bold" data-testid="stat-pie-percentage">
+                  {Math.round(analytics?.acceptRate || 0)}%
+                </span>
                 <span className="text-xs text-muted-foreground">Accepted</span>
               </div>
             </div>
@@ -191,24 +268,30 @@ export default function Analytics() {
             <CardDescription>Where your visitors are consenting from.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {locationData.map((item) => (
-                <div key={item.country} className="flex items-center">
-                  <div className="w-full space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{item.country}</span>
-                      <span className="text-muted-foreground">{item.visitors.toLocaleString()}</span>
-                    </div>
-                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary" 
-                        style={{ width: `${item.percentage}%` }}
-                      />
+            {locationData.length > 0 ? (
+              <div className="space-y-4">
+                {locationData.map((item) => (
+                  <div key={item.country} className="flex items-center" data-testid={`country-${item.country}`}>
+                    <div className="w-full space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{item.country}</span>
+                        <span className="text-muted-foreground">{item.visitors.toLocaleString()}</span>
+                      </div>
+                      <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No location data available yet
+              </div>
+            )}
           </CardContent>
         </Card>
         
@@ -223,8 +306,16 @@ export default function Analytics() {
                 <ArrowUpRight className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-sm font-medium">Acceptance rate increased by 5%</p>
-                <p className="text-xs text-muted-foreground mt-1">Changing your banner color to match your brand seems to have improved trust.</p>
+                <p className="text-sm font-medium">
+                  {(analytics?.acceptRate || 0) > 70 
+                    ? "Great acceptance rate!" 
+                    : "Room for improvement"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(analytics?.acceptRate || 0) > 70 
+                    ? "Your consent rate is above industry average. Keep it up!" 
+                    : "Try customizing your banner colors to match your brand for better trust."}
+                </p>
               </div>
             </div>
              <div className="flex gap-3 items-start">
@@ -232,8 +323,14 @@ export default function Analytics() {
                 <Users className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-sm font-medium">High rejection rate in Germany</p>
-                <p className="text-xs text-muted-foreground mt-1">Visitors from Germany reject 12% more often. Consider enabling TCF v2.2 support for this region.</p>
+                <p className="text-sm font-medium">
+                  {locationData[0]?.country || "No location data"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {locationData[0] 
+                    ? `Most of your visitors are from ${locationData[0].country}. Make sure your banner is localized.`
+                    : "Start collecting data to see visitor insights."}
+                </p>
               </div>
             </div>
           </CardContent>

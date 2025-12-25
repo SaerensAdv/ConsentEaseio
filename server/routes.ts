@@ -44,13 +44,8 @@ export async function registerRoutes(
       
       const website = await storage.createWebsite(validated);
       
-      // Create default banner config for the website
-      const defaultBannerConfig = {
-        websiteId: website.id,
-        description: `We use cookies to enhance your browsing experience and analyze site traffic. By clicking "Accept All", you consent to our use of cookies.`,
-      };
-      
-      await storage.createBannerConfig(defaultBannerConfig);
+      // Create default banner config for the website (uses schema defaults)
+      await storage.createBannerConfig({ websiteId: website.id });
       
       // Simulate scanning completion after a delay (in production, this would be a background job)
       setTimeout(async () => {

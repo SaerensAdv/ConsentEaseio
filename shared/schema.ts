@@ -41,7 +41,7 @@ export const bannerConfigs = pgTable("banner_configs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
   heading: text("heading").notNull().default("We value your privacy"),
-  description: text("description").notNull(),
+  description: text("description").notNull().default("We use cookies to enhance your browsing experience and analyze site traffic. By clicking \"Accept All\", you consent to our use of cookies."),
   acceptText: text("accept_text").notNull().default("Accept All"),
   rejectText: text("reject_text").notNull().default("Reject All"),
   settingsText: text("settings_text").notNull().default("Preferences"),

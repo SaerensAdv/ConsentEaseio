@@ -1,15 +1,74 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import DashboardLayout from "./layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { CreditCard, User, Mail, Shield, Check } from "lucide-react";
+import { CreditCard, User, Mail, Shield, Check, Loader2 } from "lucide-react";
+import { logout } from "@/lib/auth";
+import { toast } from "sonner";
+
+interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  plan: string;
+}
 
 export default function Settings() {
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"profile" | "billing">("profile");
+
+  const { data: user, isLoading } = useQuery<AuthUser>({
+    queryKey: ["/api/auth/me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (res.status === 401) {
+        setLocation("/login");
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+  });
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged out successfully");
+    setLocation("/login");
+  };
+
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`;
+    }
+    return user?.email?.[0]?.toUpperCase() || "U";
+  };
+
+  const getPlanDisplay = (plan: string) => {
+    switch (plan) {
+      case "solo": return { name: "Solo", price: "€5", limit: 1, views: "10k" };
+      case "pro": return { name: "Pro", price: "€12", limit: 5, views: "100k" };
+      case "agency": return { name: "Agency", price: "€39", limit: "Unlimited", views: "1M" };
+      default: return { name: "Solo", price: "€5", limit: 1, views: "10k" };
+    }
+  };
+
+  const planInfo = getPlanDisplay(user?.plan || "solo");
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -18,6 +77,9 @@ export default function Settings() {
           <h1 className="text-2xl font-display font-bold">Settings</h1>
           <p className="text-muted-foreground">Manage your account and subscription.</p>
         </div>
+        <Button variant="outline" onClick={handleLogout} data-testid="button-logout">
+          Log Out
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
@@ -31,6 +93,7 @@ export default function Settings() {
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
+              data-testid="button-tab-profile"
             >
               <User className="w-4 h-4" />
               Profile
@@ -42,6 +105,7 @@ export default function Settings() {
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
+              data-testid="button-tab-billing"
             >
               <CreditCard className="w-4 h-4" />
               Billing
@@ -61,8 +125,8 @@ export default function Settings() {
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-6">
                     <Avatar className="w-20 h-20 border-2 border-border">
-                      <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} />
+                      <AvatarFallback>{getInitials()}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-2">
                       <Button variant="outline" size="sm">Change Avatar</Button>
@@ -73,11 +137,11 @@ export default function Settings() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>First Name</Label>
-                      <Input defaultValue="John" />
+                      <Input defaultValue={user?.firstName || ""} data-testid="input-firstName" />
                     </div>
                     <div className="space-y-2">
                       <Label>Last Name</Label>
-                      <Input defaultValue="Doe" />
+                      <Input defaultValue={user?.lastName || ""} data-testid="input-lastName" />
                     </div>
                   </div>
                   
@@ -85,9 +149,11 @@ export default function Settings() {
                     <Label>Email Address</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input defaultValue="john@example.com" className="pl-9" />
+                      <Input defaultValue={user?.email || ""} className="pl-9" disabled data-testid="input-email" />
                     </div>
                   </div>
+
+                  <Button data-testid="button-save-profile">Save Changes</Button>
                 </CardContent>
               </Card>
 
@@ -104,7 +170,7 @@ export default function Settings() {
                       </div>
                       <div>
                         <p className="font-medium">Password</p>
-                        <p className="text-sm text-muted-foreground">Last changed 3 months ago</p>
+                        <p className="text-sm text-muted-foreground">Last changed recently</p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm">Update</Button>
@@ -121,7 +187,9 @@ export default function Settings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>Current Plan</CardTitle>
-                      <CardDescription>You are currently on the <span className="font-bold text-primary">Pro Plan</span>.</CardDescription>
+                      <CardDescription>
+                        You are currently on the <span className="font-bold text-primary capitalize" data-testid="text-plan-name">{planInfo.name} Plan</span>.
+                      </CardDescription>
                     </div>
                     <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-bold rounded-full">
                       Active
@@ -132,15 +200,15 @@ export default function Settings() {
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="p-4 bg-secondary/50 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Price</p>
-                      <p className="text-2xl font-bold">€12<span className="text-base font-normal text-muted-foreground">/mo</span></p>
+                      <p className="text-2xl font-bold">{planInfo.price}<span className="text-base font-normal text-muted-foreground">/mo</span></p>
                     </div>
                     <div className="p-4 bg-secondary/50 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Websites</p>
-                      <p className="text-2xl font-bold">2 <span className="text-base font-normal text-muted-foreground">/ 5</span></p>
+                      <p className="text-2xl font-bold">{planInfo.limit}</p>
                     </div>
                     <div className="p-4 bg-secondary/50 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Pageviews</p>
-                      <p className="text-2xl font-bold">15.6k <span className="text-base font-normal text-muted-foreground">/ 100k</span></p>
+                      <p className="text-2xl font-bold">{planInfo.views}</p>
                     </div>
                   </div>
                   
@@ -183,21 +251,16 @@ export default function Settings() {
                 <CardContent>
                   <div className="space-y-4">
                     {[
+                      { date: "Dec 25, 2025", amount: "€12.00", status: "Paid" },
+                      { date: "Nov 25, 2025", amount: "€12.00", status: "Paid" },
                       { date: "Oct 25, 2025", amount: "€12.00", status: "Paid" },
                       { date: "Sep 25, 2025", amount: "€12.00", status: "Paid" },
                       { date: "Aug 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Jul 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Jun 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "May 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Apr 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Mar 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Feb 25, 2025", amount: "€5.00", status: "Paid" },
-                      { date: "Jan 25, 2025", amount: "€5.00", status: "Paid" },
                     ].map((invoice, i) => (
                       <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
                         <div>
                           <p className="font-medium">{invoice.date}</p>
-                          <p className="text-sm text-muted-foreground">Pro Plan - Monthly</p>
+                          <p className="text-sm text-muted-foreground capitalize">{user?.plan || "pro"} Plan - Monthly</p>
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="font-medium">{invoice.amount}</span>
