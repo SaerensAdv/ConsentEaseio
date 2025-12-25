@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateBannerScript } from "./banner-script";
+import { stripeService } from "./stripeService";
+import { getStripePublishableKey } from "./stripeClient";
 
 // Helper to generate random public IDs
 function generatePublicId(): string {
@@ -161,15 +163,29 @@ export async function registerRoutes(
   });
 
   // Public endpoint for recording consent events (no auth needed)
+  // Accepts publicId and resolves to internal websiteId
   app.post("/api/analytics/event", async (req, res) => {
     try {
-      const validated = insertAnalyticsEventSchema.parse(req.body);
-      const event = await storage.createAnalyticsEvent(validated);
-      res.status(201).json(event);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
+      const { websiteId: publicId, eventType, country } = req.body;
+      
+      if (!publicId || !eventType) {
+        return res.status(400).json({ error: "Missing required fields" });
       }
+      
+      // Resolve publicId to internal websiteId
+      const website = await storage.getWebsiteByPublicId(publicId);
+      if (!website) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const event = await storage.createAnalyticsEvent({
+        websiteId: website.id,
+        eventType,
+        country: country || null,
+      });
+      
+      res.status(201).json({ success: true });
+    } catch (error) {
       res.status(500).json({ error: "Failed to create event" });
     }
   });
@@ -211,6 +227,129 @@ export async function registerRoutes(
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+  });
+
+  // Stripe endpoints
+  app.get("/api/stripe/config", async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get Stripe config" });
+    }
+  });
+
+  app.get("/api/stripe/products", async (req, res) => {
+    try {
+      const rows = await stripeService.listProductsWithPrices();
+      
+      const productsMap = new Map();
+      for (const row of rows as any[]) {
+        if (!productsMap.has(row.product_id)) {
+          productsMap.set(row.product_id, {
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            active: row.product_active,
+            metadata: row.product_metadata,
+            prices: []
+          });
+        }
+        if (row.price_id) {
+          productsMap.get(row.product_id).prices.push({
+            id: row.price_id,
+            unit_amount: row.unit_amount,
+            currency: row.currency,
+            recurring: row.recurring,
+            active: row.price_active,
+          });
+        }
+      }
+
+      res.json({ data: Array.from(productsMap.values()) });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  app.post("/api/stripe/checkout", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { priceId } = req.body;
+      if (!priceId) {
+        return res.status(400).json({ error: "Price ID required" });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripeService.createCustomer(user.email, user.id);
+        await storage.updateUserStripeInfo(user.id, { stripeCustomerId: customer.id });
+        customerId = customer.id;
+      }
+
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const session = await stripeService.createCheckoutSession(
+        customerId,
+        priceId,
+        `${baseUrl}/dashboard/settings?success=true`,
+        `${baseUrl}/dashboard/settings?canceled=true`
+      );
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/stripe/portal", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      if (!user?.stripeCustomerId) {
+        return res.status(400).json({ error: "No subscription found" });
+      }
+
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const session = await stripeService.createCustomerPortalSession(
+        user.stripeCustomerId,
+        `${baseUrl}/dashboard/settings`
+      );
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Portal error:", error);
+      res.status(500).json({ error: "Failed to create portal session" });
+    }
+  });
+
+  app.get("/api/stripe/subscription", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      if (!user?.stripeSubscriptionId) {
+        return res.json({ subscription: null });
+      }
+
+      const subscription = await stripeService.getSubscription(user.stripeSubscriptionId);
+      res.json({ subscription });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch subscription" });
     }
   });
 

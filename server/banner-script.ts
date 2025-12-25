@@ -1,10 +1,14 @@
-import { storage } from "./storage";
-
 export function generateBannerScript(config: any, publicId: string): string {
+  // Get the ConsentEase API URL from environment
+  const apiBaseUrl = process.env.REPLIT_DOMAINS 
+    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+    : 'https://consentease.replit.app';
+
   const script = `
 (function() {
   'use strict';
   
+  var API_BASE = "${apiBaseUrl}";
   var CONFIG = ${JSON.stringify({
     publicId,
     heading: config.heading,
@@ -28,7 +32,6 @@ export function generateBannerScript(config: any, publicId: string): string {
   })};
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
-  var API_URL = window.location.origin;
   
   function getStoredConsent() {
     try {
@@ -54,7 +57,7 @@ export function generateBannerScript(config: any, publicId: string): string {
   
   function trackEvent(eventType) {
     try {
-      fetch(API_URL + '/api/analytics/event', {
+      fetch(API_BASE + '/api/analytics/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

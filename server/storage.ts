@@ -169,6 +169,14 @@ export class DatabaseStorage implements IStorage {
       countryBreakdown,
     };
   }
+
+  async updateUserStripeInfo(userId: string, stripeInfo: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+  }): Promise<User> {
+    const [updated] = await db.update(users).set(stripeInfo).where(eq(users.id, userId)).returning();
+    return updated;
+  }
 }
 
 export const storage = new DatabaseStorage();
