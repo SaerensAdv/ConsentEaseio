@@ -21,15 +21,20 @@ declare global {
 
 export function setupAuth(app: Express) {
   // Session configuration
+  const isProduction = process.env.NODE_ENV === "production" || process.env.REPLIT_DEPLOYMENT === "1";
+  
+  app.set("trust proxy", 1); // Trust first proxy for secure cookies behind reverse proxy
+  
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "consentease-secret-key-change-in-production",
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: "lax",
       },
     })
   );
