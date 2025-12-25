@@ -319,34 +319,23 @@ export function generateBannerScript(config: any, publicId: string): string {
   };
   
   function init() {
-    console.log('[ConsentEase] Initializing consent banner...');
-    
     var existingConsent = getStoredConsent();
     if (existingConsent) {
-      console.log('[ConsentEase] User already gave consent:', existingConsent);
       return;
     }
     
-    console.log('[ConsentEase] No consent found, showing banner...');
-    
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() {
-        console.log('[ConsentEase] DOM ready, creating banner...');
         injectStyles();
         createBanner();
       });
     } else {
-      console.log('[ConsentEase] DOM already ready, creating banner now...');
       injectStyles();
       createBanner();
     }
   }
   
-  try {
-    init();
-  } catch (e) {
-    console.error('[ConsentEase] Error initializing banner:', e);
-  }
+  init();
 })();
 `;
 

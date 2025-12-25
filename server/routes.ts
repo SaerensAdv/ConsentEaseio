@@ -203,42 +203,6 @@ export async function registerRoutes(
     }
   });
 
-  // Test page for banner script
-  app.get("/test-banner", (req, res) => {
-    res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ConsentEase Banner Test</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-    h1 { color: #726CEA; }
-    .info { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
-    .btn { background: #726CEA; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 5px; }
-    #log { background: #1e1e1e; color: #0f0; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
-  </style>
-</head>
-<body>
-  <h1>ConsentEase Banner Test Page</h1>
-  <div class="info">
-    <p><strong>Debug Controls:</strong></p>
-    <button class="btn" onclick="clearConsent()">Clear Stored Consent & Reload</button>
-    <button class="btn" onclick="showBanner()">Force Show Banner</button>
-  </div>
-  <div class="info"><p><strong>Console Output:</strong></p><div id="log">Loading...</div></div>
-  <script>
-    var logDiv = document.getElementById('log');
-    var originalLog = console.log;
-    console.log = function() { originalLog.apply(console, arguments); var msg = Array.from(arguments).join(' '); if (msg.includes('ConsentEase')) { logDiv.innerHTML += msg + '<br>'; } };
-    function clearConsent() { Object.keys(localStorage).filter(k => k.startsWith('ce_consent_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
-    function showBanner() { if (window.ConsentEase) { window.ConsentEase.showBanner(); } else { logDiv.innerHTML += 'ConsentEase not loaded<br>'; } }
-  </script>
-  <script src="/api/consent/gzagudlnqkeq/script.js" async onload="logDiv.innerHTML+='Script loaded<br>'" onerror="logDiv.innerHTML+='Script failed to load<br>'"></script>
-</body>
-</html>`);
-  });
-
   // Public endpoint to serve the consent banner script
   app.get("/api/consent/:publicId/script.js", async (req, res) => {
     // Allow cross-origin requests for the banner script
