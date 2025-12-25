@@ -10,11 +10,13 @@ import BannerConfigurator from "@/pages/dashboard/banner";
 import Analytics from "@/pages/dashboard/analytics";
 import Settings from "@/pages/dashboard/settings";
 import Onboarding from "@/pages/onboarding";
+import ComparePage from "@/pages/compare";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home}/>
+      <Route path="/compare" component={ComparePage}/>
       <Route path="/onboarding" component={Onboarding}/>
       <Route path="/dashboard" component={DashboardWebsites}/>
       <Route path="/dashboard/websites" component={DashboardWebsites}/>
