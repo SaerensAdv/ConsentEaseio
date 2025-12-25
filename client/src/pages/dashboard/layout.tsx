@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu } from "lucide-react";
+import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, Code } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { icon: Globe, label: "Websites", href: "/dashboard" },
     { icon: LayoutDashboard, label: "Banner Design", href: "/dashboard/banner" },
+    { icon: Code, label: "Embed Code", href: "/dashboard/embed" },
     { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ];

@@ -9,6 +9,7 @@ import DashboardWebsites from "@/pages/dashboard/websites";
 import BannerConfigurator from "@/pages/dashboard/banner";
 import Analytics from "@/pages/dashboard/analytics";
 import Settings from "@/pages/dashboard/settings";
+import EmbedCode from "@/pages/dashboard/embed";
 import Onboarding from "@/pages/onboarding";
 import ComparePage from "@/pages/compare";
 import LoginPage from "@/pages/login";
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/dashboard" component={DashboardWebsites}/>
       <Route path="/dashboard/websites" component={DashboardWebsites}/>
       <Route path="/dashboard/banner" component={BannerConfigurator}/>
+      <Route path="/dashboard/embed" component={EmbedCode}/>
       <Route path="/dashboard/analytics" component={Analytics}/>
       <Route path="/dashboard/settings" component={Settings}/>
       {/* Fallback to 404 */}

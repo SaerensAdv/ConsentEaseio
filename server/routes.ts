@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema } from "@shared/schema";
 import { z } from "zod";
+import { generateBannerScript } from "./banner-script";
 
 // Helper to generate random public IDs
 function generatePublicId(): string {
@@ -170,6 +171,26 @@ export async function registerRoutes(
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  // Public endpoint to serve the consent banner script
+  app.get("/api/consent/:publicId/script.js", async (req, res) => {
+    try {
+      const website = await storage.getWebsiteByPublicId(req.params.publicId);
+      if (!website) {
+        return res.status(404).type('text/plain').send('// Website not found');
+      }
+      
+      const config = await storage.getBannerConfigByWebsiteId(website.id);
+      if (!config) {
+        return res.status(404).type('text/plain').send('// Banner config not found');
+      }
+      
+      const script = generateBannerScript(config, website.publicId);
+      res.type('application/javascript').send(script);
+    } catch (error) {
+      res.status(500).type('text/plain').send('// Error loading banner script');
     }
   });
 

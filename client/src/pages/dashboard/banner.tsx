@@ -1,52 +1,200 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import DashboardLayout from "./layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Check, Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, MousePointer2, AlignLeft, AlignCenter, AlignRight, BoxSelect } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe } from "lucide-react";
+import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+
+interface Website {
+  id: string;
+  domain: string;
+  publicId: string;
+}
+
+interface BannerConfig {
+  id: string;
+  websiteId: string;
+  heading: string;
+  description: string;
+  acceptText: string;
+  rejectText: string;
+  settingsText: string;
+  position: string;
+  theme: string;
+  primaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  borderRadius: number;
+  showIcon: boolean;
+  fontFamily: string;
+  fontSize: string;
+  shadow: string;
+  backdropBlur: boolean;
+  animation: string;
+  buttonStyle: string;
+  buttonShape: string;
+}
+
+const defaultConfig = {
+  heading: "We value your privacy",
+  description: "We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking \"Accept All\", you consent to our use of cookies.",
+  acceptText: "Accept All",
+  rejectText: "Reject All",
+  settingsText: "Preferences",
+  position: "bottom-left",
+  theme: "light",
+  primaryColor: "#726CEA",
+  backgroundColor: "#ffffff",
+  textColor: "#1e1e1e",
+  borderRadius: 12,
+  showIcon: true,
+  fontFamily: "Inter",
+  fontSize: "medium",
+  shadow: "medium",
+  backdropBlur: true,
+  animation: "slide-up",
+  buttonStyle: "filled",
+  buttonShape: "rounded",
+};
 
 export default function BannerConfigurator() {
-  const [config, setConfig] = useState({
-    // Content
-    heading: "We value your privacy",
-    description: "We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking \"Accept All\", you consent to our use of cookies.",
-    acceptText: "Accept All",
-    rejectText: "Reject All",
-    settingsText: "Preferences",
-    
-    // Appearance
-    position: "bottom-left", // bottom, bottom-left, bottom-right, center, top-bar
-    theme: "light",
-    primaryColor: "#726CEA",
-    backgroundColor: "#ffffff",
-    textColor: "#1e1e1e",
-    borderRadius: 12,
-    showIcon: true,
-    fontFamily: "Inter",
-    fontSize: "medium", // small, medium, large
-    
-    // Effects
-    shadow: "medium", // none, small, medium, large
-    backdropBlur: true,
-    animation: "slide-up", // slide-up, fade, zoom
-    
-    // Buttons
-    buttonStyle: "filled", // filled, outline
-    buttonShape: "rounded", // pill, rounded, sharp
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
+  const [config, setConfig] = useState(defaultConfig);
+  const [activeTab, setActiveTab] = useState("appearance");
+  const [previewDevice, setPreviewDevice] = useState("desktop");
+
+  const { data: websites = [], isLoading: websitesLoading } = useQuery<Website[]>({
+    queryKey: ["/api/websites"],
+    queryFn: async () => {
+      const res = await fetch("/api/websites", { credentials: "include" });
+      if (res.status === 401) {
+        setLocation("/login");
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) throw new Error("Failed to fetch websites");
+      return res.json();
+    },
   });
 
-  const [activeTab, setActiveTab] = useState("appearance");
-  const [previewDevice, setPreviewDevice] = useState("desktop"); // desktop, mobile
+  const activeWebsiteId = selectedWebsiteId || websites[0]?.id;
 
-  // Helper to determine text color based on background luminance could be added here
-  // For now we rely on user input or preset themes
+  const { data: bannerConfig, isLoading: configLoading } = useQuery<BannerConfig>({
+    queryKey: ["/api/websites", activeWebsiteId, "banner"],
+    queryFn: async () => {
+      if (!activeWebsiteId) return null;
+      const res = await fetch(`/api/websites/${activeWebsiteId}/banner`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch banner config");
+      return res.json();
+    },
+    enabled: !!activeWebsiteId,
+  });
+
+  useEffect(() => {
+    if (bannerConfig) {
+      setConfig({
+        heading: bannerConfig.heading,
+        description: bannerConfig.description,
+        acceptText: bannerConfig.acceptText,
+        rejectText: bannerConfig.rejectText,
+        settingsText: bannerConfig.settingsText,
+        position: bannerConfig.position,
+        theme: bannerConfig.theme,
+        primaryColor: bannerConfig.primaryColor,
+        backgroundColor: bannerConfig.backgroundColor,
+        textColor: bannerConfig.textColor,
+        borderRadius: bannerConfig.borderRadius,
+        showIcon: bannerConfig.showIcon,
+        fontFamily: bannerConfig.fontFamily,
+        fontSize: bannerConfig.fontSize,
+        shadow: bannerConfig.shadow,
+        backdropBlur: bannerConfig.backdropBlur,
+        animation: bannerConfig.animation,
+        buttonStyle: bannerConfig.buttonStyle,
+        buttonShape: bannerConfig.buttonShape,
+      });
+    }
+  }, [bannerConfig]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/websites/${activeWebsiteId}/banner`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(config),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/websites", activeWebsiteId, "banner"] });
+      toast.success("Banner settings saved!");
+    },
+    onError: () => {
+      toast.error("Failed to save changes");
+    },
+  });
+
+  const handleReset = () => {
+    if (bannerConfig) {
+      setConfig({
+        heading: bannerConfig.heading,
+        description: bannerConfig.description,
+        acceptText: bannerConfig.acceptText,
+        rejectText: bannerConfig.rejectText,
+        settingsText: bannerConfig.settingsText,
+        position: bannerConfig.position,
+        theme: bannerConfig.theme,
+        primaryColor: bannerConfig.primaryColor,
+        backgroundColor: bannerConfig.backgroundColor,
+        textColor: bannerConfig.textColor,
+        borderRadius: bannerConfig.borderRadius,
+        showIcon: bannerConfig.showIcon,
+        fontFamily: bannerConfig.fontFamily,
+        fontSize: bannerConfig.fontSize,
+        shadow: bannerConfig.shadow,
+        backdropBlur: bannerConfig.backdropBlur,
+        animation: bannerConfig.animation,
+        buttonStyle: bannerConfig.buttonStyle,
+        buttonShape: bannerConfig.buttonShape,
+      });
+    }
+  };
+
+  if (websitesLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (websites.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-20">
+          <Globe className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No websites yet</h2>
+          <p className="text-muted-foreground mb-4">Add a website first to customize your banner.</p>
+          <Button onClick={() => setLocation("/dashboard")}>Add Website</Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -57,12 +205,36 @@ export default function BannerConfigurator() {
             <p className="text-muted-foreground">Customize how the consent banner looks on your site.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setConfig({...config})}>
+            {websites.length > 1 && (
+              <Select value={selectedWebsiteId || websites[0]?.id} onValueChange={setSelectedWebsiteId}>
+                <SelectTrigger className="w-[200px]" data-testid="select-website">
+                  <SelectValue placeholder="Select website" />
+                </SelectTrigger>
+                <SelectContent>
+                  {websites.map((site) => (
+                    <SelectItem key={site.id} value={site.id}>
+                      {site.domain}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" size="sm" onClick={handleReset} data-testid="button-reset">
               <Undo2 className="w-4 h-4 mr-2" />
               Reset
             </Button>
-            <Button size="sm" className="shadow-lg shadow-primary/20">
-              <Save className="w-4 h-4 mr-2" />
+            <Button 
+              size="sm" 
+              className="shadow-lg shadow-primary/20"
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              data-testid="button-save"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
               Save Changes
             </Button>
           </div>
@@ -96,6 +268,7 @@ export default function BannerConfigurator() {
                               value={config.primaryColor}
                               onChange={(e) => setConfig({...config, primaryColor: e.target.value})}
                               className="absolute inset-[-50%] w-[200%] h-[200%] p-0 border-0 cursor-pointer"
+                              data-testid="input-primary-color"
                             />
                           </div>
                           <Input 
@@ -267,6 +440,7 @@ export default function BannerConfigurator() {
                     <Input 
                       value={config.heading}
                       onChange={(e) => setConfig({...config, heading: e.target.value})}
+                      data-testid="input-heading"
                     />
                   </div>
                   <div className="space-y-3">
@@ -275,6 +449,7 @@ export default function BannerConfigurator() {
                       className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
                       value={config.description}
                       onChange={(e) => setConfig({...config, description: e.target.value})}
+                      data-testid="input-description"
                     />
                   </div>
                   <Separator />
@@ -283,6 +458,7 @@ export default function BannerConfigurator() {
                     <Input 
                       value={config.acceptText}
                       onChange={(e) => setConfig({...config, acceptText: e.target.value})}
+                      data-testid="input-accept-text"
                     />
                   </div>
                   <div className="space-y-3">
@@ -290,6 +466,7 @@ export default function BannerConfigurator() {
                     <Input 
                       value={config.rejectText}
                       onChange={(e) => setConfig({...config, rejectText: e.target.value})}
+                      data-testid="input-reject-text"
                     />
                   </div>
                 </div>
@@ -443,72 +620,75 @@ export default function BannerConfigurator() {
                   }`}>
                     <motion.div 
                       layout
+                      key={config.position + config.animation}
                       initial={config.animation === 'slide-up' ? { y: 100, opacity: 0 } : config.animation === 'zoom' ? { scale: 0.5, opacity: 0 } : { opacity: 0 }}
                       animate={config.animation === 'slide-up' ? { y: 0, opacity: 1 } : config.animation === 'zoom' ? { scale: 1, opacity: 1 } : { opacity: 1 }}
                       transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                      className={`pointer-events-auto transition-all ${
-                        config.position === 'top-bar' ? 'w-full p-4 flex items-center justify-between gap-4 flex-wrap' : 
-                        config.position === 'bottom' ? 'w-full p-6' :
-                        config.position === 'center' ? 'max-w-md w-full p-6' : 
-                        'max-w-sm w-full p-6'
+                      className={`pointer-events-auto ${
+                        config.position === 'bottom' || config.position === 'top-bar' ? 'w-full' : 
+                        previewDevice === 'mobile' ? 'w-[calc(100%-2rem)]' : 'max-w-md'
                       }`}
                       style={{
                         backgroundColor: config.backgroundColor,
                         color: config.textColor,
-                        borderRadius: config.position === 'top-bar' || config.position === 'bottom' ? 0 : config.borderRadius,
-                        fontFamily: config.fontFamily,
-                        boxShadow: config.shadow === 'none' ? 'none' : config.shadow === 'small' ? '0 2px 4px rgba(0,0,0,0.1)' : config.shadow === 'medium' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        borderRadius: config.position === 'bottom' || config.position === 'top-bar' ? 0 : config.borderRadius,
+                        boxShadow: config.shadow === 'none' ? 'none' : 
+                                   config.shadow === 'small' ? '0 4px 12px rgba(0, 0, 0, 0.08)' : 
+                                   config.shadow === 'medium' ? '0 8px 30px rgba(0, 0, 0, 0.12)' : 
+                                   '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                         backdropFilter: config.backdropBlur ? 'blur(8px)' : 'none',
-                        // If backdrop blur is on, we make background slightly transparent if user didn't pick an alpha color
-                        // But for simplicity in this mock, we just trust the user's color or add a slight transparency override if needed
+                        fontFamily: config.fontFamily,
+                        fontSize: config.fontSize === 'small' ? '13px' : config.fontSize === 'large' ? '16px' : '14px',
                       }}
                     >
-                      <div className={`${config.position === 'top-bar' ? 'flex-1' : 'mb-4'}`}>
-                        {config.showIcon && config.position !== 'top-bar' && (
-                          <div className="mb-3">
-                            <Shield className="w-8 h-8" style={{ color: config.primaryColor }} />
+                      <div className="p-5 flex flex-col gap-4">
+                        <div className="flex items-start gap-3">
+                          {config.showIcon && (
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${config.primaryColor}15` }}>
+                              <Shield className="w-5 h-5" style={{ color: config.primaryColor }} />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-1" style={{ color: config.textColor }}>{config.heading}</h3>
+                            <p className="text-sm opacity-80 leading-relaxed">{config.description}</p>
                           </div>
-                        )}
-                        <h3 className={`font-bold mb-1 ${config.fontSize === 'small' ? 'text-base' : config.fontSize === 'large' ? 'text-xl' : 'text-lg'}`}>{config.heading}</h3>
-                        <p className={`opacity-80 ${config.fontSize === 'small' ? 'text-xs' : config.fontSize === 'large' ? 'text-base' : 'text-sm'} ${config.position === 'top-bar' ? 'line-clamp-2 md:line-clamp-1' : ''}`}>
-                          {config.description}
-                        </p>
-                      </div>
-
-                      <div className={`flex gap-3 ${config.position === 'top-bar' ? 'shrink-0' : 'flex-col sm:flex-row'}`}>
-                        <button 
-                          className={`px-4 py-2 font-medium transition-opacity hover:opacity-90 ${config.fontSize === 'small' ? 'text-xs' : config.fontSize === 'large' ? 'text-base' : 'text-sm'}`}
-                          style={{
-                            backgroundColor: config.buttonStyle === 'filled' ? config.primaryColor : 'transparent',
-                            color: config.buttonStyle === 'filled' ? '#ffffff' : config.primaryColor,
-                            border: config.buttonStyle === 'outline' ? `1px solid ${config.primaryColor}` : 'none',
-                            borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'sharp' ? 0 : Math.max(4, config.borderRadius - 4)
-                          }}
-                        >
-                          {config.acceptText}
-                        </button>
-                        <button 
-                          className={`px-4 py-2 font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${config.fontSize === 'small' ? 'text-xs' : config.fontSize === 'large' ? 'text-base' : 'text-sm'}`}
-                          style={{
-                            border: `1px solid ${config.theme === 'light' ? '#e5e7eb' : '#333'}`,
-                            color: config.textColor,
-                            borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'sharp' ? 0 : Math.max(4, config.borderRadius - 4)
-                          }}
-                        >
-                          {config.rejectText}
-                        </button>
-                        {config.position !== 'top-bar' && (
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 justify-end">
                           <button 
-                           className={`px-4 py-2 font-medium underline opacity-60 hover:opacity-100 ${config.fontSize === 'small' ? 'text-xs' : config.fontSize === 'large' ? 'text-base' : 'text-sm'}`}
-                           style={{ color: config.textColor }}
+                            className="px-4 py-2 text-sm font-medium transition-colors"
+                            style={{
+                              color: config.primaryColor,
+                              borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                            }}
                           >
                             {config.settingsText}
                           </button>
-                        )}
+                          <button 
+                            className="px-4 py-2 text-sm font-medium border transition-colors"
+                            style={{
+                              color: config.buttonStyle === 'filled' ? config.textColor : config.primaryColor,
+                              backgroundColor: config.buttonStyle === 'filled' ? 'transparent' : 'transparent',
+                              borderColor: config.primaryColor,
+                              borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                            }}
+                          >
+                            {config.rejectText}
+                          </button>
+                          <button 
+                            className="px-4 py-2 text-sm font-medium transition-colors"
+                            style={{
+                              color: '#fff',
+                              backgroundColor: config.primaryColor,
+                              borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                            }}
+                          >
+                            {config.acceptText}
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   </div>
-
                 </div>
               </div>
             </div>
