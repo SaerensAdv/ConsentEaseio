@@ -78,7 +78,9 @@ export default function Home() {
             <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
             <div className="flex items-center gap-4 ml-4">
               <Button variant="ghost" className="font-medium">Log in</Button>
-              <Button className="font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">Start Free Trial</Button>
+              <Link href="/onboarding">
+                <Button className="font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">Start Free Trial</Button>
+              </Link>
             </div>
           </div>
 
@@ -125,9 +127,11 @@ export default function Home() {
                 The consent banner that installs in 2 minutes, costs less than a coffee, and keeps you compliant forever.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="text-lg h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 transition-all hover:scale-105">
-                  Get Compliant Now
-                </Button>
+                <Link href="/onboarding">
+                  <Button size="lg" className="text-lg h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 transition-all hover:scale-105">
+                    Get Compliant Now
+                  </Button>
+                </Link>
                 <Button size="lg" variant="outline" className="text-lg h-14 px-8 border-2 hover:bg-secondary/50">
                   View Live Demo
                 </Button>
