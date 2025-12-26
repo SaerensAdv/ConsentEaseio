@@ -254,7 +254,7 @@ export default function DashboardWebsites() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4" data-tour="websites-list">
         {websites.map((site) => (
           <Card key={site.id} className="hover:shadow-md transition-shadow" data-testid={`card-website-${site.id}`}>
             <CardContent className="p-6 flex items-center justify-between">

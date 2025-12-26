@@ -25,6 +25,9 @@ import ContactPage from "@/pages/contact";
 import FAQPage from "@/pages/faq";
 import DocsPage from "@/pages/docs";
 import FeaturesPage from "@/pages/features";
+import DemoPage from "@/pages/demo";
+import { DemoProvider } from "@/contexts/DemoContext";
+import { DemoTour } from "@/components/DemoTour";
 
 function Router() {
   return (
@@ -36,6 +39,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword}/>
       <Route path="/verify-email" component={VerifyEmail}/>
       <Route path="/onboarding" component={Onboarding}/>
+      <Route path="/demo" component={DemoPage}/>
       <Route path="/about" component={AboutPage}/>
       <Route path="/contact" component={ContactPage}/>
       <Route path="/faq" component={FAQPage}/>
@@ -60,8 +64,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
+      <DemoProvider>
+        <Toaster />
+        <Router />
+        <DemoTour />
+      </DemoProvider>
     </QueryClientProvider>
   );
 }

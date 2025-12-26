@@ -292,7 +292,7 @@ export default function BannerConfigurator() {
 
         <div className="flex-1 grid lg:grid-cols-12 gap-8 min-h-0">
           {/* Controls Panel */}
-          <Card className="lg:col-span-4 h-full overflow-hidden flex flex-col border-none shadow-lg">
+          <Card className="lg:col-span-4 h-full overflow-hidden flex flex-col border-none shadow-lg" data-tour="banner-styles">
             <div className="p-1">
               <Tabs defaultValue="appearance" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="w-full grid grid-cols-3">
@@ -611,7 +611,7 @@ export default function BannerConfigurator() {
           </Card>
 
           {/* Preview Area */}
-          <div className="lg:col-span-8 bg-muted/30 rounded-2xl border border-border/50 relative overflow-hidden flex flex-col">
+          <div className="lg:col-span-8 bg-muted/30 rounded-2xl border border-border/50 relative overflow-hidden flex flex-col" data-tour="banner-preview">
             {/* Preview Toolbar */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/80 dark:bg-black/50 backdrop-blur border border-border/50 rounded-full p-1 flex items-center gap-1 shadow-sm z-20">
               <button 

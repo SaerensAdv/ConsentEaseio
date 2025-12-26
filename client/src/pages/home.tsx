@@ -108,9 +108,11 @@ export default function Home() {
                     Get Compliant Now
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="text-lg h-14 px-8 border-2 hover:bg-secondary/50">
-                  View Live Demo
-                </Button>
+                <Link href="/demo">
+                  <Button size="lg" variant="outline" className="text-lg h-14 px-8 border-2 hover:bg-secondary/50" data-testid="button-view-demo">
+                    View Live Demo
+                  </Button>
+                </Link>
               </div>
               <div className="mt-8 flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex -space-x-2">

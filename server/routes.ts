@@ -357,6 +357,38 @@ export async function registerRoutes(
     }
   });
   
+  // Demo login - auto-login with demo account for interactive tour
+  app.post("/api/demo/login", async (req, res) => {
+    try {
+      // Find demo account
+      const demoUser = await storage.getUserByEmail("demo@consentease.com");
+      
+      if (!demoUser) {
+        return res.status(404).json({ error: "Demo account not available" });
+      }
+      
+      // Log in as demo user
+      req.login(demoUser, (err) => {
+        if (err) {
+          console.error("Demo login error:", err);
+          return res.status(500).json({ error: "Failed to start demo" });
+        }
+        
+        res.json({ 
+          success: true,
+          user: { 
+            id: demoUser.id, 
+            email: demoUser.email, 
+            plan: demoUser.plan 
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Demo login error:", error);
+      res.status(500).json({ error: "Failed to start demo" });
+    }
+  });
+  
   // ==========================================
   // Websites endpoints
   app.get("/api/websites", async (req, res) => {

@@ -136,7 +136,7 @@ gtag('set', 'url_passthrough', true);
           </div>
         )}
 
-        <Card className="mb-6">
+        <Card className="mb-6" data-tour="embed-code">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Code className="w-5 h-5 text-primary" />

@@ -116,6 +116,16 @@ Solo plan includes a 7-day free trial configured via Stripe's `trial_period_days
 
 Note: Without STRIPE_WEBHOOK_SECRET configured, trial expiration won't auto-update. Use manual sync endpoint as fallback.
 
+### Interactive Demo Tour
+- "View Live Demo" button on landing page auto-logs in with demo account
+- Custom DemoTour component with step-by-step guided tour
+- Tour steps highlight key features: Websites, Cookies, Banner Configurator, Embed Code, Analytics
+- Floating "Start Free Trial" CTA during tour
+- End modal encourages users to start their own trial
+- Uses polling mechanism to wait for DOM elements to load before positioning tooltips
+- Files: `client/src/contexts/DemoContext.tsx`, `client/src/components/DemoTour.tsx`, `client/src/pages/demo.tsx`
+- Endpoint: `/api/demo/login` - auto-authenticates demo user
+
 ## Recent Changes
 - December 26, 2025: Added Playwright-based cookie scanner:
   - Scans websites using headless Chromium browser

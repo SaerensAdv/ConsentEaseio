@@ -180,7 +180,7 @@ export default function Analytics() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7" data-tour="analytics-chart">
         {/* Main Chart */}
         <Card className="col-span-4">
           <CardHeader>
