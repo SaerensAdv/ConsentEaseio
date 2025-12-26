@@ -54,6 +54,11 @@ export default function PlanComparisonTable({
                     Best Value
                   </div>
                 )}
+                {plan.trialDays && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap z-10">
+                    {plan.trialDays}-day free trial
+                  </div>
+                )}
                 <div className="font-display font-bold text-lg">{plan.name}</div>
                 <div className="mt-1">
                   <span className="text-2xl font-bold">{plan.priceDisplay}</span>
@@ -125,7 +130,7 @@ export default function PlanComparisonTable({
                         )}
                         data-testid={`button-select-${plan.id}`}
                       >
-                        Get Started
+                        {plan.trialDays ? `Start ${plan.trialDays}-Day Trial` : "Get Started"}
                       </Button>
                     </Link>
                   )}

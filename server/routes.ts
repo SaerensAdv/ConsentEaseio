@@ -280,7 +280,11 @@ export async function registerRoutes(
         return res.status(404).type('application/javascript').send('// ConsentEase: Banner config not found. Please configure your banner first.');
       }
       
-      const script = generateBannerScript(config, website.publicId);
+      // Check user's plan to determine if branding should be shown
+      const user = await storage.getUser(website.userId);
+      const showBranding = !user || user.plan === 'solo'; // Solo shows branding, Pro/Agency can hide it
+      
+      const script = generateBannerScript(config, website.publicId, showBranding);
       res.type('application/javascript').send(script);
     } catch (error) {
       console.error('Error generating banner script:', error);

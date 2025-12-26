@@ -16,6 +16,7 @@ export interface Plan {
   views: number;
   viewsDisplay: string;
   popular?: boolean;
+  trialDays?: number;
 }
 
 export const PLANS: Plan[] = [
@@ -30,6 +31,7 @@ export const PLANS: Plan[] = [
     views: 10000,
     viewsDisplay: "10K",
     popular: false,
+    trialDays: 7,
   },
   {
     id: "pro",
@@ -81,3 +83,24 @@ export function formatViewCount(views: number): string {
   if (views >= 1000) return `${views / 1000}K`;
   return views.toString();
 }
+
+export function getFeatureAccess(planId: string, featureName: string): boolean | string {
+  const feature = PLAN_FEATURES.find(f => f.name === featureName);
+  if (!feature) return false;
+  return feature[planId as keyof PlanFeature] as boolean | string;
+}
+
+export function hasFeature(planId: string, featureName: string): boolean {
+  const access = getFeatureAccess(planId, featureName);
+  if (typeof access === 'boolean') return access;
+  return true;
+}
+
+export const PLAN_FEATURE_KEYS = {
+  REMOVE_BRANDING: "Remove ConsentEase Branding",
+  WHITE_LABEL: "White Label",
+  API_ACCESS: "API Access",
+  CLIENT_MANAGEMENT: "Client Management",
+  PRIORITY_SUPPORT: "Priority Support",
+  FULL_CUSTOMIZATION: "Banner Customization",
+} as const;

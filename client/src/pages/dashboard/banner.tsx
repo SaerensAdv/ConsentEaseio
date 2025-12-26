@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import DashboardLayout from "./layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,16 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe, Sparkles, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+
+interface AuthUser {
+  id: string;
+  plan: string;
+}
 
 interface Website {
   id: string;
@@ -75,6 +81,15 @@ export default function BannerConfigurator() {
   const [activeTab, setActiveTab] = useState("appearance");
   const [previewDevice, setPreviewDevice] = useState("desktop");
 
+  const { data: user } = useQuery<AuthUser>({
+    queryKey: ["/api/auth/me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+  });
+
   const { data: websites = [], isLoading: websitesLoading } = useQuery<Website[]>({
     queryKey: ["/api/websites"],
     queryFn: async () => {
@@ -87,6 +102,8 @@ export default function BannerConfigurator() {
       return res.json();
     },
   });
+  
+  const isSoloPlan = user?.plan === 'solo';
 
   const activeWebsiteId = selectedWebsiteId || websites[0]?.id;
 
@@ -239,6 +256,23 @@ export default function BannerConfigurator() {
             </Button>
           </div>
         </div>
+
+        {isSoloPlan && (
+          <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800" data-testid="alert-solo-branding">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="flex items-center justify-between">
+              <span className="text-amber-800 dark:text-amber-200">
+                Solo plan banners include "Powered by ConsentEase" branding.
+              </span>
+              <Link href="/dashboard/settings?upgrade=true">
+                <Button size="sm" variant="outline" className="ml-4 gap-1 border-amber-300 text-amber-700 hover:bg-amber-100">
+                  <Sparkles className="w-3 h-3" />
+                  Upgrade to remove
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex-1 grid lg:grid-cols-12 gap-8 min-h-0">
           {/* Controls Panel */}
@@ -687,6 +721,14 @@ export default function BannerConfigurator() {
                           </button>
                         </div>
                       </div>
+                      {isSoloPlan && (
+                        <div 
+                          className="text-center text-[11px] py-2 border-t opacity-60"
+                          style={{ borderColor: 'rgba(0,0,0,0.05)' }}
+                        >
+                          Powered by ConsentEase
+                        </div>
+                      )}
                     </motion.div>
                   </div>
                 </div>

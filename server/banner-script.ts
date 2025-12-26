@@ -1,4 +1,4 @@
-export function generateBannerScript(config: any, publicId: string): string {
+export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true): string {
   // Get the ConsentEase API URL from environment
   const apiBaseUrl = process.env.REPLIT_DOMAINS 
     ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
@@ -29,6 +29,7 @@ export function generateBannerScript(config: any, publicId: string): string {
     animation: config.animation,
     buttonStyle: config.buttonStyle,
     buttonShape: config.buttonShape,
+    showBranding: showBranding,
   })};
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
@@ -220,6 +221,20 @@ export function generateBannerScript(config: any, publicId: string): string {
     \`;
     style.textContent += \`
       .ce-btn { border-radius: \${CONFIG.buttonShape === 'pill' ? '999px' : CONFIG.buttonShape === 'rounded' ? '8px' : '0'}; }
+      .ce-branding {
+        padding: 8px 20px 12px;
+        text-align: center;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        font-size: 11px;
+        opacity: 0.6;
+      }
+      .ce-branding a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .ce-branding a:hover {
+        text-decoration: underline;
+      }
     \`;
     document.head.appendChild(style);
   }
@@ -238,6 +253,12 @@ export function generateBannerScript(config: any, publicId: string): string {
       </div>
     \` : '';
     
+    var brandingHtml = CONFIG.showBranding ? \`
+      <div class="ce-branding">
+        <a href="https://consentease.com" target="_blank" rel="noopener">Powered by ConsentEase</a>
+      </div>
+    \` : '';
+    
     banner.innerHTML = \`
       <div class="ce-banner-content">
         <div class="ce-banner-header">
@@ -253,6 +274,7 @@ export function generateBannerScript(config: any, publicId: string): string {
           <button class="ce-btn ce-btn-accept">\${CONFIG.acceptText}</button>
         </div>
       </div>
+      \${brandingHtml}
     \`;
     
     overlay.appendChild(banner);
