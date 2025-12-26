@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
 import DashboardLayout from "./layout";
@@ -103,6 +103,7 @@ export default function Settings() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const isRedirectingRef = useRef(false);
   
   // Profile form state
   const [firstName, setFirstName] = useState("");
@@ -198,8 +199,9 @@ export default function Settings() {
       return res.json();
     },
     onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.url && !isRedirectingRef.current) {
+        isRedirectingRef.current = true;
+        window.location.assign(data.url);
       }
     },
     onError: (error: Error) => {
@@ -217,8 +219,9 @@ export default function Settings() {
       return res.json();
     },
     onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.url && !isRedirectingRef.current) {
+        isRedirectingRef.current = true;
+        window.location.assign(data.url);
       }
     },
     onError: () => {

@@ -32,6 +32,7 @@ export default function Onboarding() {
   
   // Flow steps: url → scanning → results → register → complete
   const [step, setStep] = useState<"url" | "scanning" | "results" | "register" | "complete" | "error">("url");
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   // Form state
   const [url, setUrl] = useState("");
@@ -90,21 +91,22 @@ export default function Onboarding() {
       return data;
     },
     onSuccess: (data) => {
+      // Guard against double invocation (React StrictMode)
+      if (isRedirecting) return;
+      setIsRedirecting(true);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/websites"] });
       toast.success("Account created successfully!");
       setStep("complete");
       
-      // Redirect after a short delay
-      setTimeout(() => {
-        const redirect = data.redirect || "/dashboard/banner";
-        // External URLs (Stripe checkout) use window.location, internal use wouter
-        if (redirect.startsWith("http")) {
-          window.location.href = redirect;
-        } else {
-          setLocation(redirect);
-        }
-      }, 1500);
+      // Redirect immediately - guard prevents duplicate calls
+      const redirect = data.redirect || "/dashboard/banner";
+      if (redirect.startsWith("http")) {
+        window.location.assign(redirect);
+      } else {
+        setLocation(redirect);
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message);
