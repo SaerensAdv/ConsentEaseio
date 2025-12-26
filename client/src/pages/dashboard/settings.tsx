@@ -71,6 +71,7 @@ export default function Settings() {
     const params = new URLSearchParams(searchString);
     const success = params.get('success');
     const plan = params.get('plan');
+    const upgrade = params.get('upgrade');
     
     if (success === 'true' && plan) {
       // Sync the plan
@@ -87,6 +88,14 @@ export default function Settings() {
         window.history.replaceState({}, '', '/dashboard/settings');
         setActiveTab('billing');
       });
+    }
+    
+    // Auto-open upgrade modal when coming from limit error
+    if (upgrade === 'true') {
+      setActiveTab('billing');
+      setShowUpgradeModal(true);
+      // Remove query params from URL
+      window.history.replaceState({}, '', '/dashboard/settings');
     }
   }, [searchString, queryClient]);
 

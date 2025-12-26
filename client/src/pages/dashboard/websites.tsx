@@ -5,7 +5,8 @@ import DashboardLayout from "./layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreHorizontal, Globe, CheckCircle2, AlertCircle, ExternalLink, Code2, Copy, Check, Loader2, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Plus, MoreHorizontal, Globe, CheckCircle2, AlertCircle, ExternalLink, Code2, Copy, Check, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,11 +36,18 @@ interface Website {
   createdAt: string;
 }
 
+interface LimitError {
+  message: string;
+  plan: string;
+  limit: number;
+}
+
 export default function DashboardWebsites() {
   const [, setLocation] = useLocation();
   const [copied, setCopied] = useState(false);
   const [newDomain, setNewDomain] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [limitError, setLimitError] = useState<LimitError | null>(null);
   const queryClient = useQueryClient();
 
   const { data: websites = [], isLoading, error } = useQuery<Website[]>({
@@ -64,8 +72,11 @@ export default function DashboardWebsites() {
         body: JSON.stringify({ domain }),
       });
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || error.error || "Failed to add website");
+        const errorData = await res.json();
+        if (res.status === 403 && errorData.error === "Website limit reached") {
+          throw { isLimitError: true, ...errorData };
+        }
+        throw new Error(errorData.message || errorData.error || "Failed to add website");
       }
       return res.json();
     },
@@ -73,10 +84,19 @@ export default function DashboardWebsites() {
       queryClient.invalidateQueries({ queryKey: ["/api/websites"] });
       setNewDomain("");
       setIsAddDialogOpen(false);
+      setLimitError(null);
       toast.success("Website added! Scanning for cookies...");
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: any) => {
+      if (error.isLimitError) {
+        setLimitError({
+          message: error.message,
+          plan: error.plan,
+          limit: error.limit,
+        });
+      } else {
+        toast.error(error.message || "Failed to add website");
+      }
     },
   });
 
@@ -135,7 +155,13 @@ export default function DashboardWebsites() {
           <h1 className="text-2xl font-display font-bold">Websites</h1>
           <p className="text-muted-foreground">Manage your domains and compliance status.</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            setLimitError(null);
+            setNewDomain("");
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg shadow-primary/20" data-testid="button-add-domain">
               <Plus className="w-4 h-4" />
@@ -149,37 +175,63 @@ export default function DashboardWebsites() {
                 Enter your domain name and we'll automatically scan it for cookies and scripts.
               </DialogDescription>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (newDomain.trim()) {
-                  addWebsiteMutation.mutate(newDomain.trim());
-                }
-              }}
-              className="space-y-4 mt-4"
-            >
-              <Input
-                placeholder="example.com"
-                value={newDomain}
-                onChange={(e) => setNewDomain(e.target.value)}
-                data-testid="input-domain"
-              />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={addWebsiteMutation.isPending || !newDomain.trim()}
-                data-testid="button-submit-domain"
+            
+            {limitError && (
+              <Alert variant="destructive" className="mt-4" data-testid="alert-limit-reached">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Website limit reached</AlertTitle>
+                <AlertDescription className="mt-2">
+                  <p className="mb-3">{limitError.message}</p>
+                  <Button 
+                    size="sm" 
+                    className="gap-2" 
+                    data-testid="button-upgrade-from-limit"
+                    onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setLimitError(null);
+                      setLocation('/dashboard/settings?upgrade=true');
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Upgrade Plan
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!limitError && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newDomain.trim()) {
+                    addWebsiteMutation.mutate(newDomain.trim());
+                  }
+                }}
+                className="space-y-4 mt-4"
               >
-                {addWebsiteMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  "Add Website"
-                )}
-              </Button>
-            </form>
+                <Input
+                  placeholder="example.com"
+                  value={newDomain}
+                  onChange={(e) => setNewDomain(e.target.value)}
+                  data-testid="input-domain"
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={addWebsiteMutation.isPending || !newDomain.trim()}
+                  data-testid="button-submit-domain"
+                >
+                  {addWebsiteMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    "Add Website"
+                  )}
+                </Button>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>
