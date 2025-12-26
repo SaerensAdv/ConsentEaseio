@@ -37,7 +37,7 @@ function SubscriptionStatusBadge({ status, endDate }: { status: string | null; e
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  if (!status || status === 'active') {
+  if (!status || status === 'active' || status === 'none') {
     return (
       <div className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full flex items-center gap-1.5" data-testid="badge-subscription-status">
         <Check className="w-4 h-4" />
