@@ -4,7 +4,7 @@ import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X } from "lucide-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import heroVideo from "@assets/generated_videos/animated_privacy_shield_hero_video.mp4";
+import abstractImage from "@assets/generated_images/abstract_3d_glass_shapes_in_purple_and_yellow_on_white.png";
 import PlanComparisonTable from "@/components/PlanComparisonTable";
 
 export default function Home() {
@@ -131,13 +131,10 @@ export default function Home() {
               className="relative hidden lg:block"
             >
               <div className="relative z-10 animate-in fade-in zoom-in duration-1000">
-                <video 
-                  src={heroVideo} 
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-auto rounded-2xl drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500"
+                <img 
+                  src={abstractImage} 
+                  alt="ConsentEase Dashboard Abstract" 
+                  className="w-full h-auto drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500"
                 />
               </div>
               {/* Decorative background blurs */}
