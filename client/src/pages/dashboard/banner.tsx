@@ -11,8 +11,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe, Sparkles, Lock } from "lucide-react";
-import { motion } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe, Sparkles, Lock, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
@@ -80,6 +81,21 @@ export default function BannerConfigurator() {
   const [config, setConfig] = useState(defaultConfig);
   const [activeTab, setActiveTab] = useState("appearance");
   const [previewDevice, setPreviewDevice] = useState("desktop");
+  const [showPreferencesPreview, setShowPreferencesPreview] = useState(false);
+
+  // Sample cookie categories for preview
+  const previewCategories = [
+    { name: "necessary", displayName: "Necessary", description: "Essential cookies required for the website to function properly.", isRequired: true },
+    { name: "functional", displayName: "Functional", description: "Enable enhanced functionality and personalization.", isRequired: false },
+    { name: "analytics", displayName: "Analytics", description: "Help us understand how visitors interact with the website.", isRequired: false },
+    { name: "marketing", displayName: "Marketing", description: "Used to track visitors across websites for advertising purposes.", isRequired: false },
+  ];
+  const [categoryStates, setCategoryStates] = useState({
+    necessary: true,
+    functional: true,
+    analytics: true,
+    marketing: true,
+  });
 
   const { data: user } = useQuery<AuthUser>({
     queryKey: ["/api/auth/me"],
@@ -690,11 +706,13 @@ export default function BannerConfigurator() {
                         
                         <div className="flex flex-wrap gap-2 justify-end">
                           <button 
-                            className="px-4 py-2 text-sm font-medium transition-colors"
+                            className="px-4 py-2 text-sm font-medium transition-colors hover:opacity-80"
                             style={{
                               color: config.primaryColor,
                               borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
                             }}
+                            onClick={() => setShowPreferencesPreview(true)}
+                            data-testid="button-banner-preferences"
                           >
                             {config.settingsText}
                           </button>
@@ -737,6 +755,155 @@ export default function BannerConfigurator() {
           </div>
         </div>
       </div>
+
+      {/* Preferences Modal Preview */}
+      <AnimatePresence>
+        {showPreferencesPreview && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(4px)',
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowPreferencesPreview(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
+              style={{
+                backgroundColor: config.backgroundColor,
+                color: config.textColor,
+                borderRadius: config.borderRadius,
+                boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+                fontFamily: config.fontFamily,
+              }}
+            >
+              {/* Header */}
+              <div className="p-5 border-b" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">Cookie Preferences</h3>
+                  <button 
+                    onClick={() => setShowPreferencesPreview(false)}
+                    className="p-1 rounded hover:bg-black/10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-sm opacity-70 mt-1">
+                  Customize your cookie preferences below. Required cookies are necessary for the website to function properly.
+                </p>
+              </div>
+
+              {/* Categories */}
+              <div className="flex-1 overflow-y-auto">
+                {previewCategories.map((cat) => (
+                  <div 
+                    key={cat.name} 
+                    className="p-4 border-b"
+                    style={{ borderColor: 'rgba(0,0,0,0.05)' }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{cat.displayName}</span>
+                        {cat.isRequired && (
+                          <span 
+                            className="text-[10px] px-2 py-0.5 rounded font-medium"
+                            style={{ 
+                              backgroundColor: `${config.primaryColor}20`,
+                              color: config.primaryColor,
+                            }}
+                          >
+                            Required
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!cat.isRequired) {
+                            setCategoryStates(prev => ({
+                              ...prev,
+                              [cat.name]: !prev[cat.name as keyof typeof prev],
+                            }));
+                          }
+                        }}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${cat.isRequired ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                        style={{
+                          backgroundColor: categoryStates[cat.name as keyof typeof categoryStates] ? config.primaryColor : 'rgba(0,0,0,0.2)',
+                        }}
+                        disabled={cat.isRequired}
+                      >
+                        <span 
+                          className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                          style={{
+                            left: '2px',
+                            transform: categoryStates[cat.name as keyof typeof categoryStates] ? 'translateX(20px)' : 'translateX(0)',
+                          }}
+                        />
+                      </button>
+                    </div>
+                    <p className="text-sm opacity-70">{cat.description}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t flex gap-2 justify-end" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
+                <button 
+                  className="px-4 py-2 text-sm font-medium border transition-colors"
+                  style={{
+                    color: config.primaryColor,
+                    borderColor: config.primaryColor,
+                    borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                  }}
+                  onClick={() => {
+                    setCategoryStates({ necessary: true, functional: false, analytics: false, marketing: false });
+                    setShowPreferencesPreview(false);
+                    toast.info("Preview: Rejected non-essential cookies");
+                  }}
+                >
+                  Reject All
+                </button>
+                <button 
+                  className="px-4 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    color: '#fff',
+                    backgroundColor: config.primaryColor,
+                    borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                  }}
+                  onClick={() => {
+                    setCategoryStates({ necessary: true, functional: true, analytics: true, marketing: true });
+                    setShowPreferencesPreview(false);
+                    toast.info("Preview: Accepted all cookies");
+                  }}
+                >
+                  Accept All
+                </button>
+                <button 
+                  className="px-4 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    color: '#fff',
+                    backgroundColor: config.primaryColor,
+                    borderRadius: config.buttonShape === 'pill' ? 999 : config.buttonShape === 'rounded' ? 8 : 0,
+                  }}
+                  onClick={() => {
+                    setShowPreferencesPreview(false);
+                    toast.info("Preview: Saved preferences");
+                  }}
+                >
+                  Save Preferences
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </DashboardLayout>
   );
 }
