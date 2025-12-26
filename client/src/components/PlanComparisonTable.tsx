@@ -31,7 +31,7 @@ export default function PlanComparisonTable({
   const displayFeatures = compact ? PLAN_FEATURES.slice(0, 6) : PLAN_FEATURES;
 
   return (
-    <div className="w-full overflow-x-auto pt-4">
+    <div className="w-full overflow-x-auto pt-6 overflow-y-visible">
       <table className="w-full border-collapse" data-testid="plan-comparison-table">
         <thead>
           <tr>
