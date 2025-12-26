@@ -132,6 +132,20 @@ export function setupAuth(app: Express) {
         plan: "solo",
       });
 
+      // Send verification email
+      try {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        await storage.createEmailVerificationToken(user.id, token, expiresAt);
+        
+        const verifyUrl = `${getBaseUrl()}/verify-email?token=${token}`;
+        const { sendVerificationEmail } = await import('./email');
+        await sendVerificationEmail(user.email, token, verifyUrl);
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't block registration if email fails
+      }
+
       // Log them in
       req.login(
         {

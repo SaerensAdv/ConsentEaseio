@@ -275,6 +275,21 @@ export async function registerRoutes(
         });
       }
       
+      // Send verification email
+      try {
+        const crypto = await import("crypto");
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        await storage.createEmailVerificationToken(user.id, token, expiresAt);
+        
+        const { getBaseUrl, sendVerificationEmail } = await import('./email');
+        const verifyUrl = `${getBaseUrl()}/verify-email?token=${token}`;
+        await sendVerificationEmail(user.email, token, verifyUrl);
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't block registration if email fails
+      }
+      
       // Log the user in automatically
       req.login(user, (err) => {
         if (err) {
