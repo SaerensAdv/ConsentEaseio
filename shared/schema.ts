@@ -93,6 +93,41 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
 
 export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
 
+// Cookie categories table
+export const cookieCategories = pgTable("cookie_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // necessary, functional, analytics, marketing, or custom
+  displayName: text("display_name").notNull(), // "Necessary Cookies", "Analytics Cookies", etc.
+  description: text("description").notNull(), // Shown to visitors in consent modal
+  isRequired: boolean("is_required").notNull().default(false), // true for necessary cookies
+  isEnabled: boolean("is_enabled").notNull().default(true), // whether this category is active
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCookieCategorySchema = createInsertSchema(cookieCategories).omit({ id: true, createdAt: true });
+export type InsertCookieCategory = z.infer<typeof insertCookieCategorySchema>;
+export type CookieCategory = typeof cookieCategories.$inferSelect;
+
+// Cookies table
+export const cookies = pgTable("cookies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
+  categoryId: varchar("category_id").notNull().references(() => cookieCategories.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // cookie name, e.g., "_ga"
+  provider: text("provider"), // e.g., "Google Analytics"
+  purpose: text("purpose").notNull(), // description of what the cookie does
+  expiry: text("expiry"), // e.g., "2 years", "Session"
+  type: text("type").notNull().default("first-party"), // first-party, third-party
+  isAutoDetected: boolean("is_auto_detected").notNull().default(false), // from scanner vs manual
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCookieSchema = createInsertSchema(cookies).omit({ id: true, createdAt: true });
+export type InsertCookie = z.infer<typeof insertCookieSchema>;
+export type Cookie = typeof cookies.$inferSelect;
+
 // Analytics events table
 export const analyticsEvents = pgTable("analytics_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

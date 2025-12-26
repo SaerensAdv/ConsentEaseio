@@ -1,4 +1,4 @@
-import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken } from "@shared/schema";
+import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 
@@ -62,6 +62,22 @@ export interface IStorage {
   getEmailVerificationToken(token: string): Promise<EmailVerificationToken | undefined>;
   deleteEmailVerificationToken(token: string): Promise<void>;
   deleteEmailVerificationTokensByUserId(userId: string): Promise<void>;
+  
+  // Cookie category methods
+  getCookieCategoriesByWebsiteId(websiteId: string): Promise<CookieCategory[]>;
+  getCookieCategoryById(id: string): Promise<CookieCategory | undefined>;
+  createCookieCategory(category: InsertCookieCategory): Promise<CookieCategory>;
+  updateCookieCategory(id: string, updates: Partial<CookieCategory>): Promise<CookieCategory>;
+  deleteCookieCategory(id: string): Promise<void>;
+  createDefaultCategoriesForWebsite(websiteId: string): Promise<CookieCategory[]>;
+  
+  // Cookie methods
+  getCookiesByWebsiteId(websiteId: string): Promise<Cookie[]>;
+  getCookiesByCategoryId(categoryId: string): Promise<Cookie[]>;
+  getCookieById(id: string): Promise<Cookie | undefined>;
+  createCookie(cookie: InsertCookie): Promise<Cookie>;
+  updateCookie(id: string, updates: Partial<Cookie>): Promise<Cookie>;
+  deleteCookie(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,6 +317,104 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEmailVerificationTokensByUserId(userId: string): Promise<void> {
     await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
+  }
+
+  // Cookie category methods
+  async getCookieCategoriesByWebsiteId(websiteId: string): Promise<CookieCategory[]> {
+    return await db.select().from(cookieCategories)
+      .where(eq(cookieCategories.websiteId, websiteId))
+      .orderBy(cookieCategories.sortOrder);
+  }
+
+  async getCookieCategoryById(id: string): Promise<CookieCategory | undefined> {
+    const [category] = await db.select().from(cookieCategories).where(eq(cookieCategories.id, id));
+    return category || undefined;
+  }
+
+  async createCookieCategory(category: InsertCookieCategory): Promise<CookieCategory> {
+    const [created] = await db.insert(cookieCategories).values(category).returning();
+    return created;
+  }
+
+  async updateCookieCategory(id: string, updates: Partial<CookieCategory>): Promise<CookieCategory> {
+    const [updated] = await db.update(cookieCategories).set(updates).where(eq(cookieCategories.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCookieCategory(id: string): Promise<void> {
+    await db.delete(cookieCategories).where(eq(cookieCategories.id, id));
+  }
+
+  async createDefaultCategoriesForWebsite(websiteId: string): Promise<CookieCategory[]> {
+    const defaults: InsertCookieCategory[] = [
+      {
+        websiteId,
+        name: 'necessary',
+        displayName: 'Necessary Cookies',
+        description: 'These cookies are essential for the website to function properly. They cannot be disabled.',
+        isRequired: true,
+        isEnabled: true,
+        sortOrder: 0,
+      },
+      {
+        websiteId,
+        name: 'functional',
+        displayName: 'Functional Cookies',
+        description: 'These cookies enable personalized features and remember your preferences.',
+        isRequired: false,
+        isEnabled: true,
+        sortOrder: 1,
+      },
+      {
+        websiteId,
+        name: 'analytics',
+        displayName: 'Analytics Cookies',
+        description: 'These cookies help us understand how visitors interact with our website.',
+        isRequired: false,
+        isEnabled: true,
+        sortOrder: 2,
+      },
+      {
+        websiteId,
+        name: 'marketing',
+        displayName: 'Marketing Cookies',
+        description: 'These cookies are used to deliver personalized advertisements.',
+        isRequired: false,
+        isEnabled: true,
+        sortOrder: 3,
+      },
+    ];
+
+    const created = await db.insert(cookieCategories).values(defaults).returning();
+    return created;
+  }
+
+  // Cookie methods
+  async getCookiesByWebsiteId(websiteId: string): Promise<Cookie[]> {
+    return await db.select().from(cookies).where(eq(cookies.websiteId, websiteId));
+  }
+
+  async getCookiesByCategoryId(categoryId: string): Promise<Cookie[]> {
+    return await db.select().from(cookies).where(eq(cookies.categoryId, categoryId));
+  }
+
+  async getCookieById(id: string): Promise<Cookie | undefined> {
+    const [cookie] = await db.select().from(cookies).where(eq(cookies.id, id));
+    return cookie || undefined;
+  }
+
+  async createCookie(cookie: InsertCookie): Promise<Cookie> {
+    const [created] = await db.insert(cookies).values(cookie).returning();
+    return created;
+  }
+
+  async updateCookie(id: string, updates: Partial<Cookie>): Promise<Cookie> {
+    const [updated] = await db.update(cookies).set(updates).where(eq(cookies.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCookie(id: string): Promise<void> {
+    await db.delete(cookies).where(eq(cookies.id, id));
   }
 }
 
