@@ -31,25 +31,25 @@ export default function PlanComparisonTable({
   const displayFeatures = compact ? PLAN_FEATURES.slice(0, 6) : PLAN_FEATURES;
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto pt-4">
       <table className="w-full border-collapse" data-testid="plan-comparison-table">
         <thead>
           <tr>
-            <th className="text-left p-4 border-b border-border bg-muted/30 font-medium text-muted-foreground">
+            <th className="text-left p-4 border-b border-border font-medium text-muted-foreground w-[200px]">
               Features
             </th>
             {PLANS.map((plan) => (
               <th 
                 key={plan.id} 
                 className={cn(
-                  "p-4 border-b border-border text-center min-w-[140px]",
-                  plan.popular && "bg-primary/5 border-x-2 border-t-2 border-primary relative",
+                  "p-4 pb-6 border-b border-border text-center min-w-[160px]",
+                  plan.popular && "bg-primary/5 relative",
                   currentPlan === plan.id && "ring-2 ring-primary/50"
                 )}
                 data-testid={`plan-header-${plan.id}`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap z-10">
                     <Sparkles className="w-3 h-3" />
                     Best Value
                   </div>
@@ -70,30 +70,21 @@ export default function PlanComparisonTable({
           {displayFeatures.map((feature, idx) => (
             <tr 
               key={feature.name} 
-              className={cn(
-                idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-              )}
+              className="transition-colors hover:bg-muted/40"
               data-testid={`feature-row-${idx}`}
             >
-              <td className="p-4 border-b border-border text-sm font-medium">
+              <td className="p-4 border-b border-border/50 text-sm font-medium">
                 {feature.name}
               </td>
-              <td className={cn(
-                "p-4 border-b border-border text-center",
-                idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-              )}>
+              <td className="p-4 border-b border-border/50 text-center">
                 {renderFeatureValue(feature.solo)}
               </td>
               <td className={cn(
-                "p-4 border-b border-border text-center border-x-2 border-primary/20",
-                idx % 2 === 0 ? "bg-primary/5" : "bg-primary/10"
+                "p-4 border-b border-border/50 text-center bg-primary/5"
               )}>
                 {renderFeatureValue(feature.pro)}
               </td>
-              <td className={cn(
-                "p-4 border-b border-border text-center",
-                idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-              )}>
+              <td className="p-4 border-b border-border/50 text-center">
                 {renderFeatureValue(feature.agency)}
               </td>
             </tr>
@@ -102,13 +93,13 @@ export default function PlanComparisonTable({
         {showCTA && (
           <tfoot>
             <tr>
-              <td className="p-4"></td>
+              <td className="p-6"></td>
               {PLANS.map((plan) => (
                 <td 
                   key={plan.id} 
                   className={cn(
-                    "p-4 text-center",
-                    plan.popular && "border-x-2 border-b-2 border-primary bg-primary/5 rounded-b-lg"
+                    "p-6 text-center",
+                    plan.popular && "bg-primary/5"
                   )}
                 >
                   {onSelectPlan ? (
