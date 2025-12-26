@@ -8,16 +8,16 @@ interface TaskUpdate {
 }
 
 const completedTasks: TaskUpdate[] = [
-  { name: "Privacy Policy pagina", status: "COMPLETE", comment: "Implemented at /privacy with full GDPR/CCPA content" },
-  { name: "Terms of Service pagina", status: "COMPLETE", comment: "Implemented at /terms with platform terms" },
-  { name: "Cookie Policy pagina", status: "COMPLETE", comment: "Implemented at /cookies with cookie usage info" },
-  { name: "FAQ pagina", status: "COMPLETE", comment: "Implemented at /faq with accordion component" },
-  { name: "Contact pagina", status: "COMPLETE", comment: "Implemented at /contact with form and support info" },
-  { name: "Documentatie/Help Center", status: "COMPLETE", comment: "Implemented at /docs with tabbed setup guides" },
-  { name: "Wachtwoord vergeten flow", status: "COMPLETE", comment: "Password reset with secure tokens, email delivery via Resend, 1-hour expiry" },
-  { name: "Email verificatie", status: "COMPLETE", comment: "Email verification with tokens, 24-hour expiry, verification page" },
-  { name: "Rate limiting implementeren", status: "COMPLETE", comment: "Rate limiting on auth (10/15min), password reset (5/hour), API (100/min), contact (5/hour)" },
-  { name: "Gratis proefperiode implementatie", status: "COMPLETE", comment: "7-day trial configured in Stripe for Solo plan" },
+  { name: "Privacy Policy pagina", status: "DONE", comment: "Implemented at /privacy with full GDPR/CCPA content" },
+  { name: "Terms of Service pagina", status: "DONE", comment: "Implemented at /terms with platform terms" },
+  { name: "Cookie Policy pagina", status: "DONE", comment: "Implemented at /cookies with cookie usage info" },
+  { name: "FAQ pagina", status: "DONE", comment: "Implemented at /faq with accordion component" },
+  { name: "Contact pagina", status: "DONE", comment: "Implemented at /contact with form and support info" },
+  { name: "Documentatie/Help Center", status: "DONE", comment: "Implemented at /docs with tabbed setup guides" },
+  { name: "Wachtwoord vergeten flow", status: "DONE", comment: "Password reset with secure tokens, email delivery via Resend, 1-hour expiry" },
+  { name: "Email verificatie", status: "DONE", comment: "Email verification with tokens, 24-hour expiry, verification page" },
+  { name: "Rate limiting implementeren", status: "DONE", comment: "Rate limiting on auth (10/15min), password reset (5/hour), API (100/min), contact (5/hour)" },
+  { name: "Gratis proefperiode implementatie", status: "DONE", comment: "7-day trial configured in Stripe for Solo plan" },
 ];
 
 async function makeRequest(url: string, options: RequestInit = {}) {
