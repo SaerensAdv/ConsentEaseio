@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, PLAN_LIMITS, type PlanType, isUnlimited } from "./storage";
-import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema } from "@shared/schema";
+import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema, insertCookieCategorySchema, insertCookieSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateBannerScript } from "./banner-script";
 import { stripeService } from "./stripeService";
@@ -69,6 +69,9 @@ export async function registerRoutes(
       
       // Create default banner config for the website (uses schema defaults)
       await storage.createBannerConfig({ websiteId: website.id });
+      
+      // Create default cookie categories for the website
+      await storage.createDefaultCategoriesForWebsite(website.id);
       
       // Simulate scanning completion after a delay (in production, this would be a background job)
       setTimeout(async () => {
@@ -289,6 +292,238 @@ export async function registerRoutes(
     } catch (error) {
       console.error('Error generating banner script:', error);
       res.status(500).type('application/javascript').send('// ConsentEase: Error loading banner script');
+    }
+  });
+
+  // Cookie category endpoints
+  app.get("/api/websites/:id/cookie-categories", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const categories = await storage.getCookieCategoriesByWebsiteId(website.id);
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cookie categories" });
+    }
+  });
+
+  app.post("/api/websites/:id/cookie-categories", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const validated = insertCookieCategorySchema.parse({
+        ...req.body,
+        websiteId: website.id,
+      });
+      
+      const category = await storage.createCookieCategory(validated);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create cookie category" });
+    }
+  });
+
+  app.patch("/api/cookie-categories/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const category = await storage.getCookieCategoryById(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+      
+      const website = await storage.getWebsiteById(category.websiteId);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Prevent modifying required status for necessary cookies
+      if (category.name === 'necessary' && req.body.isRequired === false) {
+        return res.status(400).json({ error: "Necessary cookies cannot be made optional" });
+      }
+      
+      const updated = await storage.updateCookieCategory(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update cookie category" });
+    }
+  });
+
+  app.delete("/api/cookie-categories/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const category = await storage.getCookieCategoryById(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+      
+      const website = await storage.getWebsiteById(category.websiteId);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Prevent deleting default categories
+      if (['necessary', 'functional', 'analytics', 'marketing'].includes(category.name)) {
+        return res.status(400).json({ error: "Cannot delete default cookie categories" });
+      }
+      
+      await storage.deleteCookieCategory(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete cookie category" });
+    }
+  });
+
+  // Cookie endpoints
+  app.get("/api/websites/:id/cookies", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const cookies = await storage.getCookiesByWebsiteId(website.id);
+      res.json(cookies);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cookies" });
+    }
+  });
+
+  app.post("/api/websites/:id/cookies", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Verify the category belongs to this website
+      const category = await storage.getCookieCategoryById(req.body.categoryId);
+      if (!category || category.websiteId !== website.id) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+      
+      const validated = insertCookieSchema.parse({
+        ...req.body,
+        websiteId: website.id,
+      });
+      
+      const cookie = await storage.createCookie(validated);
+      res.status(201).json(cookie);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create cookie" });
+    }
+  });
+
+  app.patch("/api/cookies/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const cookie = await storage.getCookieById(req.params.id);
+      if (!cookie) {
+        return res.status(404).json({ error: "Cookie not found" });
+      }
+      
+      const website = await storage.getWebsiteById(cookie.websiteId);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // If changing category, verify the new category belongs to this website
+      if (req.body.categoryId) {
+        const category = await storage.getCookieCategoryById(req.body.categoryId);
+        if (!category || category.websiteId !== website.id) {
+          return res.status(400).json({ error: "Invalid category" });
+        }
+      }
+      
+      const updated = await storage.updateCookie(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update cookie" });
+    }
+  });
+
+  app.delete("/api/cookies/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const cookie = await storage.getCookieById(req.params.id);
+      if (!cookie) {
+        return res.status(404).json({ error: "Cookie not found" });
+      }
+      
+      const website = await storage.getWebsiteById(cookie.websiteId);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      await storage.deleteCookie(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete cookie" });
+    }
+  });
+
+  // Public endpoint to get cookie categories and cookies for consent modal
+  app.get("/api/consent/:publicId/categories", async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    
+    try {
+      const website = await storage.getWebsiteByPublicId(req.params.publicId);
+      if (!website) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const categories = await storage.getCookieCategoriesByWebsiteId(website.id);
+      const cookies = await storage.getCookiesByWebsiteId(website.id);
+      
+      // Group cookies by category
+      const categoriesWithCookies = categories.map(cat => ({
+        ...cat,
+        cookies: cookies.filter(c => c.categoryId === cat.id),
+      }));
+      
+      res.json(categoriesWithCookies);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch consent data" });
     }
   });
 
