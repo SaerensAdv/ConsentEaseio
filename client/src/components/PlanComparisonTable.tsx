@@ -48,17 +48,16 @@ export default function PlanComparisonTable({
                 )}
                 data-testid={`plan-header-${plan.id}`}
               >
-                {plan.popular && (
+                {plan.popular ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap z-10">
                     <Sparkles className="w-3 h-3" />
                     Best Value
                   </div>
-                )}
-                {plan.trialDays && (
+                ) : plan.trialDays ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap z-10">
                     {plan.trialDays}-day free trial
                   </div>
-                )}
+                ) : null}
                 <div className="font-display font-bold text-lg">{plan.name}</div>
                 <div className="mt-1">
                   <span className="text-2xl font-bold">{plan.priceDisplay}</span>
