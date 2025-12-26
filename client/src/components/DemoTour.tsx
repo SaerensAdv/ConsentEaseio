@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDemo } from "@/contexts/DemoContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,8 +21,24 @@ export function DemoTour() {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [showEndModal, setShowEndModal] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const [tooltipSize, setTooltipSize] = useState({ width: 320, height: 200 });
 
   const [targetFound, setTargetFound] = useState(false);
+  
+  const measureTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      const rect = tooltipRef.current.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setTooltipSize({ width: rect.width, height: rect.height });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (targetFound && tooltipRef.current) {
+      requestAnimationFrame(measureTooltip);
+    }
+  }, [targetFound, measureTooltip, currentStep]);
   
   useEffect(() => {
     if (!isDemoMode || !currentTourStep) return;
@@ -46,14 +62,27 @@ export function DemoTour() {
       setTargetFound(true);
       
       const rect = target.getBoundingClientRect();
-      const tooltipWidth = 320;
-      const tooltipHeight = 180;
+      const tooltipWidth = tooltipSize.width || 320;
+      const tooltipHeight = tooltipSize.height || 200;
       const padding = 16;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
 
       let top = 0;
       let left = 0;
+      let finalPosition = currentTourStep.position || "bottom";
 
-      switch (currentTourStep.position) {
+      const fitsTop = rect.top - tooltipHeight - padding > padding;
+      const fitsBottom = rect.bottom + tooltipHeight + padding < viewportHeight - padding;
+      const fitsLeft = rect.left - tooltipWidth - padding > padding;
+      const fitsRight = rect.right + tooltipWidth + padding < viewportWidth - padding;
+
+      if (finalPosition === "top" && !fitsTop) finalPosition = fitsBottom ? "bottom" : "right";
+      if (finalPosition === "bottom" && !fitsBottom) finalPosition = fitsTop ? "top" : "right";
+      if (finalPosition === "left" && !fitsLeft) finalPosition = fitsRight ? "right" : "bottom";
+      if (finalPosition === "right" && !fitsRight) finalPosition = fitsLeft ? "left" : "bottom";
+
+      switch (finalPosition) {
         case "top":
           top = rect.top - tooltipHeight - padding;
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
@@ -75,8 +104,8 @@ export function DemoTour() {
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
       }
 
-      left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
-      top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
+      left = Math.max(padding, Math.min(left, viewportWidth - tooltipWidth - padding));
+      top = Math.max(padding, Math.min(top, viewportHeight - tooltipHeight - padding));
 
       setTooltipPosition({ top, left });
 
@@ -96,7 +125,7 @@ export function DemoTour() {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition);
     };
-  }, [isDemoMode, currentTourStep, currentStep]);
+  }, [isDemoMode, currentTourStep, currentStep, tooltipSize]);
 
   const handleNext = () => {
     if (currentStep === totalSteps - 1) {
