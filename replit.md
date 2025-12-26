@@ -136,6 +136,19 @@ The platform is a full-stack application with:
 ## ClickUp Integration
 Folder ID: 901512713527
 
+### Automatic Git Commit Integration
+The ClickUp automation module automatically syncs tasks based on commit messages:
+
+```bash
+# Commit prefixes that trigger automatic updates:
+feat: [Task Name] message    → Sets task to DOING
+fix: [Task Name] message     → Sets task to DOING
+done: [Task Name] message    → Sets task to DONE
+close: [Task Name] message   → Sets task to DONE
+wip: [Task Name] message     → Sets task to DOING
+task: [Task Name] message    → Sets task to DOING
+```
+
 ### CLI Commands
 ```bash
 npx tsx scripts/clickup-cli.ts lists                    # List all lists
@@ -147,7 +160,9 @@ npx tsx scripts/clickup-cli.ts doing "Task name"       # Mark in progress
 npx tsx scripts/clickup-cli.ts status "Task" "WAITING" # Change status
 npx tsx scripts/clickup-cli.ts comment "Task" "Text"   # Add comment
 npx tsx scripts/clickup-cli.ts find "Task name"        # Find task
-npx tsx scripts/clickup-cli.ts sync tasks.json         # Bulk sync from JSON
+npx tsx scripts/clickup-cli.ts commit "feat: [Task] msg"  # Process commit
+npx tsx scripts/clickup-cli.ts queue                    # Show pending events
+npx tsx scripts/clickup-cli.ts process                  # Process queue
 ```
 
 ### Statuses
@@ -160,10 +175,24 @@ npx tsx scripts/clickup-cli.ts sync tasks.json         # Bulk sync from JSON
 
 ### Programmatic Usage
 ```typescript
-import * as clickup from './server/clickup';
+import * as clickup from './packages/clickup-automation/src';
 
-await clickup.markTaskDone("Task name", "Optional comment");
-await clickup.markTaskInProgress("Task name");
-await clickup.createTask(listId, { name: "New task", status: "TO DO" });
-await clickup.syncTasks([{ name: "Task", list: "List", status: "DONE" }]);
+// Manual task updates
+await clickup.done("Task name", "Optional comment");
+await clickup.doing("Task name");
+await clickup.waiting("Task name", "Blocked by X");
+
+// Process git commits automatically
+await clickup.processCommit({ message: "feat: [Task] description", branch: "main" });
+
+// Queue-based sync (for offline/batch processing)
+clickup.queue.enqueue({ type: 'status_change', taskName: 'Task', status: 'DONE' });
+await clickup.processQueue();
 ```
+
+### Configuration
+Config file: `clickup-automation.config.json`
+- `folderId`: ClickUp folder ID
+- `commitRules`: Define which commit prefixes trigger which statuses
+- `branchPatterns`: Extract task names from branch names
+- `taskMappings`: Map file patterns to tasks

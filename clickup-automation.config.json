@@ -1,0 +1,26 @@
+{
+  "folderId": "901512713527",
+  "defaultList": "Backlog",
+  "commitRules": [
+    { "prefix": "feat:", "status": "DOING", "commentTemplate": "🚀 Started: {{message}}" },
+    { "prefix": "fix:", "status": "DOING", "commentTemplate": "🔧 Working on fix: {{message}}" },
+    { "prefix": "done:", "status": "DONE", "commentTemplate": "✅ Completed: {{message}}" },
+    { "prefix": "close:", "status": "DONE", "commentTemplate": "✅ Closed: {{message}}" },
+    { "prefix": "wip:", "status": "DOING", "commentTemplate": "🔄 Work in progress: {{message}}" },
+    { "prefix": "task:", "status": "DOING", "commentTemplate": "📋 Working on: {{message}}" }
+  ],
+  "taskMappings": [
+    { "pattern": "server/auth.ts", "taskName": "Authenticatie", "list": "Authenticatie & Beveiliging" },
+    { "pattern": "server/stripe*.ts", "taskName": "Stripe", "list": "Stripe & Billing" },
+    { "pattern": "client/src/pages/dashboard/analytics*", "taskName": "Analytics", "list": "Analytics & Rapportage" }
+  ],
+  "branchPatterns": [
+    { "pattern": "feature/(.+)", "extractTaskName": true },
+    { "pattern": "fix/(.+)", "extractTaskName": true },
+    { "pattern": "task/(.+)", "extractTaskName": true }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "intervalMs": 60000
+  }
+}
