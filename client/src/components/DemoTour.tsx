@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { X, ChevronLeft, ChevronRight, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function DemoTour() {
   const { 
@@ -22,6 +23,7 @@ export function DemoTour() {
   const [showEndModal, setShowEndModal] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipSize, setTooltipSize] = useState({ width: 320, height: 200 });
+  const isMobile = useIsMobile();
 
   const [targetFound, setTargetFound] = useState(false);
   
@@ -218,7 +220,7 @@ export function DemoTour() {
         )}
       </AnimatePresence>
 
-      {showFloatingCTA && !showEndModal && (
+      {showFloatingCTA && !showEndModal && !isMobile && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
