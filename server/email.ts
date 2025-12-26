@@ -49,9 +49,12 @@ export function getBaseUrl(): string {
 }
 
 export async function sendPasswordResetEmail(email: string, resetToken: string, resetUrl: string) {
-  const { client, fromEmail } = await getResendClient();
+  console.log(`Attempting to send password reset email to ${email}...`);
   
-  await client.emails.send({
+  const { client, fromEmail } = await getResendClient();
+  console.log(`Using from email: ${fromEmail}`);
+  
+  const result = await client.emails.send({
     from: fromEmail,
     to: email,
     subject: 'Reset your ConsentEase password',
@@ -85,12 +88,18 @@ export async function sendPasswordResetEmail(email: string, resetToken: string, 
       </div>
     `
   });
+  
+  console.log(`Password reset email sent, result:`, result);
+  return result;
 }
 
 export async function sendVerificationEmail(email: string, verificationToken: string, verifyUrl: string) {
-  const { client, fromEmail } = await getResendClient();
+  console.log(`Attempting to send verification email to ${email}...`);
   
-  await client.emails.send({
+  const { client, fromEmail } = await getResendClient();
+  console.log(`Using from email: ${fromEmail}`);
+  
+  const result = await client.emails.send({
     from: fromEmail,
     to: email,
     subject: 'Verify your ConsentEase email',
@@ -124,4 +133,7 @@ export async function sendVerificationEmail(email: string, verificationToken: st
       </div>
     `
   });
+  
+  console.log(`Verification email sent, result:`, result);
+  return result;
 }
