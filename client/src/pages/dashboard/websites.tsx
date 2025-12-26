@@ -117,6 +117,24 @@ export default function DashboardWebsites() {
     },
   });
 
+  const rescanMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/websites/${id}/scan`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to start scan");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/websites"] });
+      toast.success("Scanning for cookies...");
+    },
+    onError: () => {
+      toast.error("Failed to start scan");
+    },
+  });
+
   const handleCopy = (publicId: string) => {
     navigator.clipboard.writeText(`<script src="https://cdn.consentease.com/banner.js" data-id="${publicId}"></script>`);
     setCopied(true);
@@ -342,8 +360,17 @@ export default function DashboardWebsites() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Re-scan Cookies</DropdownMenuItem>
-                    <DropdownMenuItem>View Report</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => rescanMutation.mutate(site.id)}
+                      disabled={site.status === 'scanning'}
+                      data-testid={`button-rescan-${site.id}`}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Re-scan Cookies
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation(`/dashboard/cookies`)}>
+                      View Cookies
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-destructive"
                       onClick={() => deleteWebsiteMutation.mutate(site.id)}

@@ -35,27 +35,24 @@ async function runCookieScan(websiteId: string, domain: string): Promise<void> {
     const categories = await storage.getCookieCategoriesByWebsiteId(websiteId);
     const categoryMap = new Map(categories.map(c => [c.name, c.id]));
     
-    // Delete previously auto-detected cookies
-    await storage.deleteAutoDetectedCookies(websiteId);
+    // Prepare cookies to insert
+    const cookiesToInsert = result.cookies
+      .filter(cookie => categoryMap.has(cookie.category))
+      .map(cookie => ({
+        websiteId,
+        categoryId: categoryMap.get(cookie.category)!,
+        name: cookie.name,
+        provider: cookie.provider,
+        purpose: cookie.purpose,
+        expiry: cookie.expiry,
+        type: cookie.type,
+        isAutoDetected: true,
+      }));
     
-    // Store detected cookies
-    for (const cookie of result.cookies) {
-      const categoryId = categoryMap.get(cookie.category);
-      if (categoryId) {
-        await storage.createCookie({
-          websiteId,
-          categoryId,
-          name: cookie.name,
-          provider: cookie.provider,
-          purpose: cookie.purpose,
-          expiry: cookie.expiry,
-          type: cookie.type,
-          isAutoDetected: true,
-        });
-      }
-    }
+    // Use atomic operation to delete old and insert new cookies
+    await storage.replaceAutoDetectedCookies(websiteId, cookiesToInsert);
     
-    // Update website status
+    // Update website status after successful cookie storage
     await storage.updateWebsite(websiteId, {
       status: "compliant",
       lastScan: new Date(),

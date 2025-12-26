@@ -78,6 +78,7 @@ export interface IStorage {
   createCookie(cookie: InsertCookie): Promise<Cookie>;
   updateCookie(id: string, updates: Partial<Cookie>): Promise<Cookie>;
   deleteCookie(id: string): Promise<void>;
+  replaceAutoDetectedCookies(websiteId: string, newCookies: InsertCookie[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -424,6 +425,23 @@ export class DatabaseStorage implements IStorage {
         eq(cookies.isAutoDetected, true)
       )
     );
+  }
+
+  async replaceAutoDetectedCookies(websiteId: string, newCookies: InsertCookie[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Delete existing auto-detected cookies
+      await tx.delete(cookies).where(
+        and(
+          eq(cookies.websiteId, websiteId),
+          eq(cookies.isAutoDetected, true)
+        )
+      );
+      
+      // Insert new cookies if any
+      if (newCookies.length > 0) {
+        await tx.insert(cookies).values(newCookies);
+      }
+    });
   }
 }
 

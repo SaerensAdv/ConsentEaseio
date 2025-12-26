@@ -12,13 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Cookie, Shield, BarChart3, Megaphone, Wrench, Loader2, Globe, Lock, Info } from "lucide-react";
+import { Plus, Pencil, Trash2, Cookie, Shield, BarChart3, Megaphone, Wrench, Loader2, Globe, Lock, Info, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface Website {
   id: string;
   domain: string;
   publicId: string;
+  status: string;
+  lastScan: string | null;
+  cookiesFound: number | null;
 }
 
 interface CookieCategory {
@@ -81,9 +84,36 @@ export default function CookiesPage() {
       if (!res.ok) throw new Error("Failed to fetch websites");
       return res.json();
     },
+    refetchInterval: (query) => {
+      const data = query.state.data as Website[] | undefined;
+      if (data?.some(w => w.status === 'scanning')) {
+        return 3000;
+      }
+      return false;
+    },
   });
 
   const activeWebsiteId = selectedWebsiteId || websites[0]?.id;
+  const activeWebsite = websites.find(w => w.id === activeWebsiteId);
+  const isScanning = activeWebsite?.status === 'scanning';
+
+  const rescanMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/websites/${id}/scan`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to start scan");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/websites"] });
+      toast.success("Scanning for cookies...");
+    },
+    onError: () => {
+      toast.error("Failed to start scan");
+    },
+  });
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<CookieCategory[]>({
     queryKey: ["/api/websites", activeWebsiteId, "cookie-categories"],
@@ -105,6 +135,7 @@ export default function CookiesPage() {
       return res.json();
     },
     enabled: !!activeWebsiteId,
+    refetchInterval: isScanning ? 3000 : false,
   });
 
   const createCookieMutation = useMutation({
@@ -248,7 +279,7 @@ export default function CookiesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Select value={activeWebsiteId || ""} onValueChange={setSelectedWebsiteId}>
               <SelectTrigger className="w-[200px]" data-testid="select-website">
                 <SelectValue placeholder="Select website" />
@@ -261,6 +292,16 @@ export default function CookiesPage() {
                 ))}
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              onClick={() => activeWebsiteId && rescanMutation.mutate(activeWebsiteId)}
+              disabled={isScanning || !activeWebsiteId}
+              data-testid="button-rescan-cookies"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isScanning ? 'animate-spin' : ''}`} />
+              {isScanning ? 'Scanning...' : 'Scan Cookies'}
+            </Button>
 
             <Dialog open={isAddCookieOpen} onOpenChange={setIsAddCookieOpen}>
               <DialogTrigger asChild>

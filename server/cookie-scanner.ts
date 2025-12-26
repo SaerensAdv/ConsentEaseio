@@ -127,17 +127,38 @@ export async function scanWebsite(url: string): Promise<ScanResult> {
     
     await page.waitForTimeout(2000);
     
+    // Try to find and click cookie consent banner accept button safely
+    // Only target elements that look like consent banners (not other page buttons)
     try {
-      const acceptButtons = await page.$$('button, a, div[role="button"]');
-      for (const button of acceptButtons) {
-        const text = await button.textContent();
-        if (text && /accept|agree|ok|got it|allow|consent/i.test(text)) {
-          await button.click().catch(() => {});
-          await page.waitForTimeout(1000);
-          break;
+      const consentSelectors = [
+        '[class*="cookie"] button',
+        '[class*="consent"] button',
+        '[class*="gdpr"] button',
+        '[class*="privacy"] button',
+        '[id*="cookie"] button',
+        '[id*="consent"] button',
+        '[data-cookieconsent]',
+        '[class*="cc-"] button',
+        '.cookie-banner button',
+        '.consent-banner button',
+        '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
+        '#onetrust-accept-btn-handler',
+      ];
+      
+      for (const selector of consentSelectors) {
+        const buttons = await page.$$(selector);
+        for (const button of buttons) {
+          const text = await button.textContent();
+          const isVisible = await button.isVisible().catch(() => false);
+          if (isVisible && text && /accept|agree|ok|got it|allow|alle akzeptieren|accepter/i.test(text)) {
+            await button.click().catch(() => {});
+            await page.waitForTimeout(1000);
+            break;
+          }
         }
       }
     } catch (e) {
+      // Ignore consent banner interaction errors
     }
     
     const cookies = await context.cookies();
