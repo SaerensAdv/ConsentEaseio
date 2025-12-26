@@ -132,3 +132,38 @@ The platform is a full-stack application with:
 - `npm run dev` - Start development server
 - `npm run db:push` - Push schema changes to database
 - `npx tsx server/seed-stripe-products.ts` - Seed Stripe products
+
+## ClickUp Integration
+Folder ID: 901512713527
+
+### CLI Commands
+```bash
+npx tsx scripts/clickup-cli.ts lists                    # List all lists
+npx tsx scripts/clickup-cli.ts tasks                    # List all tasks
+npx tsx scripts/clickup-cli.ts tasks "Public Pages"    # Filter by list
+npx tsx scripts/clickup-cli.ts add "List" "Task name"  # Add task
+npx tsx scripts/clickup-cli.ts done "Task name" "Comment"  # Mark done
+npx tsx scripts/clickup-cli.ts doing "Task name"       # Mark in progress
+npx tsx scripts/clickup-cli.ts status "Task" "WAITING" # Change status
+npx tsx scripts/clickup-cli.ts comment "Task" "Text"   # Add comment
+npx tsx scripts/clickup-cli.ts find "Task name"        # Find task
+npx tsx scripts/clickup-cli.ts sync tasks.json         # Bulk sync from JSON
+```
+
+### Statuses
+- TO DO → Not started
+- DOING → In progress
+- WAITING → Blocked/waiting
+- READY TO PUBLISH → Ready for deployment
+- DONE → Finished (visible)
+- COMPLETE → Archived (hidden)
+
+### Programmatic Usage
+```typescript
+import * as clickup from './server/clickup';
+
+await clickup.markTaskDone("Task name", "Optional comment");
+await clickup.markTaskInProgress("Task name");
+await clickup.createTask(listId, { name: "New task", status: "TO DO" });
+await clickup.syncTasks([{ name: "Task", list: "List", status: "DONE" }]);
+```
