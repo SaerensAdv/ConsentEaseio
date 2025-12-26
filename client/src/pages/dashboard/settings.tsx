@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, BarChart3, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, BarChart3, AlertTriangle, XCircle, Clock, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { logout } from "@/lib/auth";
 import { toast } from "sonner";
@@ -100,7 +100,19 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"profile" | "billing">("profile");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  
+  // Profile form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  
+  // Password form state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // Handle checkout success - sync plan
   useEffect(() => {
@@ -213,6 +225,63 @@ export default function Settings() {
     },
   });
 
+  const profileMutation = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string }) => {
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to update profile");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast.success("Profile updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const res = await fetch("/api/auth/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to change password");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully");
+      setShowPasswordModal(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Initialize profile form when user data loads
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+    }
+  }, [user]);
+
   const handleUpgrade = (planId: string) => {
     setSelectedPlan(planId);
     checkoutMutation.mutate(planId);
@@ -314,11 +383,19 @@ export default function Settings() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>First Name</Label>
-                      <Input defaultValue={user?.firstName || ""} data-testid="input-firstName" />
+                      <Input 
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        data-testid="input-firstName" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Last Name</Label>
-                      <Input defaultValue={user?.lastName || ""} data-testid="input-lastName" />
+                      <Input 
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        data-testid="input-lastName" 
+                      />
                     </div>
                   </div>
                   
@@ -330,7 +407,14 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <Button data-testid="button-save-profile">Save Changes</Button>
+                  <Button 
+                    onClick={() => profileMutation.mutate({ firstName, lastName })}
+                    disabled={profileMutation.isPending}
+                    data-testid="button-save-profile"
+                  >
+                    {profileMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Save Changes
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -347,10 +431,17 @@ export default function Settings() {
                       </div>
                       <div>
                         <p className="font-medium">Password</p>
-                        <p className="text-sm text-muted-foreground">Last changed recently</p>
+                        <p className="text-sm text-muted-foreground">Change your account password</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">Update</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowPasswordModal(true)}
+                      data-testid="button-change-password"
+                    >
+                      Update
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -465,57 +556,32 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                  <CardDescription>Manage your payment details.</CardDescription>
+                  <CardTitle>Payment & Billing</CardTitle>
+                  <CardDescription>Manage your payment methods, view invoices, and download receipts.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/30">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center text-white font-bold text-xs">
-                        VISA
+                      <div className="p-2 bg-primary/10 rounded-full text-primary">
+                        <CreditCard className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-medium">Visa ending in 4242</p>
-                        <p className="text-sm text-muted-foreground">Expires 12/28</p>
+                        <p className="font-medium">Stripe Customer Portal</p>
+                        <p className="text-sm text-muted-foreground">Update payment methods, view invoices, and download receipts</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">Edit</Button>
+                    <Button 
+                      onClick={() => portalMutation.mutate()}
+                      disabled={portalMutation.isPending}
+                      data-testid="button-open-stripe-portal"
+                    >
+                      {portalMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ExternalLink className="w-4 h-4 mr-2" />}
+                      Open Portal
+                    </Button>
                   </div>
-                  <Button variant="outline" className="mt-4 w-full border-dashed">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Add Payment Method
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Billing History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { date: "Dec 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Nov 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Oct 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Sep 25, 2025", amount: "€12.00", status: "Paid" },
-                      { date: "Aug 25, 2025", amount: "€12.00", status: "Paid" },
-                    ].map((invoice, i) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div>
-                          <p className="font-medium">{invoice.date}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{user?.plan || "pro"} Plan - Monthly</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-medium">{invoice.amount}</span>
-                          <span className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full dark:bg-green-900/30 dark:text-green-400">
-                            <Check className="w-3 h-3 mr-1" /> {invoice.status}
-                          </span>
-                          <Button variant="ghost" size="sm">PDF</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The Stripe Customer Portal allows you to securely manage all your billing information, update payment methods, view past invoices, and download receipts.
+                  </p>
                 </CardContent>
               </Card>
             </>
@@ -540,6 +606,83 @@ export default function Settings() {
               }}
             />
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Enter your current password and choose a new one.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Current Password</Label>
+              <div className="relative">
+                <Input 
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  data-testid="input-current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <div className="relative">
+                <Input 
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 characters)"
+                  data-testid="input-new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm New Password</Label>
+              <Input 
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                data-testid="input-confirm-password"
+              />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-500">Passwords do not match</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => passwordMutation.mutate({ currentPassword, newPassword })}
+              disabled={passwordMutation.isPending || !currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 6}
+              data-testid="button-submit-password"
+            >
+              {passwordMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Change Password
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

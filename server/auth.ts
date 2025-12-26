@@ -39,7 +39,7 @@ export function setupAuth(app: Express) {
         secure: isProduction,
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: "lax",
+        sameSite: "strict", // Strict for CSRF protection on state-changing requests
       },
     })
   );
@@ -352,6 +352,109 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error('Resend verification error:', error);
       res.status(500).json({ error: "Failed to send verification email" });
+    }
+  });
+
+  // Update profile (first name, last name)
+  app.put("/api/auth/profile", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const { firstName, lastName } = req.body;
+
+      const updatedUser = await storage.updateUser(req.user.id, {
+        firstName: firstName || null,
+        lastName: lastName || null,
+      });
+
+      // Update session with new data
+      const sessionUser = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        plan: updatedUser.plan,
+        subscriptionStatus: updatedUser.subscriptionStatus,
+        subscriptionEndDate: updatedUser.subscriptionEndDate,
+      };
+
+      req.login(sessionUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Failed to update session" });
+        }
+        res.json(sessionUser);
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // Change password (requires current password)
+  app.put("/api/auth/password", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Current password and new password are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters" });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Verify current password
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await storage.updateUser(req.user.id, { password: hashedPassword });
+
+      // Invalidate any existing password reset tokens
+      await storage.deletePasswordResetTokensByUserId(req.user.id);
+
+      // Regenerate session to invalidate other sessions
+      const sessionUser = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        plan: user.plan,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionEndDate: user.subscriptionEndDate,
+      };
+
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          return res.json({ success: true, message: "Password updated successfully" });
+        }
+        req.login(sessionUser, (loginErr) => {
+          if (loginErr) {
+            console.error('Re-login error:', loginErr);
+          }
+          res.json({ success: true, message: "Password updated successfully" });
+        });
+      });
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.status(500).json({ error: "Failed to change password" });
     }
   });
 }
