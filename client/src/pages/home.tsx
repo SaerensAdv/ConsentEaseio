@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PlanComparisonTable from "@/components/PlanComparisonTable";
 import { AnimatedHeroShowcase } from "@/components/AnimatedHeroShowcase";
+import { IntroOverlay, useIntroOverlay } from "@/components/IntroOverlay";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { showIntro, completeIntro } = useIntroOverlay();
 
   const features = [
     {
@@ -30,7 +32,10 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
+    <>
+      {showIntro && <IntroOverlay onComplete={completeIntro} />}
+      
+      <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -344,5 +349,6 @@ export default function Home() {
         </footer>
       </main>
     </div>
+    </>
   );
 }
