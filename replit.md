@@ -120,6 +120,9 @@ The platform is a full-stack application with:
 - December 25, 2025: Connected banner configurator to API
 - December 25, 2025: Converted from prototype to full-stack app
 
+## Pending To-Do
+- Add STRIPE_WEBHOOK_SECRET to secrets for automatic subscription webhook processing
+
 ## Development Commands
 - `npm run dev` - Start development server
 - `npm run db:push` - Push schema changes to database
