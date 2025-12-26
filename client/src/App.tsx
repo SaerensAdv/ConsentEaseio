@@ -13,6 +13,9 @@ import EmbedCode from "@/pages/dashboard/embed";
 import Onboarding from "@/pages/onboarding";
 import ComparePage from "@/pages/compare";
 import LoginPage from "@/pages/login";
+import PrivacyPolicy from "@/pages/legal/privacy";
+import TermsOfService from "@/pages/legal/terms";
+import CookiePolicy from "@/pages/legal/cookies";
 
 function Router() {
   return (
@@ -21,6 +24,9 @@ function Router() {
       <Route path="/compare" component={ComparePage}/>
       <Route path="/login" component={LoginPage}/>
       <Route path="/onboarding" component={Onboarding}/>
+      <Route path="/privacy" component={PrivacyPolicy}/>
+      <Route path="/terms" component={TermsOfService}/>
+      <Route path="/cookies" component={CookiePolicy}/>
       <Route path="/dashboard" component={DashboardWebsites}/>
       <Route path="/dashboard/websites" component={DashboardWebsites}/>
       <Route path="/dashboard/banner" component={BannerConfigurator}/>
