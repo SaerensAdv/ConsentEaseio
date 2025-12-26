@@ -1,0 +1,84 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "sans-serif",
+      "count": 61
+    },
+    {
+      "family": "Inter",
+      "count": 49
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "count": 12
+    }
+  ],
+  "colors": {
+    "primary": "#966CE0",
+    "accent": "#241F2E",
+    "background": "#FFFFFF",
+    "textPrimary": "#71717A",
+    "link": "#241F2E"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Inter",
+      "heading": "Plus Jakarta Sans"
+    },
+    "fontStacks": {
+      "body": [
+        "Inter",
+        "sans-serif"
+      ],
+      "heading": [
+        "Plus Jakarta Sans",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Inter",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "72px",
+      "h2": "36px",
+      "body": "20px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 8,
+    "borderRadius": "0px"
+  },
+  "components": {},
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "https://consentease.io/favicon.png",
+    "ogImage": "https://purple-accent--Saerens.replit.app/opengraph.jpg"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Logo rejected: Red flags detected (small square icon). Strong indicators: header logo linking to homepage, header location, visible, highest logo on page, too small (likely icon, penalty), small square icon (likely UI icon, heavy penalty), SVG format. Score: 80 (clear winner by 80 points)",
+    "confidence": 0.9,
+    "rejected": true
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "confidence": 0
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}
