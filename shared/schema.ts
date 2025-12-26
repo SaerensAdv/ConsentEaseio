@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   plan: text("plan").notNull().default("solo"), // solo, pro, agency
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status").default("none"), // none, active, past_due, canceled, unpaid, trialing
+  subscriptionEndDate: timestamp("subscription_end_date"), // When subscription ends (for canceled subscriptions)
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -15,6 +15,8 @@ declare global {
       firstName: string | null;
       lastName: string | null;
       plan: string;
+      subscriptionStatus: string | null;
+      subscriptionEndDate: Date | null;
     }
   }
 }
@@ -68,6 +70,8 @@ export function setupAuth(app: Express) {
             firstName: user.firstName,
             lastName: user.lastName,
             plan: user.plan,
+            subscriptionStatus: user.subscriptionStatus,
+            subscriptionEndDate: user.subscriptionEndDate,
           });
         } catch (error) {
           return done(error);
@@ -94,6 +98,8 @@ export function setupAuth(app: Express) {
         firstName: user.firstName,
         lastName: user.lastName,
         plan: user.plan,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionEndDate: user.subscriptionEndDate,
       });
     } catch (error) {
       done(error);
@@ -131,6 +137,8 @@ export function setupAuth(app: Express) {
           firstName: user.firstName,
           lastName: user.lastName,
           plan: user.plan,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionEndDate: user.subscriptionEndDate,
         },
         (err) => {
           if (err) {
@@ -142,6 +150,8 @@ export function setupAuth(app: Express) {
             firstName: user.firstName,
             lastName: user.lastName,
             plan: user.plan,
+            subscriptionStatus: user.subscriptionStatus,
+            subscriptionEndDate: user.subscriptionEndDate,
           });
         }
       );

@@ -20,8 +20,10 @@ export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByStripeCustomerId(customerId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  updateSubscriptionStatus(userId: string, status: string, endDate?: Date): Promise<User>;
   
   // Website methods
   getWebsitesByUserId(userId: string): Promise<Website[]>;
@@ -62,6 +64,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeCustomerId, customerId));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
@@ -69,6 +76,15 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
     const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async updateSubscriptionStatus(userId: string, status: string, endDate?: Date): Promise<User> {
+    const updates: Partial<User> = { subscriptionStatus: status };
+    if (endDate) {
+      updates.subscriptionEndDate = endDate;
+    }
+    const [updated] = await db.update(users).set(updates).where(eq(users.id, userId)).returning();
     return updated;
   }
 

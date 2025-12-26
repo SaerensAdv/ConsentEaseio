@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, BarChart3 } from "lucide-react";
+import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, BarChart3, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { logout } from "@/lib/auth";
 import { toast } from "sonner";
@@ -27,6 +27,71 @@ interface AuthUser {
   firstName: string | null;
   lastName: string | null;
   plan: string;
+  subscriptionStatus: string | null;
+  subscriptionEndDate: string | null;
+}
+
+function SubscriptionStatusBadge({ status, endDate }: { status: string | null; endDate: string | null }) {
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  if (!status || status === 'active') {
+    return (
+      <div className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full flex items-center gap-1.5" data-testid="badge-subscription-status">
+        <Check className="w-4 h-4" />
+        Active
+      </div>
+    );
+  }
+
+  if (status === 'trialing') {
+    return (
+      <div className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-bold rounded-full flex items-center gap-1.5" data-testid="badge-subscription-status">
+        <Clock className="w-4 h-4" />
+        Trial
+      </div>
+    );
+  }
+
+  if (status === 'past_due') {
+    return (
+      <div className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-bold rounded-full flex items-center gap-1.5" data-testid="badge-subscription-status">
+        <AlertTriangle className="w-4 h-4" />
+        Past Due
+      </div>
+    );
+  }
+
+  if (status === 'canceled') {
+    return (
+      <div className="flex flex-col items-end gap-1" data-testid="badge-subscription-status">
+        <div className="px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full flex items-center gap-1.5">
+          <XCircle className="w-4 h-4" />
+          Canceled
+        </div>
+        {endDate && (
+          <span className="text-xs text-muted-foreground">Access until {formatDate(endDate)}</span>
+        )}
+      </div>
+    );
+  }
+
+  if (status === 'unpaid' || status === 'incomplete') {
+    return (
+      <div className="px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full flex items-center gap-1.5" data-testid="badge-subscription-status">
+        <XCircle className="w-4 h-4" />
+        Payment Issue
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-bold rounded-full" data-testid="badge-subscription-status">
+      {status}
+    </div>
+  );
 }
 
 export default function Settings() {
@@ -45,13 +110,19 @@ export default function Settings() {
     const upgrade = params.get('upgrade');
     
     if (success === 'true' && plan) {
-      // Sync the plan
-      fetch('/api/stripe/sync-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ plan }),
-      }).then(() => {
+      // Sync the subscription status from Stripe
+      Promise.all([
+        fetch('/api/stripe/sync-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ plan }),
+        }),
+        fetch('/api/stripe/sync-subscription', {
+          method: 'POST',
+          credentials: 'include',
+        }),
+      ]).then(() => {
         queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
         queryClient.invalidateQueries({ queryKey: ['/api/usage'] });
         toast.success(`Successfully upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
@@ -297,9 +368,7 @@ export default function Settings() {
                         You are currently on the <span className="font-bold text-primary capitalize" data-testid="text-plan-name">{planInfo.name} Plan</span>.
                       </CardDescription>
                     </div>
-                    <div className="px-3 py-1 bg-primary/10 text-primary text-sm font-bold rounded-full">
-                      Active
-                    </div>
+                    <SubscriptionStatusBadge status={user?.subscriptionStatus || null} endDate={user?.subscriptionEndDate || null} />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">

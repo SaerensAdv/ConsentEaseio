@@ -514,5 +514,26 @@ export async function registerRoutes(
     }
   });
 
+  // Sync subscription status from Stripe (manual refresh)
+  app.post("/api/stripe/sync-subscription", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { SubscriptionHandler } = await import('./subscriptionHandler');
+      const result = await SubscriptionHandler.syncUserSubscription(req.user.id);
+      
+      if (!result) {
+        return res.json({ synced: false, message: "No Stripe customer found" });
+      }
+
+      res.json({ synced: true, status: result.status, plan: result.plan });
+    } catch (error) {
+      console.error("Sync subscription error:", error);
+      res.status(500).json({ error: "Failed to sync subscription" });
+    }
+  });
+
   return httpServer;
 }
