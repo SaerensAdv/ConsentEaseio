@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import abstractImage from "@assets/generated_images/abstract_3d_glass_shapes_in_purple_and_yellow_on_white.png";
-import { PlanComparisonCards } from "@/components/PlanComparisonTable";
+import PlanComparisonTable from "@/components/PlanComparisonTable";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -243,9 +243,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="max-w-5xl mx-auto"
+              className="bg-background rounded-2xl shadow-xl border overflow-hidden"
             >
-              <PlanComparisonCards />
+              <PlanComparisonTable />
             </motion.div>
           </div>
         </section>
