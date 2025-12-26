@@ -13,6 +13,7 @@ The platform is a full-stack application with:
 - Embeddable JavaScript consent banner script
 - Analytics tracking (banner shown, accept, reject events)
 - Stripe payment integration for subscriptions
+- Plan limit enforcement (website limits, view tracking)
 
 ## Demo Account
 - Email: demo@consentease.com
@@ -76,6 +77,9 @@ The platform is a full-stack application with:
 - Products synced from Stripe to local database
 
 ## Recent Changes
+- December 26, 2025: Added plan limit enforcement (websites per plan, monthly views tracking)
+- December 26, 2025: Added usage stats display in dashboard settings with progress bars
+- December 26, 2025: Secured plan sync endpoint to verify Stripe subscription
 - December 25, 2025: Fixed Stripe checkout integration with plan selection modal
 - December 25, 2025: Added About section to landing page
 - December 25, 2025: Updated pricing to Solo €5, Pro €12, Agency €39
