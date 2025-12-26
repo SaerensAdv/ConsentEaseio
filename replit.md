@@ -106,6 +106,13 @@ The platform is a full-stack application with:
 - **STRIPE_WEBHOOK_SECRET**: Required for automatic subscription updates from webhooks. Get this from Stripe Dashboard > Developers > Webhooks > Signing secret
 
 ## Recent Changes
+- December 26, 2025: Added Playwright-based cookie scanner:
+  - Scans websites using headless Chromium browser
+  - Detects and classifies cookies automatically (100+ known cookies in knowledge base)
+  - Categories: Necessary, Functional, Analytics, Marketing
+  - Runs automatically when website is added, rescan button available
+  - Uses system Chromium (/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium)
+  - Atomic database transactions for reliable cookie storage
 - December 26, 2025: Added complete cookie management system:
   - Cookie categories table with default categories (necessary, functional, analytics, marketing)
   - Individual cookies table with provider, purpose, expiry, and type fields
