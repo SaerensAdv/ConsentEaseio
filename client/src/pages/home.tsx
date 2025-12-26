@@ -4,8 +4,8 @@ import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X } from "lucide-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import abstractImage from "@assets/b0cfeeaa-3b72-4959-bc58-a8dc3577e09b_1766777685513.png";
 import PlanComparisonTable from "@/components/PlanComparisonTable";
+import { AnimatedHeroShowcase } from "@/components/AnimatedHeroShowcase";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -132,14 +132,7 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              <div className="relative z-10 animate-in fade-in zoom-in duration-1000">
-                <img 
-                  src={abstractImage} 
-                  alt="ConsentEase Dashboard Abstract" 
-                  className="w-full h-auto drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500"
-                />
-              </div>
-              {/* Decorative background blurs */}
+              <AnimatedHeroShowcase />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary/20 via-accent/20 to-transparent blur-3xl -z-10 rounded-full opacity-60" />
             </motion.div>
           </div>
