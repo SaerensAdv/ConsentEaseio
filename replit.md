@@ -105,6 +105,17 @@ The platform is a full-stack application with:
 - Subscription status tracking (active, trialing, past_due, canceled, etc.)
 - **STRIPE_WEBHOOK_SECRET**: Required for automatic subscription updates from webhooks. Get this from Stripe Dashboard > Developers > Webhooks > Signing secret
 
+### Trial Expiration Flow
+Solo plan includes a 7-day free trial configured via Stripe's `trial_period_days` parameter.
+1. **Trial Start**: When user starts checkout, Stripe creates subscription with `status: 'trialing'`
+2. **During Trial**: Users have full Solo plan access, SubscriptionStatusBadge shows "Trial" status
+3. **Trial End**: Stripe automatically charges the card and sends `customer.subscription.updated` webhook
+4. **Webhook Processing**: SubscriptionHandler updates user's `subscriptionStatus` from 'trialing' to 'active'
+5. **Failed Payment**: If card fails, status changes to 'past_due' and user sees warning badge
+6. **Cancellation**: User can cancel anytime via Stripe Customer Portal
+
+Note: Without STRIPE_WEBHOOK_SECRET configured, trial expiration won't auto-update. Use manual sync endpoint as fallback.
+
 ## Recent Changes
 - December 26, 2025: Added Playwright-based cookie scanner:
   - Scans websites using headless Chromium browser
