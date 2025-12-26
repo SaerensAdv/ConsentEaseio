@@ -396,52 +396,53 @@ export default function CookiesPage() {
                     value={category.id}
                     className="border rounded-lg px-4"
                   >
-                    <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          {categoryIcons[category.name] || <Cookie className="w-4 h-4" />}
-                        </div>
-                        <div className="text-left flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{category.displayName}</span>
-                            {category.isRequired && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Lock className="w-3 h-3 mr-1" />
-                                Required
-                              </Badge>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              {categoryCookies.length} cookie{categoryCookies.length !== 1 ? "s" : ""}
-                            </Badge>
+                    <div className="flex items-center py-4">
+                      <AccordionTrigger className="hover:no-underline flex-1 [&>svg]:ml-2">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            {categoryIcons[category.name] || <Cookie className="w-4 h-4" />}
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {category.description}
-                          </p>
+                          <div className="text-left flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{category.displayName}</span>
+                              {category.isRequired && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Lock className="w-3 h-3 mr-1" />
+                                  Required
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {categoryCookies.length} cookie{categoryCookies.length !== 1 ? "s" : ""}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {category.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Switch
-                            checked={category.isEnabled}
-                            disabled={category.isRequired}
-                            onCheckedChange={(checked) => {
-                              updateCategoryMutation.mutate({ id: category.id, isEnabled: checked });
-                            }}
-                            data-testid={`switch-category-${category.id}`}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingCategory(category);
-                              setIsEditCategoryOpen(true);
-                            }}
-                            data-testid={`button-edit-category-${category.id}`}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </div>
+                      </AccordionTrigger>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Switch
+                          checked={category.isEnabled}
+                          disabled={category.isRequired}
+                          onCheckedChange={(checked) => {
+                            updateCategoryMutation.mutate({ id: category.id, isEnabled: checked });
+                          }}
+                          data-testid={`switch-category-${category.id}`}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingCategory(category);
+                            setIsEditCategoryOpen(true);
+                          }}
+                          data-testid={`button-edit-category-${category.id}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
                       </div>
-                    </AccordionTrigger>
+                    </div>
                     <AccordionContent>
                       <div className="pt-2 pb-4 space-y-3">
                         {categoryCookies.length === 0 ? (
