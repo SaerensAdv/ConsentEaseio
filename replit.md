@@ -82,13 +82,14 @@ The platform is a full-stack application with:
 - Sends analytics to ConsentEase API
 
 ### Stripe Integration
-- Webhook handling for subscription events (via stripe-replit-sync)
+- Webhook handling for subscription events (via stripe-replit-sync + custom handler)
 - Checkout sessions for new subscriptions
 - Customer portal for subscription management
 - Products synced from Stripe to local database
 - SubscriptionHandler class for subscription lifecycle management
-- Manual subscription sync endpoint for reliable status updates
+- Manual subscription sync endpoint (/api/stripe/sync-subscription)
 - Subscription status tracking (active, trialing, past_due, canceled, etc.)
+- **STRIPE_WEBHOOK_SECRET**: Required for automatic subscription updates from webhooks. Get this from Stripe Dashboard > Developers > Webhooks > Signing secret
 
 ## Recent Changes
 - December 26, 2025: Added billing reliability infrastructure:
