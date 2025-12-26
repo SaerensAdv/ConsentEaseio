@@ -97,7 +97,13 @@ export default function Onboarding() {
       
       // Redirect after a short delay
       setTimeout(() => {
-        setLocation(data.redirect || "/dashboard/banner");
+        const redirect = data.redirect || "/dashboard/banner";
+        // External URLs (Stripe checkout) use window.location, internal use wouter
+        if (redirect.startsWith("http")) {
+          window.location.href = redirect;
+        } else {
+          setLocation(redirect);
+        }
       }, 1500);
     },
     onError: (error: Error) => {

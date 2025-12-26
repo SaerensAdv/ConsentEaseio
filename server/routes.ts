@@ -290,6 +290,37 @@ export async function registerRoutes(
         // Don't block registration if email fails
       }
       
+      // Create Stripe customer and checkout session for Solo plan with 7-day trial
+      let checkoutUrl: string | null = null;
+      try {
+        // Create Stripe customer
+        const customer = await stripeService.createCustomer(user.email, user.id);
+        await storage.updateUserStripeInfo(user.id, { stripeCustomerId: customer.id });
+        
+        // Find Solo price (€5/month = 500 cents)
+        const stripe = await import('./stripeClient').then(m => m.getStripeClient());
+        const prices = await stripe.prices.list({ active: true, limit: 100 });
+        const soloPrice = prices.data.find(
+          p => p.unit_amount === 500 && p.currency === 'eur' && p.recurring?.interval === 'month'
+        );
+        
+        if (soloPrice) {
+          // Create checkout session with 7-day trial
+          const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+          const session = await stripeService.createCheckoutSession(
+            customer.id,
+            soloPrice.id,
+            `${baseUrl}/dashboard/banner?success=true&plan=solo`,
+            `${baseUrl}/onboarding?canceled=true`,
+            7 // 7-day free trial
+          );
+          checkoutUrl = session.url;
+        }
+      } catch (stripeError) {
+        console.error('Failed to create Stripe checkout:', stripeError);
+        // Continue without checkout - user can upgrade later
+      }
+      
       // Log the user in automatically
       req.login(user, (err) => {
         if (err) {
@@ -301,12 +332,24 @@ export async function registerRoutes(
           });
         }
         
-        res.status(201).json({
-          success: true,
-          user: { id: user.id, email: user.email, plan: user.plan },
-          website: { id: website.id, domain: website.domain },
-          redirect: "/dashboard/banner"
-        });
+        // If we have a checkout URL, redirect to Stripe for payment
+        if (checkoutUrl) {
+          res.status(201).json({
+            success: true,
+            user: { id: user.id, email: user.email, plan: user.plan },
+            website: { id: website.id, domain: website.domain },
+            checkoutUrl: checkoutUrl,
+            redirect: checkoutUrl
+          });
+        } else {
+          // Fallback to dashboard if Stripe checkout failed
+          res.status(201).json({
+            success: true,
+            user: { id: user.id, email: user.email, plan: user.plan },
+            website: { id: website.id, domain: website.domain },
+            redirect: "/dashboard/banner"
+          });
+        }
       });
     } catch (error) {
       console.error("Onboarding registration error:", error);
