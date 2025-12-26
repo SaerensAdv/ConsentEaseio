@@ -20,9 +20,14 @@ The platform is a full-stack application with:
 - Password: demo123
 
 ## Subscription Plans (Stripe)
-- Solo: €5/month - 1 website, 10K views
-- Pro: €12/month - 5 websites, 100K views
+- Solo: €5/month - 1 website, 10K views, 7-day free trial
+- Pro: €12/month - 5 websites, 100K views (highlighted as "Best Value")
 - Agency: €39/month - Unlimited websites, 1M views
+
+## Plan Feature Restrictions
+- Solo: Shows "Powered by ConsentEase" branding on banner
+- Pro/Agency: Can remove branding (white-label ready)
+- Agency only: API Access feature
 
 ## Project Architecture
 
@@ -77,6 +82,10 @@ The platform is a full-stack application with:
 - Products synced from Stripe to local database
 
 ## Recent Changes
+- December 26, 2025: Added "Powered by ConsentEase" branding in banner preview for Solo users
+- December 26, 2025: Added branding notice alert in banner configurator with upgrade button for Solo users
+- December 26, 2025: Banner script shows branding footer for Solo users, hidden for Pro/Agency
+- December 26, 2025: Added 7-day free trial badge to Solo plan in comparison table
 - December 26, 2025: Added centralized plan configuration in shared/plans.ts with pricing, limits, and features
 - December 26, 2025: Created PlanComparisonTable component with feature comparison and "Most Popular" highlighting
 - December 26, 2025: Updated landing page and settings upgrade modal to use shared plan components
