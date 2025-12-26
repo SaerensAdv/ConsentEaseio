@@ -416,6 +416,15 @@ export class DatabaseStorage implements IStorage {
   async deleteCookie(id: string): Promise<void> {
     await db.delete(cookies).where(eq(cookies.id, id));
   }
+
+  async deleteAutoDetectedCookies(websiteId: string): Promise<void> {
+    await db.delete(cookies).where(
+      and(
+        eq(cookies.websiteId, websiteId),
+        eq(cookies.isAutoDetected, true)
+      )
+    );
+  }
 }
 
 export const storage = new DatabaseStorage();

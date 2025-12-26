@@ -6,12 +6,70 @@ import { z } from "zod";
 import { generateBannerScript } from "./banner-script";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
+import { scanWebsite, type ClassifiedCookie } from "./cookie-scanner";
 
 // Helper to generate random public IDs
 function generatePublicId(): string {
   return Array.from({ length: 12 }, () => 
     Math.random().toString(36).substring(2)
   ).join('').substring(0, 12);
+}
+
+// Helper to run cookie scan and store results
+async function runCookieScan(websiteId: string, domain: string): Promise<void> {
+  try {
+    console.log(`Starting cookie scan for ${domain}...`);
+    const result = await scanWebsite(domain);
+    
+    if (!result.success) {
+      console.error(`Scan failed for ${domain}:`, result.error);
+      await storage.updateWebsite(websiteId, {
+        status: "attention",
+        lastScan: new Date(),
+        cookiesFound: 0,
+      });
+      return;
+    }
+    
+    // Get categories for this website
+    const categories = await storage.getCookieCategoriesByWebsiteId(websiteId);
+    const categoryMap = new Map(categories.map(c => [c.name, c.id]));
+    
+    // Delete previously auto-detected cookies
+    await storage.deleteAutoDetectedCookies(websiteId);
+    
+    // Store detected cookies
+    for (const cookie of result.cookies) {
+      const categoryId = categoryMap.get(cookie.category);
+      if (categoryId) {
+        await storage.createCookie({
+          websiteId,
+          categoryId,
+          name: cookie.name,
+          provider: cookie.provider,
+          purpose: cookie.purpose,
+          expiry: cookie.expiry,
+          type: cookie.type,
+          isAutoDetected: true,
+        });
+      }
+    }
+    
+    // Update website status
+    await storage.updateWebsite(websiteId, {
+      status: "compliant",
+      lastScan: new Date(),
+      cookiesFound: result.cookies.length,
+    });
+    
+    console.log(`Scan completed for ${domain}: ${result.cookies.length} cookies found`);
+  } catch (error) {
+    console.error(`Scan error for ${domain}:`, error);
+    await storage.updateWebsite(websiteId, {
+      status: "attention",
+      lastScan: new Date(),
+    });
+  }
 }
 
 export async function registerRoutes(
@@ -73,15 +131,10 @@ export async function registerRoutes(
       // Create default cookie categories for the website
       await storage.createDefaultCategoriesForWebsite(website.id);
       
-      // Simulate scanning completion after a delay (in production, this would be a background job)
-      setTimeout(async () => {
-        await storage.updateWebsite(website.id, {
-          status: "compliant",
-          lastScan: new Date(),
-          cookiesFound: Math.floor(Math.random() * 15) + 5,
-          scriptsFound: Math.floor(Math.random() * 8) + 3,
-        });
-      }, 3000);
+      // Run cookie scan in background
+      runCookieScan(website.id, website.domain).catch(err => {
+        console.error('Background scan error:', err);
+      });
       
       res.status(201).json(website);
     } catch (error) {
@@ -125,6 +178,32 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete website" });
+    }
+  });
+
+  // Rescan website cookies
+  app.post("/api/websites/:id/scan", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Set status to scanning
+      await storage.updateWebsite(website.id, { status: "scanning" });
+      
+      // Run scan in background
+      runCookieScan(website.id, website.domain).catch(err => {
+        console.error('Rescan error:', err);
+      });
+      
+      res.json({ message: "Scan started", status: "scanning" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to start scan" });
     }
   });
 
