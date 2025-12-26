@@ -7,14 +7,14 @@ export default function TermsOfService() {
     <div className="min-h-screen bg-background font-sans">
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
+          <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
             <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
               <Shield className="w-5 h-5 fill-current" />
             </div>
             ConsentEase
           </Link>
           <Link href="/">
-            <Button variant="ghost" className="gap-2">
+            <Button variant="ghost" className="gap-2" data-testid="button-back-home">
               <ArrowLeft className="w-4 h-4" />
               Back to Home
             </Button>

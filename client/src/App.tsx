@@ -16,6 +16,11 @@ import LoginPage from "@/pages/login";
 import PrivacyPolicy from "@/pages/legal/privacy";
 import TermsOfService from "@/pages/legal/terms";
 import CookiePolicy from "@/pages/legal/cookies";
+import AboutPage from "@/pages/about";
+import ContactPage from "@/pages/contact";
+import FAQPage from "@/pages/faq";
+import DocsPage from "@/pages/docs";
+import FeaturesPage from "@/pages/features";
 
 function Router() {
   return (
@@ -24,6 +29,11 @@ function Router() {
       <Route path="/compare" component={ComparePage}/>
       <Route path="/login" component={LoginPage}/>
       <Route path="/onboarding" component={Onboarding}/>
+      <Route path="/about" component={AboutPage}/>
+      <Route path="/contact" component={ContactPage}/>
+      <Route path="/faq" component={FAQPage}/>
+      <Route path="/docs" component={DocsPage}/>
+      <Route path="/features" component={FeaturesPage}/>
       <Route path="/privacy" component={PrivacyPolicy}/>
       <Route path="/terms" component={TermsOfService}/>
       <Route path="/cookies" component={CookiePolicy}/>

@@ -299,7 +299,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="bg-background border-t border-border pt-16 pb-8">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="grid md:grid-cols-5 gap-12 mb-12">
               <div className="col-span-2">
                 <Link href="/" className="text-xl font-display font-bold flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
@@ -314,10 +314,18 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><a href="#features" className="hover:text-primary">Features</a></li>
+                  <li><Link href="/features" className="hover:text-primary">Features</Link></li>
                   <li><a href="#pricing" className="hover:text-primary">Pricing</a></li>
-                  <li><a href="#about" className="hover:text-primary">About Us</a></li>
                   <li><Link href="/compare" className="hover:text-primary">Compare to OneTrust</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-4">Resources</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link href="/docs" className="hover:text-primary">Documentation</Link></li>
+                  <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
+                  <li><Link href="/about" className="hover:text-primary">About Us</Link></li>
+                  <li><Link href="/contact" className="hover:text-primary">Contact</Link></li>
                 </ul>
               </div>
               <div>
