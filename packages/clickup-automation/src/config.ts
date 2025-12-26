@@ -43,8 +43,9 @@ export function loadConfig(configPath?: string): ClickUpConfig {
       if (fs.existsSync(searchPath)) {
         const content = fs.readFileSync(searchPath, 'utf-8');
         const userConfig = JSON.parse(content);
-        cachedConfig = { ...DEFAULT_CONFIG, ...userConfig };
-        return cachedConfig;
+        const merged = { ...DEFAULT_CONFIG, ...userConfig };
+        cachedConfig = merged;
+        return merged;
       }
     } catch (e) {
       continue;
