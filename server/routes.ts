@@ -951,12 +951,16 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No valid price found for this plan" });
       }
 
+      // Solo plan gets 7-day free trial
+      const trialDays = planId === 'solo' ? 7 : undefined;
+
       const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
       const session = await stripeService.createCheckoutSession(
         customerId,
         finalPriceId,
         `${baseUrl}/dashboard/settings?success=true&plan=${planId || 'pro'}`,
-        `${baseUrl}/dashboard/settings?canceled=true`
+        `${baseUrl}/dashboard/settings?canceled=true`,
+        trialDays
       );
 
       res.json({ url: session.url });

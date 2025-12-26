@@ -11,16 +11,26 @@ export class StripeService {
     });
   }
 
-  async createCheckoutSession(customerId: string, priceId: string, successUrl: string, cancelUrl: string) {
+  async createCheckoutSession(customerId: string, priceId: string, successUrl: string, cancelUrl: string, trialDays?: number) {
     const stripe = await getUncachableStripeClient();
-    return await stripe.checkout.sessions.create({
+    
+    const sessionParams: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
       success_url: successUrl,
       cancel_url: cancelUrl,
-    });
+    };
+    
+    // Add trial period if specified
+    if (trialDays && trialDays > 0) {
+      sessionParams.subscription_data = {
+        trial_period_days: trialDays,
+      };
+    }
+    
+    return await stripe.checkout.sessions.create(sessionParams);
   }
 
   async createCustomerPortalSession(customerId: string, returnUrl: string) {
