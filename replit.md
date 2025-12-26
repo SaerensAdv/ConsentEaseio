@@ -92,6 +92,11 @@ The platform is a full-stack application with:
 - **STRIPE_WEBHOOK_SECRET**: Required for automatic subscription updates from webhooks. Get this from Stripe Dashboard > Developers > Webhooks > Signing secret
 
 ## Recent Changes
+- December 26, 2025: Added password reset and email verification flows:
+  - Password reset with secure tokens and email links (1-hour expiry)
+  - Email verification during registration (24-hour expiry)
+  - Forgot password and reset password pages
+  - Rate limiting on auth endpoints (10 attempts/15min), password reset (5/hour), API (100/min)
 - December 26, 2025: Added billing reliability infrastructure:
   - Added subscriptionStatus and subscriptionEndDate fields to users table
   - Created SubscriptionHandler for subscription lifecycle events

@@ -13,6 +13,9 @@ import EmbedCode from "@/pages/dashboard/embed";
 import Onboarding from "@/pages/onboarding";
 import ComparePage from "@/pages/compare";
 import LoginPage from "@/pages/login";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
+import VerifyEmail from "@/pages/verify-email";
 import PrivacyPolicy from "@/pages/legal/privacy";
 import TermsOfService from "@/pages/legal/terms";
 import CookiePolicy from "@/pages/legal/cookies";
@@ -28,6 +31,9 @@ function Router() {
       <Route path="/" component={Home}/>
       <Route path="/compare" component={ComparePage}/>
       <Route path="/login" component={LoginPage}/>
+      <Route path="/forgot-password" component={ForgotPassword}/>
+      <Route path="/reset-password" component={ResetPassword}/>
+      <Route path="/verify-email" component={VerifyEmail}/>
       <Route path="/onboarding" component={Onboarding}/>
       <Route path="/about" component={AboutPage}/>
       <Route path="/contact" component={ContactPage}/>
