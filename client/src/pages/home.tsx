@@ -4,7 +4,7 @@ import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X } from "lucide-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import abstractImage from "@assets/generated_images/abstract_3d_glass_shapes_in_purple_and_yellow_on_white.png";
+import abstractImage from "@assets/b0cfeeaa-3b72-4959-bc58-a8dc3577e09b_1766777685513.png";
 import PlanComparisonTable from "@/components/PlanComparisonTable";
 
 export default function Home() {
