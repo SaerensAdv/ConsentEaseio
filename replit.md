@@ -37,6 +37,12 @@ The platform is a full-stack application with:
   - `compare.tsx` - OneTrust comparison page
   - `login.tsx` - Authentication page
   - `onboarding.tsx` - New user onboarding flow
+  - `about.tsx` - Company story and mission
+  - `contact.tsx` - Contact form and support info
+  - `faq.tsx` - Frequently asked questions with accordion
+  - `docs.tsx` - Documentation with tabbed setup guides
+  - `features.tsx` - Feature breakdown with comparison table
+  - `legal/` - Legal pages (privacy.tsx, terms.tsx, cookies.tsx)
   - `dashboard/` - Dashboard pages (websites, banner, embed, analytics, settings)
 
 ### Backend (Express + TypeScript)
@@ -82,6 +88,9 @@ The platform is a full-stack application with:
 - Products synced from Stripe to local database
 
 ## Recent Changes
+- December 26, 2025: Added all public pages (About, Contact, FAQ, Documentation, Features)
+- December 26, 2025: Added legal pages (Privacy Policy, Terms of Service, Cookie Policy)
+- December 26, 2025: Updated footer with organized sections (Product, Resources, Legal)
 - December 26, 2025: Added "Powered by ConsentEase" branding in banner preview for Solo users
 - December 26, 2025: Added branding notice alert in banner configurator with upgrade button for Solo users
 - December 26, 2025: Banner script shows branding footer for Solo users, hidden for Pro/Agency
