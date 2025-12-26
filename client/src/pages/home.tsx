@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import abstractImage from "@assets/generated_images/abstract_3d_glass_shapes_in_purple_and_yellow_on_white.png";
+import { PlanComparisonCards } from "@/components/PlanComparisonTable";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,35 +28,6 @@ export default function Home() {
     }
   ];
 
-  const pricing = [
-    {
-      name: "Solo",
-      price: "€5",
-      period: "/month",
-      description: "Perfect for personal sites.",
-      features: ["1 Website", "10,000 Views/mo", "Basic Customization", "Email Support"],
-      cta: "Start Free Trial",
-      popular: false
-    },
-    {
-      name: "Pro",
-      price: "€12",
-      period: "/month",
-      description: "For growing businesses.",
-      features: ["5 Websites", "100,000 Views/mo", "Full Customization", "Priority Support", "Remove Branding"],
-      cta: "Get Started",
-      popular: true
-    },
-    {
-      name: "Agency",
-      price: "€39",
-      period: "/month",
-      description: "Manage multiple clients.",
-      features: ["Unlimited Websites", "1M Views/mo", "White Label", "API Access", "Client Management"],
-      cta: "Contact Sales",
-      popular: false
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
@@ -261,55 +233,20 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Transparent Pricing</h2>
-              <p className="text-lg text-muted-foreground">No hidden fees. No surprises.</p>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                No hidden fees. No surprises. Choose the plan that fits your needs.
+              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {pricing.map((plan, idx) => (
-                <motion.div
-                  key={idx}
-                  whileHover={{ y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Card className={`h-full flex flex-col relative ${plan.popular ? 'border-primary shadow-2xl shadow-primary/10 ring-2 ring-primary ring-offset-2' : 'hover:shadow-lg transition-shadow'}`}>
-                    {plan.popular && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        Most Popular
-                      </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-4xl font-bold font-display">{plan.price}</span>
-                        <span className="text-muted-foreground">{plan.period}</span>
-                      </div>
-                      <CardDescription className="mt-2">{plan.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm">
-                            <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Link href="/onboarding" className="w-full">
-                        <Button 
-                          className={`w-full ${plan.popular ? 'bg-primary' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
-                          data-testid={`button-pricing-${plan.name.toLowerCase()}`}
-                        >
-                          {plan.cta}
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="max-w-5xl mx-auto"
+            >
+              <PlanComparisonCards />
+            </motion.div>
           </div>
         </section>
 

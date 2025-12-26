@@ -12,6 +12,8 @@ import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, B
 import { Progress } from "@/components/ui/progress";
 import { logout } from "@/lib/auth";
 import { toast } from "sonner";
+import { PLANS, getPlanById } from "@shared/plans";
+import { PlanComparisonCards } from "@/components/PlanComparisonTable";
 
 interface UsageData {
   plan: string;
@@ -26,37 +28,6 @@ interface AuthUser {
   lastName: string | null;
   plan: string;
 }
-
-const plans = [
-  {
-    id: "solo",
-    name: "Solo",
-    price: "€5",
-    priceAmount: 5,
-    websites: 1,
-    views: "10k",
-    features: ["1 Website", "10,000 Views/mo", "Basic Customization", "Email Support"],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "€12",
-    priceAmount: 12,
-    websites: 5,
-    views: "100k",
-    features: ["5 Websites", "100,000 Views/mo", "Full Customization", "Priority Support", "Remove Branding"],
-    popular: true,
-  },
-  {
-    id: "agency",
-    name: "Agency",
-    price: "€39",
-    priceAmount: 39,
-    websites: "Unlimited",
-    views: "1M",
-    features: ["Unlimited Websites", "1M Views/mo", "White Label", "API Access", "Client Management"],
-  },
-];
 
 export default function Settings() {
   const [, setLocation] = useLocation();
@@ -183,13 +154,14 @@ export default function Settings() {
     return user?.email?.[0]?.toUpperCase() || "U";
   };
 
-  const getPlanDisplay = (plan: string) => {
-    switch (plan) {
-      case "solo": return { name: "Solo", price: "€5", limit: 1, views: "10k" };
-      case "pro": return { name: "Pro", price: "€12", limit: 5, views: "100k" };
-      case "agency": return { name: "Agency", price: "€39", limit: "Unlimited", views: "1M" };
-      default: return { name: "Solo", price: "€5", limit: 1, views: "10k" };
-    }
+  const getPlanDisplay = (planId: string) => {
+    const plan = getPlanById(planId) || PLANS[0];
+    return {
+      name: plan.name,
+      price: plan.priceDisplay,
+      limit: plan.websites === 'unlimited' ? 'Unlimited' : plan.websites,
+      views: plan.viewsDisplay,
+    };
   };
 
   const planInfo = getPlanDisplay(user?.plan || "solo");
@@ -483,68 +455,21 @@ export default function Settings() {
       </div>
 
       <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-display">Upgrade Your Plan</DialogTitle>
             <DialogDescription>
               Choose a plan that fits your needs. You can change or cancel anytime.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid md:grid-cols-3 gap-4 mt-4">
-            {plans.map((plan) => {
-              const isCurrentPlan = user?.plan === plan.id;
-              const isUpgrade = plans.findIndex(p => p.id === user?.plan) < plans.findIndex(p => p.id === plan.id);
-              
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative p-5 rounded-xl border-2 transition-all ${
-                    plan.popular 
-                      ? 'border-primary shadow-lg shadow-primary/10' 
-                      : 'border-border hover:border-primary/50'
-                  } ${isCurrentPlan ? 'bg-primary/5' : ''}`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                      Most Popular
-                    </div>
-                  )}
-                  <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-3">
-                    <span className="text-3xl font-bold font-display">{plan.price}</span>
-                    <span className="text-muted-foreground">/mo</span>
-                  </div>
-                  <ul className="space-y-2 mb-4 text-sm">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-primary shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {isCurrentPlan ? (
-                    <Button disabled className="w-full" variant="outline">
-                      Current Plan
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
-                      onClick={() => handleUpgrade(plan.id)}
-                      disabled={checkoutMutation.isPending && selectedPlan === plan.id}
-                      data-testid={`button-select-plan-${plan.id}`}
-                    >
-                      {checkoutMutation.isPending && selectedPlan === plan.id ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                      )}
-                      {isUpgrade ? 'Upgrade' : 'Switch'}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
+          <div className="mt-4">
+            <PlanComparisonCards 
+              currentPlan={user?.plan}
+              onSelectPlan={(planId) => {
+                setSelectedPlan(planId);
+                handleUpgrade(planId);
+              }}
+            />
           </div>
         </DialogContent>
       </Dialog>
