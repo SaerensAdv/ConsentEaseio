@@ -63,7 +63,10 @@ export default function DashboardWebsites() {
         credentials: "include",
         body: JSON.stringify({ domain }),
       });
-      if (!res.ok) throw new Error("Failed to add website");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || error.error || "Failed to add website");
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -72,8 +75,8 @@ export default function DashboardWebsites() {
       setIsAddDialogOpen(false);
       toast.success("Website added! Scanning for cookies...");
     },
-    onError: () => {
-      toast.error("Failed to add website");
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 

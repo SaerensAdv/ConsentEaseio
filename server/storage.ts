@@ -1,12 +1,27 @@
 import { users, websites, bannerConfigs, analyticsEvents, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, desc, sql, count } from "drizzle-orm";
+
+// Plan limits configuration
+// Using -1 to represent unlimited for JSON serialization
+export const PLAN_LIMITS = {
+  solo: { websites: 1, monthlyViews: 10000 },
+  pro: { websites: 5, monthlyViews: 100000 },
+  agency: { websites: -1, monthlyViews: 1000000 }, // -1 = unlimited
+} as const;
+
+export function isUnlimited(limit: number): boolean {
+  return limit === -1;
+}
+
+export type PlanType = keyof typeof PLAN_LIMITS;
 
 export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
   
   // Website methods
   getWebsitesByUserId(userId: string): Promise<Website[]>;
@@ -15,6 +30,7 @@ export interface IStorage {
   createWebsite(website: InsertWebsite): Promise<Website>;
   updateWebsite(id: string, updates: Partial<Website>): Promise<Website>;
   deleteWebsite(id: string): Promise<void>;
+  countWebsitesByUserId(userId: string): Promise<number>;
   
   // Banner config methods
   getBannerConfigByWebsiteId(websiteId: string): Promise<BannerConfig | undefined>;
@@ -31,6 +47,7 @@ export interface IStorage {
     dailyStats: Array<{ date: string; views: number; accepts: number; rejects: number }>;
     countryBreakdown: Array<{ country: string; count: number }>;
   }>;
+  getMonthlyViewsForUser(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -48,6 +65,11 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return updated;
   }
 
   // Website methods
@@ -77,6 +99,11 @@ export class DatabaseStorage implements IStorage {
 
   async deleteWebsite(id: string): Promise<void> {
     await db.delete(websites).where(eq(websites.id, id));
+  }
+
+  async countWebsitesByUserId(userId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(websites).where(eq(websites.userId, userId));
+    return result[0]?.count || 0;
   }
 
   // Banner config methods
@@ -176,6 +203,30 @@ export class DatabaseStorage implements IStorage {
   }): Promise<User> {
     const [updated] = await db.update(users).set(stripeInfo).where(eq(users.id, userId)).returning();
     return updated;
+  }
+
+  async getMonthlyViewsForUser(userId: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const userWebsites = await this.getWebsitesByUserId(userId);
+    if (userWebsites.length === 0) return 0;
+
+    const websiteIds = userWebsites.map(w => w.id);
+    
+    const result = await db
+      .select({ count: count() })
+      .from(analyticsEvents)
+      .where(
+        and(
+          sql`${analyticsEvents.websiteId} = ANY(ARRAY[${sql.raw(websiteIds.map(id => `'${id}'`).join(','))}]::varchar[])`,
+          eq(analyticsEvents.eventType, 'banner_shown'),
+          gte(analyticsEvents.timestamp, startOfMonth)
+        )
+      );
+    
+    return result[0]?.count || 0;
   }
 }
 

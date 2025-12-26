@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, PLAN_LIMITS, type PlanType, isUnlimited } from "./storage";
 import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateBannerScript } from "./banner-script";
@@ -36,6 +36,26 @@ export async function registerRoutes(
     try {
       if (!req.user) {
         return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      // Check plan limits
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+      
+      const plan = (user.plan || 'solo') as PlanType;
+      const limits = PLAN_LIMITS[plan];
+      const currentCount = await storage.countWebsitesByUserId(req.user.id);
+      
+      if (!isUnlimited(limits.websites) && currentCount >= limits.websites) {
+        return res.status(403).json({ 
+          error: "Website limit reached",
+          message: `Your ${plan} plan allows ${limits.websites} website${limits.websites === 1 ? '' : 's'}. Please upgrade to add more.`,
+          currentCount,
+          limit: limits.websites,
+          plan 
+        });
       }
       
       const validated = insertWebsiteSchema.parse({
@@ -102,6 +122,45 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete website" });
+    }
+  });
+
+  // Usage endpoint - shows current plan usage
+  app.get("/api/usage", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+      
+      const plan = (user.plan || 'solo') as PlanType;
+      const limits = PLAN_LIMITS[plan];
+      const websiteCount = await storage.countWebsitesByUserId(req.user.id);
+      const monthlyViews = await storage.getMonthlyViewsForUser(req.user.id);
+      
+      const websitesUnlimited = isUnlimited(limits.websites);
+      
+      res.json({
+        plan,
+        websites: {
+          used: websiteCount,
+          limit: websitesUnlimited ? 'unlimited' : limits.websites,
+          remaining: websitesUnlimited ? 'unlimited' : Math.max(0, limits.websites - websiteCount),
+          unlimited: websitesUnlimited,
+        },
+        views: {
+          used: monthlyViews,
+          limit: limits.monthlyViews,
+          remaining: Math.max(0, limits.monthlyViews - monthlyViews),
+          percentUsed: limits.monthlyViews > 0 ? Math.round((monthlyViews / limits.monthlyViews) * 100) : 0,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch usage" });
     }
   });
 
@@ -340,7 +399,7 @@ export async function registerRoutes(
       const session = await stripeService.createCheckoutSession(
         customerId,
         finalPriceId,
-        `${baseUrl}/dashboard/settings?success=true`,
+        `${baseUrl}/dashboard/settings?success=true&plan=${planId || 'pro'}`,
         `${baseUrl}/dashboard/settings?canceled=true`
       );
 
@@ -348,6 +407,64 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Checkout error:", error);
       res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // Sync plan after successful checkout - verifies with Stripe
+  app.post("/api/stripe/sync-plan", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { plan } = req.body;
+      if (!plan || !['solo', 'pro', 'agency'].includes(plan)) {
+        return res.status(400).json({ error: "Invalid plan" });
+      }
+
+      // Verify user has a valid Stripe subscription before allowing plan update
+      const user = await storage.getUser(req.user.id);
+      if (!user?.stripeCustomerId) {
+        return res.status(403).json({ error: "No payment method found. Please complete checkout." });
+      }
+
+      // Verify with Stripe that customer has active subscription
+      const stripe = await import('./stripeClient').then(m => m.getStripeClient());
+      const subscriptions = await stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        return res.status(403).json({ error: "No active subscription found" });
+      }
+
+      // Get the price from the subscription to verify the plan matches
+      const subscription = subscriptions.data[0];
+      const priceId = subscription.items.data[0]?.price.id;
+      const price = await stripe.prices.retrieve(priceId);
+      const amount = price.unit_amount || 0;
+
+      // Map amount to expected plan
+      const amountToPlan: Record<number, string> = {
+        500: 'solo',
+        1200: 'pro',
+        3900: 'agency',
+      };
+      const expectedPlan = amountToPlan[amount];
+
+      if (expectedPlan && expectedPlan !== plan) {
+        // Update to the actual plan from Stripe
+        await storage.updateUser(req.user.id, { plan: expectedPlan });
+        return res.json({ success: true, plan: expectedPlan });
+      }
+
+      await storage.updateUser(req.user.id, { plan });
+      res.json({ success: true, plan });
+    } catch (error) {
+      console.error("Sync plan error:", error);
+      res.status(500).json({ error: "Failed to sync plan" });
     }
   });
 

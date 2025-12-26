@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useSearch } from "wouter";
 import DashboardLayout from "./layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { CreditCard, User, Mail, Shield, Check, Loader2, Sparkles, ArrowRight, BarChart3 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { logout } from "@/lib/auth";
 import { toast } from "sonner";
+
+interface UsageData {
+  plan: string;
+  websites: { used: number; limit: number | 'unlimited'; remaining: number | 'unlimited'; unlimited: boolean };
+  views: { used: number; limit: number; remaining: number; percentUsed: number };
+}
 
 interface AuthUser {
   id: string;
@@ -53,9 +60,35 @@ const plans = [
 
 export default function Settings() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"profile" | "billing">("profile");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+  // Handle checkout success - sync plan
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const success = params.get('success');
+    const plan = params.get('plan');
+    
+    if (success === 'true' && plan) {
+      // Sync the plan
+      fetch('/api/stripe/sync-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ plan }),
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/usage'] });
+        toast.success(`Successfully upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
+        // Remove query params from URL
+        window.history.replaceState({}, '', '/dashboard/settings');
+        setActiveTab('billing');
+      });
+    }
+  }, [searchString, queryClient]);
 
   const { data: user, isLoading } = useQuery<AuthUser>({
     queryKey: ["/api/auth/me"],
@@ -68,6 +101,16 @@ export default function Settings() {
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();
     },
+  });
+
+  const { data: usage } = useQuery<UsageData>({
+    queryKey: ["/api/usage"],
+    queryFn: async () => {
+      const res = await fetch("/api/usage", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch usage");
+      return res.json();
+    },
+    enabled: !!user,
   });
 
   const handleLogout = async () => {
@@ -311,6 +354,61 @@ export default function Settings() {
                       <Sparkles className="w-4 h-4 mr-2" />
                       Upgrade Plan
                     </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Usage Stats Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Usage This Month
+                  </CardTitle>
+                  <CardDescription>Track your usage against plan limits.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Websites Usage */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Websites</span>
+                      <span className="text-sm text-muted-foreground" data-testid="text-websites-usage">
+                        {usage?.websites.used || 0} of {usage?.websites.unlimited ? '∞' : (usage?.websites.limit || 0)}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={usage?.websites.unlimited ? 0 : ((usage?.websites.used || 0) / (Number(usage?.websites.limit) || 1)) * 100} 
+                      className="h-2"
+                    />
+                    {usage && !usage.websites.unlimited && usage.websites.used >= Number(usage.websites.limit) && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        You've reached your website limit. Upgrade to add more.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Pageviews Usage */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Pageviews</span>
+                      <span className="text-sm text-muted-foreground" data-testid="text-views-usage">
+                        {(usage?.views.used || 0).toLocaleString()} of {(usage?.views.limit || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={usage?.views.percentUsed || 0} 
+                      className="h-2"
+                    />
+                    {usage && usage.views.percentUsed >= 80 && usage.views.percentUsed < 100 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        You're approaching your pageview limit ({usage.views.percentUsed}% used).
+                      </p>
+                    )}
+                    {usage && usage.views.percentUsed >= 100 && (
+                      <p className="text-xs text-red-600 dark:text-red-400">
+                        You've exceeded your pageview limit. Upgrade to continue tracking.
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
