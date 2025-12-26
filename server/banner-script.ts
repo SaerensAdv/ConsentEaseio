@@ -266,9 +266,16 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     prefsOverlay.className = 'ce-prefs-overlay';
     prefsOverlay.id = 'ce-prefs-modal';
     
+    var storedConsent = getStoredConsent();
     var categoryStates = {};
     categories.forEach(function(cat) {
-      categoryStates[cat.name] = cat.isRequired ? true : true;
+      if (cat.isRequired) {
+        categoryStates[cat.name] = true;
+      } else if (storedConsent && typeof storedConsent === 'object') {
+        categoryStates[cat.name] = storedConsent[cat.name] !== false;
+      } else {
+        categoryStates[cat.name] = true;
+      }
     });
     
     function renderCategories() {

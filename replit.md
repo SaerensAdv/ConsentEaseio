@@ -59,6 +59,8 @@ The platform is a full-stack application with:
   - users (with Stripe customer/subscription IDs)
   - websites
   - banner_configs
+  - cookie_categories (4 default: necessary, functional, analytics, marketing)
+  - cookies (individual cookie definitions per category)
   - analytics_events
 
 ### Styling
@@ -74,6 +76,18 @@ The platform is a full-stack application with:
 - Content options: heading, description, button text, font family/size
 - Layout options: position (5 options), animation (3 options), icon toggle
 - Button customization: style (filled/outline), shape (pill/rounded/sharp)
+
+### Cookie Management
+- Default categories created per website: Necessary, Functional, Analytics, Marketing
+- Category customization: display name, description, enabled/disabled toggle
+- Individual cookie management: name, provider, purpose, expiry, type (first/third-party)
+- Granular consent modal in banner with per-category toggles
+- Preferences preserved in localStorage and restored when modal reopens
+- Google Consent Mode v2 integration maps categories to consent types:
+  - marketing → ad_storage, ad_user_data, ad_personalization
+  - analytics → analytics_storage
+  - functional → functionality_storage, personalization_storage
+  - necessary → security_storage (always granted)
 
 ### Embed Script
 - Generated JavaScript that customers add to their websites
@@ -92,6 +106,13 @@ The platform is a full-stack application with:
 - **STRIPE_WEBHOOK_SECRET**: Required for automatic subscription updates from webhooks. Get this from Stripe Dashboard > Developers > Webhooks > Signing secret
 
 ## Recent Changes
+- December 26, 2025: Added complete cookie management system:
+  - Cookie categories table with default categories (necessary, functional, analytics, marketing)
+  - Individual cookies table with provider, purpose, expiry, and type fields
+  - Dashboard page for managing cookie categories and cookies (/dashboard/cookies)
+  - Granular consent modal in banner script with per-category toggles
+  - Preferences preserved in localStorage and restored when modal reopens
+  - Google Consent Mode v2 integration mapping categories to consent types
 - December 26, 2025: Added password reset and email verification flows:
   - Password reset with secure tokens and email links (1-hour expiry)
   - Email verification during registration (24-hour expiry)
