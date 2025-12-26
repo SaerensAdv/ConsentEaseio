@@ -69,11 +69,237 @@ async function runCookieScan(websiteId: string, domain: string): Promise<void> {
   }
 }
 
+// Simple in-memory rate limiter for public endpoints
+const publicScanRateLimit = new Map<string, { count: number; resetAt: number }>();
+const MAX_SCANS_PER_IP = 5;
+const SCAN_RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+
+function checkPublicScanRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = publicScanRateLimit.get(ip);
+  
+  if (!record || now > record.resetAt) {
+    publicScanRateLimit.set(ip, { count: 1, resetAt: now + SCAN_RATE_LIMIT_WINDOW });
+    return true;
+  }
+  
+  if (record.count >= MAX_SCANS_PER_IP) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
+// Domain validation - block internal/private IPs
+function isValidPublicDomain(domain: string): boolean {
+  const lower = domain.toLowerCase();
+  
+  // Block localhost and internal domains
+  if (lower === 'localhost' || lower.endsWith('.local') || lower.endsWith('.internal')) {
+    return false;
+  }
+  
+  // Block IP addresses (simple check)
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(lower)) {
+    return false;
+  }
+  
+  // Block common internal ranges
+  if (lower.startsWith('10.') || lower.startsWith('192.168.') || lower.startsWith('172.')) {
+    return false;
+  }
+  
+  // Must have at least one dot (valid domain)
+  if (!lower.includes('.')) {
+    return false;
+  }
+  
+  return true;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  // ==========================================
+  // PUBLIC ONBOARDING ENDPOINTS (No auth required)
+  // ==========================================
+  
+  // Public scan endpoint - runs scanner without creating account
+  app.post("/api/public/scan", async (req, res) => {
+    try {
+      // Rate limiting by IP
+      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+      if (!checkPublicScanRateLimit(clientIp)) {
+        return res.status(429).json({ 
+          error: "Too many scan requests. Please try again later.",
+          retryAfter: 3600 
+        });
+      }
+      
+      const { domain } = req.body;
+      
+      if (!domain || typeof domain !== "string") {
+        return res.status(400).json({ error: "Domain is required" });
+      }
+      
+      // Clean domain
+      let cleanDomain = domain.trim().toLowerCase();
+      cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+      
+      // Validate domain
+      if (!isValidPublicDomain(cleanDomain)) {
+        return res.status(400).json({ error: "Please enter a valid public domain name" });
+      }
+      
+      console.log(`Public scan starting for ${cleanDomain}...`);
+      
+      // Run the actual scan
+      const result = await scanWebsite(cleanDomain);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: result.error || "Failed to scan website" 
+        });
+      }
+      
+      // Return scan results without storing anything
+      res.json({
+        success: true,
+        domain: cleanDomain,
+        cookies: result.cookies,
+        cookiesFound: result.cookies.length,
+      });
+    } catch (error) {
+      console.error("Public scan error:", error);
+      res.status(500).json({ error: "Failed to scan website" });
+    }
+  });
+  
+  // Onboarding registration - creates account + website + stores scan results
+  app.post("/api/onboarding/register", async (req, res) => {
+    try {
+      const { email, password, domain, cookies } = req.body;
+      
+      // Input validation
+      if (!email || !password || !domain) {
+        return res.status(400).json({ error: "Email, password, and domain are required" });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Please enter a valid email address" });
+      }
+      
+      // Validate password length
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+      
+      // Clean and validate domain
+      let cleanDomain = domain.trim().toLowerCase();
+      cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+      
+      if (!isValidPublicDomain(cleanDomain)) {
+        return res.status(400).json({ error: "Please enter a valid public domain name" });
+      }
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (existingUser) {
+        return res.status(400).json({ error: "An account with this email already exists" });
+      }
+      
+      // Import bcrypt for password hashing
+      const bcrypt = await import("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Create user
+      const user = await storage.createUser({
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        plan: "solo",
+      });
+      
+      // Create website
+      const website = await storage.createWebsite({
+        userId: user.id,
+        domain: cleanDomain,
+        publicId: generatePublicId(),
+        status: "compliant",
+      });
+      
+      // Create default banner config
+      await storage.createBannerConfig({ websiteId: website.id });
+      
+      // Create default cookie categories
+      await storage.createDefaultCategoriesForWebsite(website.id);
+      
+      // If scan results were provided, store the cookies (with limits)
+      if (cookies && Array.isArray(cookies) && cookies.length > 0) {
+        // Limit to 100 cookies max to prevent abuse
+        const limitedCookies = cookies.slice(0, 100);
+        const categories = await storage.getCookieCategoriesByWebsiteId(website.id);
+        const categoryMap = new Map(categories.map(c => [c.name, c.id]));
+        const validCategories = ["necessary", "functional", "analytics", "marketing"];
+        
+        const cookiesToInsert = limitedCookies
+          .filter((cookie: ClassifiedCookie) => 
+            categoryMap.has(cookie.category) && 
+            validCategories.includes(cookie.category) &&
+            typeof cookie.name === "string" && cookie.name.length <= 100
+          )
+          .map((cookie: ClassifiedCookie) => ({
+            websiteId: website.id,
+            categoryId: categoryMap.get(cookie.category)!,
+            name: String(cookie.name).substring(0, 100),
+            provider: String(cookie.provider || "Unknown").substring(0, 100),
+            purpose: String(cookie.purpose || "").substring(0, 500),
+            expiry: String(cookie.expiry || "Session").substring(0, 50),
+            type: cookie.type === "first-party" ? "first-party" : "third-party",
+            isAutoDetected: true,
+          }));
+        
+        if (cookiesToInsert.length > 0) {
+          await storage.replaceAutoDetectedCookies(website.id, cookiesToInsert);
+        }
+        
+        // Update website with cookie count
+        await storage.updateWebsite(website.id, {
+          cookiesFound: cookiesToInsert.length,
+          lastScan: new Date(),
+        });
+      }
+      
+      // Log the user in automatically
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Auto-login error:", err);
+          return res.status(201).json({ 
+            success: true, 
+            message: "Account created. Please log in.",
+            redirect: "/login"
+          });
+        }
+        
+        res.status(201).json({
+          success: true,
+          user: { id: user.id, email: user.email, plan: user.plan },
+          website: { id: website.id, domain: website.domain },
+          redirect: "/dashboard/banner"
+        });
+      });
+    } catch (error) {
+      console.error("Onboarding registration error:", error);
+      res.status(500).json({ error: "Failed to create account" });
+    }
+  });
+  
+  // ==========================================
   // Websites endpoints
   app.get("/api/websites", async (req, res) => {
     try {
