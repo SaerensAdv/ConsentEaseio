@@ -617,28 +617,14 @@ export default function BannerConfigurator() {
               <button 
                 onClick={() => setPreviewDevice("desktop")}
                 className={`p-2 rounded-full transition-colors ${previewDevice === 'desktop' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
-                title="Desktop view"
               >
                 <Monitor className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setPreviewDevice("mobile")}
                 className={`p-2 rounded-full transition-colors ${previewDevice === 'mobile' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
-                title="Mobile view"
               >
                 <Smartphone className="w-4 h-4" />
-              </button>
-              <div className="w-px h-4 bg-border mx-1" />
-              <button 
-                onClick={() => {
-                  setCategoryStates({ necessary: true, functional: true, analytics: true, marketing: true });
-                  toast.success("Consent reset - all categories enabled");
-                }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-muted text-muted-foreground"
-                title="Reset consent preferences"
-                data-testid="button-reset-consent"
-              >
-                Reset Consent
               </button>
             </div>
 
