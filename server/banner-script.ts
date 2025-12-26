@@ -1,9 +1,19 @@
 export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true): string {
-  const apiBaseUrl = process.env.REPLIT_DOMAINS 
-    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-    : process.env.REPLIT_DEV_DOMAIN
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-      : 'https://consentease.replit.app';
+  // Prioritize custom domain (consentease.io) if available
+  let apiBaseUrl = 'https://consentease.io';
+  
+  if (process.env.REPLIT_DOMAINS) {
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    // Look for custom domain first (not .replit.app)
+    const customDomain = domains.find(d => !d.includes('.replit.app') && !d.includes('replit.dev'));
+    if (customDomain) {
+      apiBaseUrl = `https://${customDomain}`;
+    } else {
+      apiBaseUrl = `https://${domains[0]}`;
+    }
+  } else if (process.env.REPLIT_DEV_DOMAIN) {
+    apiBaseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
 
   const script = `
 (function() {
