@@ -58,15 +58,15 @@ async function main() {
     console.log(`  Found ${tasks.length} tasks`);
 
     for (const task of tasks) {
-      const currentStatus = task.status?.status?.toLowerCase() || '';
+      const currentStatus = task.status?.status?.toUpperCase() || '';
       
-      if (currentStatus === 'to do' || currentStatus === 'complete' || currentStatus === 'in progress') {
+      if (currentStatus === 'TO DO') {
         skippedCount++;
         continue;
       }
 
       try {
-        await updateTaskStatus(task.id, 'to do');
+        await updateTaskStatus(task.id, 'TO DO');
         updatedCount++;
         console.log(`  ✅ Updated: ${task.name}`);
         
