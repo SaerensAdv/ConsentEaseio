@@ -77,6 +77,10 @@ The platform is a full-stack application with:
 - Products synced from Stripe to local database
 
 ## Recent Changes
+- December 26, 2025: Added centralized plan configuration in shared/plans.ts with pricing, limits, and features
+- December 26, 2025: Created PlanComparisonTable component with feature comparison and "Most Popular" highlighting
+- December 26, 2025: Updated landing page and settings upgrade modal to use shared plan components
+- December 26, 2025: Added inline limit error UX with upgrade path when adding websites
 - December 26, 2025: Added plan limit enforcement (websites per plan, monthly views tracking)
 - December 26, 2025: Added usage stats display in dashboard settings with progress bars
 - December 26, 2025: Secured plan sync endpoint to verify Stripe subscription
