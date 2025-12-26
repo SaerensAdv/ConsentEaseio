@@ -524,6 +524,15 @@ export function useIntroOverlay() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // Disable intro on mobile devices (< 768px) due to performance
+    const isMobile = window.innerWidth < 768;
+    
+    if (isMobile) {
+      setShowIntro(false);
+      setIsReady(true);
+      return;
+    }
+    
     const hasSeenIntro = localStorage.getItem(STORAGE_KEY);
     if (hasSeenIntro) {
       setShowIntro(false);
