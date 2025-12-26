@@ -587,7 +587,8 @@ export async function registerRoutes(
     // Allow cross-origin requests for the banner script
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+    // Short cache with revalidation - query param ?v= can bust cache on config changes
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     
     try {
       const website = await storage.getWebsiteByPublicId(req.params.publicId);
@@ -598,6 +599,15 @@ export async function registerRoutes(
       const config = await storage.getBannerConfigByWebsiteId(website.id);
       if (!config) {
         return res.status(404).type('application/javascript').send('// ConsentEase: Banner config not found. Please configure your banner first.');
+      }
+      
+      // Add ETag based on config updatedAt for proper cache validation
+      const etag = `"${website.publicId}-${config.updatedAt.getTime()}"`;
+      res.setHeader('ETag', etag);
+      
+      // Check if client has fresh version
+      if (req.headers['if-none-match'] === etag) {
+        return res.status(304).end();
       }
       
       // Check user's plan to determine if branding should be shown

@@ -14,6 +14,11 @@ interface Website {
   publicId: string;
 }
 
+interface BannerConfig {
+  id: string;
+  updatedAt: string;
+}
+
 export default function EmbedCode() {
   const [, setLocation] = useLocation();
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
@@ -33,8 +38,24 @@ export default function EmbedCode() {
   });
 
   const activeWebsite = websites.find(w => w.id === selectedWebsiteId) || websites[0];
+  
+  // Fetch banner config to get updatedAt for cache busting
+  const { data: bannerConfig } = useQuery<BannerConfig>({
+    queryKey: ["/api/websites", activeWebsite?.id, "banner"],
+    queryFn: async () => {
+      const res = await fetch(`/api/websites/${activeWebsite?.id}/banner`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch banner config");
+      return res.json();
+    },
+    enabled: !!activeWebsite?.id,
+  });
+  
+  // Use banner config updatedAt for stable cache busting (only changes when config changes)
+  const scriptVersion = bannerConfig?.updatedAt 
+    ? new Date(bannerConfig.updatedAt).getTime() 
+    : Date.now();
   const scriptUrl = activeWebsite 
-    ? `${window.location.origin}/api/consent/${activeWebsite.publicId}/script.js`
+    ? `${window.location.origin}/api/consent/${activeWebsite.publicId}/script.js?v=${scriptVersion}`
     : '';
   
   // Full embed code with inline consent default (must run BEFORE GTM)
