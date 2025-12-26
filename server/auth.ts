@@ -20,6 +20,7 @@ declare global {
       plan: string;
       subscriptionStatus: string | null;
       subscriptionEndDate: Date | null;
+      stripeSubscriptionId: string | null;
     }
   }
 }
@@ -75,6 +76,7 @@ export function setupAuth(app: Express) {
             plan: user.plan,
             subscriptionStatus: user.subscriptionStatus,
             subscriptionEndDate: user.subscriptionEndDate,
+            stripeSubscriptionId: user.stripeSubscriptionId,
           });
         } catch (error) {
           return done(error);
@@ -103,6 +105,7 @@ export function setupAuth(app: Express) {
         plan: user.plan,
         subscriptionStatus: user.subscriptionStatus,
         subscriptionEndDate: user.subscriptionEndDate,
+        stripeSubscriptionId: user.stripeSubscriptionId,
       });
     } catch (error) {
       done(error);
@@ -156,6 +159,7 @@ export function setupAuth(app: Express) {
           plan: user.plan,
           subscriptionStatus: user.subscriptionStatus,
           subscriptionEndDate: user.subscriptionEndDate,
+          stripeSubscriptionId: user.stripeSubscriptionId,
         },
         (err) => {
           if (err) {
@@ -169,6 +173,7 @@ export function setupAuth(app: Express) {
             plan: user.plan,
             subscriptionStatus: user.subscriptionStatus,
             subscriptionEndDate: user.subscriptionEndDate,
+            stripeSubscriptionId: user.stripeSubscriptionId,
           });
         }
       );
@@ -392,6 +397,7 @@ export function setupAuth(app: Express) {
         plan: updatedUser.plan,
         subscriptionStatus: updatedUser.subscriptionStatus,
         subscriptionEndDate: updatedUser.subscriptionEndDate,
+        stripeSubscriptionId: updatedUser.stripeSubscriptionId,
       };
 
       req.login(sessionUser, (err) => {
@@ -452,6 +458,7 @@ export function setupAuth(app: Express) {
         plan: user.plan,
         subscriptionStatus: user.subscriptionStatus,
         subscriptionEndDate: user.subscriptionEndDate,
+        stripeSubscriptionId: user.stripeSubscriptionId,
       };
 
       req.session.regenerate((err) => {

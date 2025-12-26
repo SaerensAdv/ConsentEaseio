@@ -29,6 +29,7 @@ interface AuthUser {
   plan: string;
   subscriptionStatus: string | null;
   subscriptionEndDate: string | null;
+  stripeSubscriptionId: string | null;
 }
 
 function SubscriptionStatusBadge({ status, endDate }: { status: string | null; endDate: string | null }) {
@@ -482,7 +483,8 @@ export default function Settings() {
                     <Button 
                       variant="outline" 
                       onClick={() => portalMutation.mutate()}
-                      disabled={portalMutation.isPending}
+                      disabled={portalMutation.isPending || !user?.stripeSubscriptionId}
+                      title={!user?.stripeSubscriptionId ? "Complete checkout first to manage subscription" : undefined}
                       data-testid="button-manage-subscription"
                     >
                       {portalMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -572,7 +574,8 @@ export default function Settings() {
                     </div>
                     <Button 
                       onClick={() => portalMutation.mutate()}
-                      disabled={portalMutation.isPending}
+                      disabled={portalMutation.isPending || !user?.stripeSubscriptionId}
+                      title={!user?.stripeSubscriptionId ? "Complete checkout first to access billing portal" : undefined}
                       data-testid="button-open-stripe-portal"
                     >
                       {portalMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ExternalLink className="w-4 h-4 mr-2" />}
