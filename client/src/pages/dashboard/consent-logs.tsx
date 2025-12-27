@@ -104,12 +104,12 @@ export default function ConsentLogsPage() {
   return (
     <DashboardLayout>
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Consent Proof Logs</h1>
           <p className="text-muted-foreground">View and export consent records for compliance documentation.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Select
             value={selectedWebsite?.id || ""}
             onValueChange={(value) => {
@@ -117,7 +117,7 @@ export default function ConsentLogsPage() {
               setPage(0);
             }}
           >
-            <SelectTrigger className="w-[200px]" data-testid="select-website">
+            <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-website">
               <SelectValue placeholder="Select website" />
             </SelectTrigger>
             <SelectContent>

@@ -124,7 +124,7 @@ gtag('set', 'url_passthrough', true);
         {websites.length > 1 && (
           <div className="mb-6">
             <Select value={selectedWebsiteId || websites[0]?.id} onValueChange={setSelectedWebsiteId}>
-              <SelectTrigger className="w-[300px]" data-testid="select-website">
+              <SelectTrigger className="w-full sm:w-[300px]" data-testid="select-website">
                 <SelectValue placeholder="Select website" />
               </SelectTrigger>
               <SelectContent>

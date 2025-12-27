@@ -17,7 +17,7 @@
     },
     "id": "1766834500000-agency-mgmt",
     "timestamp": "2025-12-27T11:30:00.000Z",
-    "processed": false
+    "processed": true
   },
   {
     "type": "status_change",
@@ -26,11 +26,20 @@
     "comment": "8 languages with auto-detection and fallback system",
     "metadata": {
       "branch": "main",
-      "languages": ["EN", "NL", "FR", "DE", "ES", "IT", "PT", "PL"]
+      "languages": [
+        "EN",
+        "NL",
+        "FR",
+        "DE",
+        "ES",
+        "IT",
+        "PT",
+        "PL"
+      ]
     },
     "id": "1766834500001-multilang",
     "timestamp": "2025-12-27T10:00:00.000Z",
-    "processed": false
+    "processed": true
   },
   {
     "type": "status_change",
@@ -42,7 +51,7 @@
     },
     "id": "1766834500002-analytics",
     "timestamp": "2025-12-26T22:00:00.000Z",
-    "processed": false
+    "processed": true
   },
   {
     "type": "status_change",
@@ -54,7 +63,7 @@
     },
     "id": "1766834500003-cookies",
     "timestamp": "2025-12-26T20:00:00.000Z",
-    "processed": false
+    "processed": true
   },
   {
     "type": "status_change",
@@ -67,7 +76,7 @@
     },
     "id": "1766834500004-privacy-policy",
     "timestamp": "2025-12-27T12:00:00.000Z",
-    "processed": false
+    "processed": true
   },
   {
     "type": "status_change",

@@ -137,15 +137,15 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-display font-bold">Analytics</h1>
           <p className="text-muted-foreground">Monitor your consent rates and compliance metrics.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {websites.length > 1 && (
             <Select value={selectedWebsite || websites[0]?.id} onValueChange={setSelectedWebsite}>
-              <SelectTrigger className="w-[200px]" data-testid="select-website">
+              <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-website">
                 <SelectValue placeholder="Select website" />
               </SelectTrigger>
               <SelectContent>
@@ -158,7 +158,7 @@ export default function Analytics() {
             </Select>
           )}
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[180px]" data-testid="select-date-range">
+            <SelectTrigger className="w-full sm:w-[180px]" data-testid="select-date-range">
               <SelectValue placeholder="Select range" />
             </SelectTrigger>
             <SelectContent>

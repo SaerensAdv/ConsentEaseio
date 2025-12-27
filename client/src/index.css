@@ -117,3 +117,56 @@
     @apply bg-gradient-to-r from-primary to-accent;
   }
 }
+
+/* Custom Branded Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(262 50% 96%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(262 65% 65%);
+  border-radius: 5px;
+  border: 2px solid hsl(262 50% 96%);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(262 65% 55%);
+}
+
+::-webkit-scrollbar-corner {
+  background: hsl(262 50% 96%);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(262 65% 65%) hsl(262 50% 96%);
+}
+
+/* Dark mode scrollbars */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(260 30% 20%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(262 70% 70%);
+  border-color: hsl(260 30% 20%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(262 70% 60%);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: hsl(260 30% 20%);
+}
+
+.dark * {
+  scrollbar-color: hsl(262 70% 70%) hsl(260 30% 20%);
+}

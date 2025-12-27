@@ -168,7 +168,7 @@ export default function DashboardWebsites() {
 
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-display font-bold">Websites</h1>
           <p className="text-muted-foreground">Manage your domains and compliance status.</p>
@@ -257,9 +257,9 @@ export default function DashboardWebsites() {
       <div className="grid gap-4" data-tour="websites-list">
         {websites.map((site) => (
           <Card key={site.id} className="hover:shadow-md transition-shadow" data-testid={`card-website-${site.id}`}>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0 flex items-center justify-center ${
                   site.status === 'compliant' 
                     ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
                     : site.status === 'scanning'
@@ -267,19 +267,19 @@ export default function DashboardWebsites() {
                     : 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
                 }`}>
                   {site.status === 'scanning' ? (
-                    <RefreshCw className="w-6 h-6 animate-spin" />
+                    <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                   ) : (
-                    <Globe className="w-6 h-6" />
+                    <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-lg" data-testid={`text-domain-${site.id}`}>{site.domain}</h3>
-                    <a href={`https://${site.domain}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                    <h3 className="font-semibold text-base sm:text-lg truncate" data-testid={`text-domain-${site.id}`}>{site.domain}</h3>
+                    <a href={`https://${site.domain}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary flex-shrink-0">
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1.5">
                       {site.status === 'compliant' ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
@@ -290,11 +290,11 @@ export default function DashboardWebsites() {
                       )}
                       <span className="capitalize" data-testid={`text-status-${site.id}`}>{site.status}</span>
                     </span>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span>Scanned {formatLastScan(site.lastScan)}</span>
                     {site.cookiesFound !== null && (
                       <>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>{site.cookiesFound} cookies</span>
                       </>
                     )}
@@ -302,7 +302,7 @@ export default function DashboardWebsites() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="gap-2" data-testid={`button-get-code-${site.id}`}>

@@ -279,9 +279,9 @@ export default function CookiesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={activeWebsiteId || ""} onValueChange={setSelectedWebsiteId}>
-              <SelectTrigger className="w-[200px]" data-testid="select-website">
+              <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-website">
                 <SelectValue placeholder="Select website" />
               </SelectTrigger>
               <SelectContent>
