@@ -197,34 +197,36 @@ export default function Home() {
         </section>
 
         {/* Trust Bar */}
-        <section className="py-8 border-y bg-muted/30">
+        <section className="py-8 border-y bg-muted/30 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-primary" />
+            <div className="overflow-x-auto scrollbar-hide -mx-6 px-6 md:overflow-visible md:mx-0 md:px-0">
+              <div className="flex items-center justify-start md:justify-center gap-8 md:gap-16 min-w-max md:min-w-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold">GDPR & CCPA</p>
+                    <p className="text-sm text-muted-foreground">Fully Compliant</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold">GDPR & CCPA</p>
-                  <p className="text-sm text-muted-foreground">Fully Compliant</p>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold">EU Data Center</p>
+                    <p className="text-sm text-muted-foreground">Your Data Stays in Europe</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-bold">EU Data Center</p>
-                  <p className="text-sm text-muted-foreground">Your Data Stays in Europe</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-bold">256-bit Encryption</p>
-                  <p className="text-sm text-muted-foreground">Bank-Level Security</p>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold">256-bit Encryption</p>
+                    <p className="text-sm text-muted-foreground">Bank-Level Security</p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -170,3 +170,13 @@
 .dark * {
   scrollbar-color: hsl(262 70% 70%) hsl(260 30% 20%);
 }
+
+/* Utility to hide scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

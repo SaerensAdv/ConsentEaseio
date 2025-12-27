@@ -79,18 +79,29 @@ export function CursorTrail() {
       });
 
       ctx.lineCap = "round";
-      ctx.strokeStyle = "hsl(262 65% 65%)";
-      ctx.beginPath();
-      ctx.moveTo(trail[0].x, trail[0].y);
 
       for (let i = 1; i < trail.length - 1; i++) {
+        const progress = i / (trail.length - 1);
+        const hue = 262 + progress * (35 - 262 + 360);
+        const saturation = 65 + progress * (95 - 65);
+        const lightness = 65 + progress * (55 - 65);
+        ctx.strokeStyle = `hsl(${hue % 360} ${saturation}% ${lightness}%)`;
+        
+        ctx.beginPath();
+        ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
         const xc = 0.5 * (trail[i].x + trail[i + 1].x);
         const yc = 0.5 * (trail[i].y + trail[i + 1].y);
         ctx.quadraticCurveTo(trail[i].x, trail[i].y, xc, yc);
         ctx.lineWidth = params.widthFactor * (params.pointsNumber - i);
         ctx.stroke();
       }
+      
+      const lastProgress = 1;
+      ctx.strokeStyle = `hsl(35 95% 55%)`;
+      ctx.beginPath();
+      ctx.moveTo(trail[trail.length - 2].x, trail[trail.length - 2].y);
       ctx.lineTo(trail[trail.length - 1].x, trail[trail.length - 1].y);
+      ctx.lineWidth = params.widthFactor;
       ctx.stroke();
 
       animationId = window.requestAnimationFrame(update);
