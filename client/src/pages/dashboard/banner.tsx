@@ -433,16 +433,16 @@ export default function BannerConfigurator() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-8rem)]">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+      <div className="flex flex-col lg:h-[calc(100vh-8rem)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex-shrink-0">
             <h1 className="text-2xl font-display font-bold">Banner Design</h1>
-            <p className="text-muted-foreground">Customize how the consent banner looks on your site.</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Customize how the consent banner looks on your site.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {websites.length > 1 && (
               <Select value={selectedWebsiteId || websites[0]?.id} onValueChange={setSelectedWebsiteId}>
-                <SelectTrigger className="w-[200px]" data-testid="select-website">
+                <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-website">
                   <SelectValue placeholder="Select website" />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,13 +477,13 @@ export default function BannerConfigurator() {
 
         {isSoloPlan && (
           <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800" data-testid="alert-solo-branding">
-            <Lock className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="flex items-center justify-between">
-              <span className="text-amber-800 dark:text-amber-200">
+            <Lock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-amber-800 dark:text-amber-200 text-sm">
                 Solo plan banners include "Powered by ConsentEase" branding.
               </span>
               <Link href="/dashboard/settings?upgrade=true">
-                <Button size="sm" variant="outline" className="ml-4 gap-1 border-amber-300 text-amber-700 hover:bg-amber-100">
+                <Button size="sm" variant="outline" className="gap-1 border-amber-300 text-amber-700 hover:bg-amber-100 whitespace-nowrap">
                   <Sparkles className="w-3 h-3" />
                   Upgrade to remove
                 </Button>
@@ -492,9 +492,9 @@ export default function BannerConfigurator() {
           </Alert>
         )}
 
-        <div className="flex-1 grid lg:grid-cols-12 gap-8 min-h-0">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 min-h-0 pb-4 lg:pb-0">
           {/* Controls Panel */}
-          <Card className="lg:col-span-4 h-full overflow-hidden flex flex-col border-none shadow-lg" data-tour="banner-styles">
+          <Card className="lg:col-span-4 max-h-[50vh] lg:max-h-none lg:h-full overflow-hidden flex flex-col border-none shadow-lg order-2 lg:order-1" data-tour="banner-styles">
             <div className="p-1">
               <Tabs defaultValue="appearance" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="w-full grid grid-cols-5 h-auto">
@@ -1135,25 +1135,25 @@ export default function BannerConfigurator() {
           </Card>
 
           {/* Preview Area */}
-          <div className="lg:col-span-8 bg-muted/30 rounded-2xl border border-border/50 relative overflow-hidden flex flex-col" data-tour="banner-preview">
+          <div className="lg:col-span-8 bg-muted/30 rounded-2xl border border-border/50 relative overflow-hidden flex flex-col h-[300px] sm:h-[400px] lg:h-auto order-1 lg:order-2" data-tour="banner-preview">
             {/* Preview Toolbar */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/80 dark:bg-black/50 backdrop-blur border border-border/50 rounded-full p-1 flex items-center gap-1 shadow-sm z-20">
+            <div className="absolute top-2 sm:top-4 left-1/2 -translate-x-1/2 bg-white/80 dark:bg-black/50 backdrop-blur border border-border/50 rounded-full p-1 flex items-center gap-1 shadow-sm z-20">
               <button 
                 onClick={() => setPreviewDevice("desktop")}
-                className={`p-2 rounded-full transition-colors ${previewDevice === 'desktop' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
+                className={`p-1.5 sm:p-2 rounded-full transition-colors ${previewDevice === 'desktop' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
               >
-                <Monitor className="w-4 h-4" />
+                <Monitor className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
               <button 
                 onClick={() => setPreviewDevice("mobile")}
-                className={`p-2 rounded-full transition-colors ${previewDevice === 'mobile' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
+                className={`p-1.5 sm:p-2 rounded-full transition-colors ${previewDevice === 'mobile' ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}
               >
-                <Smartphone className="w-4 h-4" />
+                <Smartphone className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </div>
 
             {/* Preview Viewport */}
-            <div className="flex-1 overflow-auto flex items-center justify-center p-8">
+            <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-8">
               <div 
                 className={`bg-white shadow-2xl transition-all duration-500 relative overflow-hidden flex flex-col ${
                   previewDevice === 'mobile' ? 'w-[375px] h-[667px] rounded-[3rem] border-8 border-gray-900' : 'w-full h-full rounded-lg border border-border'
