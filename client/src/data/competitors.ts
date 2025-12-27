@@ -10,6 +10,12 @@ export interface PricingTier {
   details?: string;
 }
 
+export interface SEOData {
+  title: string;
+  description: string;
+  keywords: string[];
+}
+
 export interface CompetitorData {
   slug: string;
   name: string;
@@ -23,6 +29,7 @@ export interface CompetitorData {
   features: CompetitorFeature[];
   chooseThemIf: string[];
   chooseUsIf: string[];
+  seo: SEOData;
 }
 
 export const COMPETITORS: CompetitorData[] = [
@@ -54,6 +61,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You want a banner that matches your brand (not a legal document).",
       "You hate getting on sales calls to ask \"how much?\".",
     ],
+    seo: {
+      title: "ConsentEase vs OneTrust: Affordable GDPR Alternative (2025)",
+      description: "Compare ConsentEase to OneTrust. Get GDPR compliance for €5/month instead of $30,000/year. 2-minute setup vs 2-week implementation. Perfect for small businesses.",
+      keywords: ["OneTrust alternative", "OneTrust pricing", "GDPR consent management", "cookie consent", "affordable OneTrust", "OneTrust vs ConsentEase"],
+    },
   },
   {
     slug: "cookiebot",
@@ -89,6 +101,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You prefer pageview-based pricing (more flexible).",
       "You want a more modern, customizable banner.",
     ],
+    seo: {
+      title: "ConsentEase vs Cookiebot: Better Value Cookie Consent (2025)",
+      description: "Compare ConsentEase to Cookiebot. Starting at €5/month vs €7/month with pageview-based pricing. Visual banner editor, automatic scanning, Google Consent Mode v2.",
+      keywords: ["Cookiebot alternative", "Cookiebot pricing", "cookie consent solution", "GDPR banner", "Cookiebot vs ConsentEase", "cookie compliance"],
+    },
   },
   {
     slug: "usercentrics",
@@ -125,6 +142,11 @@ export const COMPETITORS: CompetitorData[] = [
       "Sessions pricing would be too expensive for your traffic.",
       "You want faster setup with less configuration.",
     ],
+    seo: {
+      title: "ConsentEase vs Usercentrics: Simpler Consent Management (2025)",
+      description: "Compare ConsentEase to Usercentrics. Pageview pricing vs session pricing. €5/month starting price. No complex setup. Google Consent Mode v2 included.",
+      keywords: ["Usercentrics alternative", "Usercentrics pricing", "consent management platform", "CMP comparison", "Usercentrics vs ConsentEase"],
+    },
   },
   {
     slug: "complianz",
@@ -157,6 +179,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You want a platform-agnostic solution.",
       "You prefer monthly payments with flexibility.",
     ],
+    seo: {
+      title: "ConsentEase vs Complianz: Platform-Agnostic Alternative (2025)",
+      description: "Compare ConsentEase to Complianz. Works on any website, not just WordPress. Monthly pricing from €5. Visual editor, automatic cookie scanning included.",
+      keywords: ["Complianz alternative", "Complianz pricing", "WordPress cookie consent", "GDPR plugin", "Complianz vs ConsentEase"],
+    },
   },
   {
     slug: "iubenda",
@@ -192,6 +219,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You want the best cookie banner experience.",
       "You want better value at the Pro tier.",
     ],
+    seo: {
+      title: "ConsentEase vs Iubenda: Focused Cookie Consent (2025)",
+      description: "Compare ConsentEase to Iubenda. Better Pro tier value at €12 vs €19.99. Focused on cookie consent with visual editor. Google Consent Mode v2 included.",
+      keywords: ["Iubenda alternative", "Iubenda pricing", "cookie consent banner", "GDPR compliance", "Iubenda vs ConsentEase"],
+    },
   },
   {
     slug: "cookiefirst",
@@ -224,6 +256,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You prefer our visual banner editor.",
       "You want 44% savings at entry-level (€5 vs €9).",
     ],
+    seo: {
+      title: "ConsentEase vs CookieFirst: 44% Cheaper Cookie Consent (2025)",
+      description: "Compare ConsentEase to CookieFirst. Save 44% with €5/month vs €9/month. Visual banner editor, automatic scanning, Google Consent Mode v2 included.",
+      keywords: ["CookieFirst alternative", "CookieFirst pricing", "cookie consent management", "GDPR banner", "CookieFirst vs ConsentEase"],
+    },
   },
   {
     slug: "cookie-script",
@@ -258,6 +295,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You need better customization options.",
       "You want 37% savings on paid plans (€5 vs €8).",
     ],
+    seo: {
+      title: "ConsentEase vs Cookie Script: Better Design & Value (2025)",
+      description: "Compare ConsentEase to Cookie Script. Save 37% with €5/month vs €8/month. Modern visual editor, polished banner designs, Google Consent Mode v2.",
+      keywords: ["Cookie Script alternative", "Cookie Script pricing", "cookie compliance", "GDPR consent", "Cookie Script vs ConsentEase"],
+    },
   },
   {
     slug: "cookieyes",
@@ -291,6 +333,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You want 48% savings on Pro tier (€12 vs €23).",
       "You prefer our visual editor approach.",
     ],
+    seo: {
+      title: "ConsentEase vs CookieYes: Save 48% on Pro Features (2025)",
+      description: "Compare ConsentEase to CookieYes. Pro tier at €12 vs €23 (48% savings). Unlimited customization, visual editor, Google Consent Mode v2 included.",
+      keywords: ["CookieYes alternative", "CookieYes pricing", "GDPR cookie consent", "cookie banner", "CookieYes vs ConsentEase"],
+    },
   },
   {
     slug: "axeptio",
@@ -325,6 +372,11 @@ export const COMPETITORS: CompetitorData[] = [
       "You want 5x savings at entry-level.",
       "You want more control over customization.",
     ],
+    seo: {
+      title: "ConsentEase vs Axeptio: 5x Cheaper Professional Consent (2025)",
+      description: "Compare ConsentEase to Axeptio. Get professional cookie consent for €5/month vs €26/month (5x savings). Visual editor, Google Consent Mode v2 included.",
+      keywords: ["Axeptio alternative", "Axeptio pricing", "playful cookie consent", "GDPR banner", "Axeptio vs ConsentEase"],
+    },
   },
 ];
 
