@@ -41,6 +41,24 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     buttonStyle: config.buttonStyle,
     buttonShape: config.buttonShape,
     showBranding: showBranding,
+    borderColor: config.borderColor || '#e5e7eb',
+    borderWidth: config.borderWidth || 1,
+    secondaryButtonColor: config.secondaryButtonColor || '#6b7280',
+    maxWidth: config.maxWidth || 400,
+    showOverlay: config.showOverlay || false,
+    overlayOpacity: config.overlayOpacity || 50,
+    logoUrl: config.logoUrl,
+    displayDelay: config.displayDelay || 0,
+    autoHideDelay: config.autoHideDelay,
+    showCloseButton: config.showCloseButton || false,
+    reconsentDays: config.reconsentDays || 365,
+    respectDnt: config.respectDnt || false,
+    privacyPolicyUrl: config.privacyPolicyUrl,
+    privacyPolicyText: config.privacyPolicyText || 'Privacy Policy',
+    cookiePolicyUrl: config.cookiePolicyUrl,
+    cookiePolicyText: config.cookiePolicyText || 'Cookie Policy',
+    customFooter: config.customFooter,
+    language: config.language || 'en',
   })};
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
@@ -97,11 +115,18 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   
   function storeConsent(consent) {
     try {
+      var reconsentMs = CONFIG.reconsentDays * 24 * 60 * 60 * 1000;
       localStorage.setItem(CONSENT_KEY, JSON.stringify({
         consent: consent,
-        expires: Date.now() + (365 * 24 * 60 * 60 * 1000)
+        expires: Date.now() + reconsentMs
       }));
     } catch (e) {}
+  }
+  
+  function shouldRespectDNT() {
+    if (!CONFIG.respectDnt) return false;
+    var dnt = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+    return dnt === '1' || dnt === 'yes';
   }
   
   function getVisitorId() {
@@ -452,32 +477,93 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       </div>
     \` : '';
     
+    var logoHtml = CONFIG.logoUrl ? \`
+      <img src="\${CONFIG.logoUrl}" alt="Logo" style="max-height:32px;max-width:120px;margin-bottom:8px;object-fit:contain;" />
+    \` : '';
+    
+    var closeButtonHtml = CONFIG.showCloseButton ? \`
+      <button class="ce-close-btn" aria-label="Close" style="position:absolute;top:8px;right:8px;background:transparent;border:none;cursor:pointer;padding:4px;opacity:0.5;transition:opacity 0.2s;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    \` : '';
+    
+    var policyLinksHtml = '';
+    if (CONFIG.privacyPolicyUrl || CONFIG.cookiePolicyUrl) {
+      var links = [];
+      if (CONFIG.privacyPolicyUrl) {
+        links.push('<a href="' + CONFIG.privacyPolicyUrl + '" target="_blank" rel="noopener" style="color:' + CONFIG.primaryColor + ';text-decoration:underline;">' + CONFIG.privacyPolicyText + '</a>');
+      }
+      if (CONFIG.cookiePolicyUrl) {
+        links.push('<a href="' + CONFIG.cookiePolicyUrl + '" target="_blank" rel="noopener" style="color:' + CONFIG.primaryColor + ';text-decoration:underline;">' + CONFIG.cookiePolicyText + '</a>');
+      }
+      policyLinksHtml = '<div style="font-size:0.75em;margin-top:8px;opacity:0.7;">' + links.join(' • ') + '</div>';
+    }
+    
+    var customFooterHtml = CONFIG.customFooter ? \`
+      <div style="font-size:0.75em;margin-top:8px;opacity:0.7;">\${CONFIG.customFooter}</div>
+    \` : '';
+    
     var brandingHtml = CONFIG.showBranding ? \`
       <div class="ce-branding">
         <a href="https://consentease.com?utm_source=banner&utm_medium=branding&utm_campaign=powered_by" target="_blank" rel="noopener">Powered by ConsentEase</a>
       </div>
     \` : '';
     
+    // Apply custom border styling
+    banner.style.border = CONFIG.borderWidth + 'px solid ' + CONFIG.borderColor;
+    banner.style.maxWidth = CONFIG.maxWidth + 'px';
+    
     banner.innerHTML = \`
+      \${closeButtonHtml}
       <div class="ce-banner-content">
+        \${logoHtml}
         <div class="ce-banner-header">
           \${iconHtml}
           <div class="ce-banner-text">
             <h3>\${heading}\${jurisdictionBadge}</h3>
             <p>\${description}</p>
+            \${policyLinksHtml}
+            \${customFooterHtml}
           </div>
         </div>
         <div class="ce-banner-buttons">
-          <button class="ce-btn ce-btn-settings">\${settingsText}</button>
-          <button class="ce-btn ce-btn-reject">\${rejectText}</button>
+          <button class="ce-btn ce-btn-settings" style="color:\${CONFIG.secondaryButtonColor};">\${settingsText}</button>
+          <button class="ce-btn ce-btn-reject" style="color:\${CONFIG.secondaryButtonColor};">\${rejectText}</button>
           <button class="ce-btn ce-btn-accept">\${acceptText}</button>
         </div>
       </div>
       \${brandingHtml}
     \`;
     
+    // Add overlay if enabled
+    if (CONFIG.showOverlay) {
+      var backdropOverlay = document.createElement('div');
+      backdropOverlay.id = 'ce-backdrop-overlay';
+      backdropOverlay.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,' + (CONFIG.overlayOpacity / 100) + ');transition:opacity 0.3s;';
+      document.body.appendChild(backdropOverlay);
+    }
+    
     overlay.appendChild(banner);
     document.body.appendChild(overlay);
+    
+    // Handle close button
+    if (CONFIG.showCloseButton) {
+      var closeBtn = banner.querySelector('.ce-close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('mouseenter', function() { this.style.opacity = '1'; });
+        closeBtn.addEventListener('mouseleave', function() { this.style.opacity = '0.5'; });
+        closeBtn.addEventListener('click', function() {
+          hideBanner();
+        });
+      }
+    }
+    
+    // Auto-hide timer
+    if (CONFIG.autoHideDelay && CONFIG.autoHideDelay > 0) {
+      setTimeout(function() {
+        hideBanner();
+      }, CONFIG.autoHideDelay * 1000);
+    }
     
     banner.querySelector('.ce-btn-accept').addEventListener('click', function() {
       handleConsent('accept');
@@ -619,6 +705,16 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       banner.style.opacity = '0';
       setTimeout(function() { banner.remove(); }, 300);
     }
+    var backdrop = document.getElementById('ce-backdrop-overlay');
+    if (backdrop) {
+      backdrop.style.opacity = '0';
+      setTimeout(function() { backdrop.remove(); }, 300);
+    }
+  }
+  
+  function hideBanner() {
+    closeBanner();
+    trackEvent('banner_dismissed');
   }
   
   function handleConsent(consent) {
@@ -670,13 +766,21 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   };
   
   function init() {
+    // Check if user has Do Not Track enabled and we respect it
+    if (shouldRespectDNT()) {
+      // If DNT is enabled and we respect it, set minimal consent automatically
+      var dntConsent = { necessary: true, functional: false, analytics: false, marketing: false };
+      storeConsent(dntConsent);
+      updateGoogleConsent(dntConsent);
+      return;
+    }
+    
     var existingConsent = getStoredConsent();
     if (existingConsent) {
       return;
     }
     
-    // Fetch geolocation and categories in parallel, then show banner
-    Promise.all([fetchGeoLocation(), fetchCategories()]).then(function() {
+    function showBannerNow() {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
           injectStyles();
@@ -685,6 +789,16 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       } else {
         injectStyles();
         createBanner();
+      }
+    }
+    
+    // Fetch geolocation and categories in parallel, then show banner
+    Promise.all([fetchGeoLocation(), fetchCategories()]).then(function() {
+      // Apply display delay if configured
+      if (CONFIG.displayDelay && CONFIG.displayDelay > 0) {
+        setTimeout(showBannerNow, CONFIG.displayDelay * 1000);
+      } else {
+        showBannerNow();
       }
     });
   }
