@@ -32,12 +32,42 @@ interface RoadmapItem {
 }
 
 const roadmap2026: RoadmapItem[] = [
-  // Q1 - Policy Generators & Multi-Language
+  // Q1 - Completed & Near-term
+  {
+    title: "Multi-Language Banner Support",
+    description: "Automatically detect visitor language and show localized consent banners in 8+ languages.",
+    quarter: "Q1",
+    status: "completed",
+    type: "feature",
+    icon: Globe,
+    details: [
+      "Auto-detect browser language",
+      "8 languages included (EN, NL, FR, DE, ES, IT, PT, PL)",
+      "Fallback translation system",
+      "Live preview in configurator",
+      "RTL language support coming soon"
+    ]
+  },
+  {
+    title: "Agency Management Platform",
+    description: "Complete multi-tenant system for agencies to manage client websites at scale.",
+    quarter: "Q1",
+    status: "completed",
+    type: "feature",
+    icon: Lock,
+    details: [
+      "3-tier hierarchy: Agency → Account → Domain",
+      "Aggregate analytics across all clients",
+      "Bulk banner updates for efficiency",
+      "Email invite system for client onboarding",
+      "Public agency profiles with referral signup"
+    ]
+  },
   {
     title: "Privacy Policy Generator",
-    description: "Generate legally compliant privacy policies tailored to your business, jurisdiction, and data practices.",
+    description: "Generate legally compliant privacy policies tailored to your business and jurisdiction.",
     quarter: "Q1",
-    status: "planned",
+    status: "in-progress",
     type: "add-on",
     icon: FileText,
     details: [
@@ -45,8 +75,7 @@ const roadmap2026: RoadmapItem[] = [
       "Customizable sections based on your data practices",
       "Automatic updates when regulations change",
       "Multiple export formats (HTML, PDF, Markdown)",
-      "Embed directly on your website with one click",
-      "Multi-language support (10+ languages)"
+      "Embed directly on your website with one click"
     ],
     pricing: "€9/one-time or included in Agency"
   },
@@ -62,41 +91,39 @@ const roadmap2026: RoadmapItem[] = [
       "Explains each cookie category clearly",
       "Updates automatically when new cookies detected",
       "Includes third-party provider disclosures",
-      "Customizable language and tone",
       "Direct integration with consent banner"
     ],
     pricing: "€9/one-time or included in Agency"
   },
+  // Q2 - Competitive Advantages
   {
-    title: "Multi-Language Banner Support",
-    description: "Automatically detect visitor language and show localized consent banners.",
-    quarter: "Q1",
+    title: "AI-Powered Cookie Classification",
+    description: "Machine learning automatically categorizes detected cookies with 95%+ accuracy.",
+    quarter: "Q2",
     status: "planned",
     type: "feature",
-    icon: Globe,
+    icon: Sparkles,
     details: [
-      "Auto-detect browser language",
-      "20+ language translations included",
-      "Custom translations editor",
-      "RTL language support",
-      "Language-specific legal requirements"
+      "Automatic cookie purpose detection",
+      "Learn from global cookie database",
+      "Suggest optimal privacy settings",
+      "Detect tracking scripts and pixels",
+      "Compliance risk scoring per cookie"
     ]
   },
-  // Q2 - Analytics & Integrations
   {
-    title: "Advanced Analytics Dashboard",
-    description: "Deep insights into user consent behavior with geographic breakdowns and trend analysis.",
+    title: "Zero-Latency Edge Banner",
+    description: "Banner served from edge locations worldwide for sub-50ms load times.",
     quarter: "Q2",
     status: "planned",
     type: "feature",
     icon: Zap,
     details: [
-      "Geographic consent rate heatmaps",
-      "Device and browser breakdown",
-      "A/B testing for banner designs",
-      "Consent rate optimization suggestions",
-      "Export reports in PDF/CSV",
-      "Custom date range comparisons"
+      "Global CDN deployment (200+ locations)",
+      "No impact on Core Web Vitals",
+      "Offline-first with service workers",
+      "Compressed script under 5KB gzipped",
+      "Async loading with no render blocking"
     ]
   },
   {
@@ -111,7 +138,7 @@ const roadmap2026: RoadmapItem[] = [
       "Configure everything from WP admin",
       "Auto-sync with ConsentEase dashboard",
       "Compatible with popular caching plugins",
-      "WooCommerce integration for e-commerce compliance"
+      "WooCommerce integration for e-commerce"
     ]
   },
   {
@@ -129,20 +156,50 @@ const roadmap2026: RoadmapItem[] = [
       "Shopify Analytics integration"
     ]
   },
-  // Q3 - Enterprise & API
+  // Q3 - Enterprise & Certification
   {
-    title: "Team Management & Collaboration",
-    description: "Invite team members, assign roles, and collaborate on consent management.",
+    title: "Google CMP Partner Certification",
+    description: "Official Google Certified CMP Partner status for enhanced ad ecosystem integration.",
+    quarter: "Q3",
+    status: "in-progress",
+    type: "feature",
+    icon: Star,
+    details: [
+      "TCF 2.2 full compliance",
+      "Google Consent Mode v2 certified",
+      "Direct integration with Google Ads",
+      "Enhanced measurement features",
+      "Priority support from Google"
+    ]
+  },
+  {
+    title: "Consent Receipts & Blockchain Proof",
+    description: "Tamper-proof consent records with optional blockchain verification for audits.",
     quarter: "Q3",
     status: "planned",
     type: "feature",
     icon: Lock,
     details: [
-      "Team member invitations",
-      "Role-based access control (Admin, Editor, Viewer)",
-      "Activity audit logs",
-      "Shared website management",
-      "Team billing & usage reports"
+      "Cryptographically signed receipts",
+      "Optional blockchain timestamping",
+      "Regulator-ready export format",
+      "Consent version history",
+      "Third-party verification portal"
+    ]
+  },
+  {
+    title: "A/B Testing Engine",
+    description: "Test different banner designs and measure impact on consent rates.",
+    quarter: "Q3",
+    status: "planned",
+    type: "feature",
+    icon: Rocket,
+    details: [
+      "Visual A/B test builder",
+      "Statistical significance calculator",
+      "Auto-winner selection",
+      "Test copy, colors, positions",
+      "Detailed conversion reports"
     ]
   },
   {
@@ -160,65 +217,66 @@ const roadmap2026: RoadmapItem[] = [
       "JavaScript & PHP SDKs"
     ]
   },
+  // Q4 - Advanced & Enterprise
   {
-    title: "Wix Integration",
-    description: "Seamless Wix website builder integration with drag-and-drop setup.",
-    quarter: "Q3",
+    title: "Mobile SDK (iOS & Android)",
+    description: "Native mobile SDKs for in-app consent management with beautiful UI components.",
+    quarter: "Q4",
     status: "planned",
-    type: "integration",
+    type: "feature",
     icon: Package,
     details: [
-      "Install from Wix App Market",
-      "Native Wix Editor integration",
-      "Auto-match site theme",
-      "Wix Analytics sync",
-      "One-click activation"
+      "Swift & Kotlin native libraries",
+      "Pre-built UI components",
+      "ATT (App Tracking Transparency) integration",
+      "Sync with web consent preferences",
+      "React Native & Flutter wrappers"
     ]
   },
-  // Q4 - Enterprise SSO & Advanced Features
   {
-    title: "Enterprise SSO",
-    description: "SAML and OAuth SSO for enterprise customers with custom identity providers.",
+    title: "Privacy-First Analytics Alternative",
+    description: "Cookie-free analytics that doesn't require consent, fully GDPR compliant.",
+    quarter: "Q4",
+    status: "planned",
+    type: "add-on",
+    icon: Zap,
+    details: [
+      "No cookies, no consent needed",
+      "Privacy-focused visitor insights",
+      "Page views, referrers, devices",
+      "Real-time dashboard",
+      "GDPR/CCPA compliant by design"
+    ],
+    pricing: "€5/month or included in Pro+"
+  },
+  {
+    title: "Enterprise SSO & SCIM",
+    description: "SAML SSO and automated user provisioning for enterprise customers.",
     quarter: "Q4",
     status: "planned",
     type: "feature",
     icon: Lock,
     details: [
-      "SAML 2.0 support",
-      "OAuth 2.0 / OpenID Connect",
+      "SAML 2.0 & OpenID Connect",
       "Azure AD, Okta, Google Workspace",
-      "Just-in-time user provisioning",
+      "SCIM user provisioning",
+      "Just-in-time account creation",
       "Custom domain login"
     ]
   },
   {
-    title: "Consent Proof & Audit Reports",
-    description: "Generate legally valid consent proof documentation for compliance audits.",
+    title: "White-Label Reseller Program",
+    description: "Fully rebrandable solution for agencies to resell under their own brand.",
     quarter: "Q4",
     status: "planned",
     type: "feature",
-    icon: FileText,
+    icon: Star,
     details: [
-      "Timestamped consent records",
-      "IP address and device logging",
-      "Exportable audit reports",
-      "Consent version history",
-      "Regulator-ready documentation"
-    ]
-  },
-  {
-    title: "Squarespace Integration",
-    description: "Native Squarespace integration for designers and creative professionals.",
-    quarter: "Q4",
-    status: "planned",
-    type: "integration",
-    icon: Package,
-    details: [
-      "Install via Squarespace Extensions",
-      "Style sync with site design",
-      "Code-free configuration",
-      "Squarespace Commerce support",
-      "Custom CSS override options"
+      "Custom domain & branding",
+      "Your logo, colors, emails",
+      "Client billing management",
+      "Wholesale pricing tiers",
+      "Dedicated partner support"
     ]
   },
 ];

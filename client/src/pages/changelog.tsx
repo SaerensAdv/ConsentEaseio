@@ -16,6 +16,50 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    date: "December 27, 2025",
+    type: "minor",
+    title: "Agency Management Suite",
+    changes: [
+      { type: "feature", text: "Multi-tenant agency management with 3-tier hierarchy (Agency → Account → Domain)" },
+      { type: "feature", text: "Agency dashboard with client management, website oversight, and bulk actions" },
+      { type: "feature", text: "Aggregate analytics across all agency clients with per-client breakdown" },
+      { type: "feature", text: "Email invite system for onboarding new clients via agency referral" },
+      { type: "feature", text: "Public agency profile pages at /agency/:slug with referral signup" },
+      { type: "feature", text: "Featured agencies spotlight on homepage with hero text and branding" },
+      { type: "feature", text: "Bulk update banner settings (position/theme) across multiple websites" },
+      { type: "improvement", text: "Website selection with checkboxes for batch operations" },
+    ]
+  },
+  {
+    version: "1.6.0",
+    date: "December 27, 2025",
+    type: "minor",
+    title: "Multi-Language & Translations",
+    changes: [
+      { type: "feature", text: "Pre-built translations for 8 languages (EN, NL, FR, DE, ES, IT, PT, PL)" },
+      { type: "feature", text: "Auto-detect visitor browser language for localized banners" },
+      { type: "feature", text: "Language selector in banner configurator with live preview" },
+      { type: "feature", text: "Fallback translation system for missing language keys" },
+      { type: "improvement", text: "Mobile-responsive banner layout fixes" },
+      { type: "fix", text: "Translation fallback logic for incomplete language files" },
+    ]
+  },
+  {
+    version: "1.5.0",
+    date: "December 26, 2025",
+    type: "minor",
+    title: "Advanced Analytics & Insights",
+    changes: [
+      { type: "feature", text: "Conversion funnel visualization (Shown → Interacted → Decided)" },
+      { type: "feature", text: "Geographic consent rate breakdown with country flags" },
+      { type: "feature", text: "Period-over-period trend analysis with percentage changes" },
+      { type: "feature", text: "Real-time analytics with WebSocket live updates" },
+      { type: "feature", text: "Consent logs with detailed user journey tracking" },
+      { type: "improvement", text: "Interactive charts with Recharts library" },
+    ]
+  },
+  {
     version: "1.4.0",
     date: "December 26, 2025",
     type: "minor",

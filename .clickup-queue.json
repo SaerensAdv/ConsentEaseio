@@ -1,14 +1,189 @@
 [
   {
     "type": "status_change",
-    "taskName": "2FA",
-    "status": "DOING",
-    "comment": "Starting two-factor auth implementation",
+    "taskName": "Agency Management System",
+    "status": "DONE",
+    "comment": "Complete agency management with client oversight, analytics, invites, and bulk actions",
+    "metadata": {
+      "branch": "main",
+      "features": [
+        "3-tier hierarchy (Agency → Account → Domain)",
+        "Aggregate analytics dashboard",
+        "Email invite system",
+        "Public agency profiles",
+        "Bulk banner updates",
+        "Featured agencies on homepage"
+      ]
+    },
+    "id": "1766834500000-agency-mgmt",
+    "timestamp": "2025-12-27T11:30:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Multi-Language Support",
+    "status": "DONE",
+    "comment": "8 languages with auto-detection and fallback system",
+    "metadata": {
+      "branch": "main",
+      "languages": ["EN", "NL", "FR", "DE", "ES", "IT", "PT", "PL"]
+    },
+    "id": "1766834500001-multilang",
+    "timestamp": "2025-12-27T10:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Advanced Analytics",
+    "status": "DONE",
+    "comment": "Conversion funnel, geographic breakdown, period trends, real-time WebSocket updates",
     "metadata": {
       "branch": "main"
     },
-    "id": "1766773142884-mdtgdkkzu",
-    "timestamp": "2025-12-26T18:19:02.884Z",
-    "processed": true
+    "id": "1766834500002-analytics",
+    "timestamp": "2025-12-26T22:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Cookie Scanner & Management",
+    "status": "DONE",
+    "comment": "Playwright-based scanner with category management and Google Consent Mode v2",
+    "metadata": {
+      "branch": "main"
+    },
+    "id": "1766834500003-cookies",
+    "timestamp": "2025-12-26T20:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Privacy Policy Generator",
+    "status": "DOING",
+    "comment": "Starting privacy policy generator with GDPR/CCPA templates",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q1 2026"
+    },
+    "id": "1766834500004-privacy-policy",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Cookie Policy Generator",
+    "status": "TODO",
+    "comment": "Planned: Auto-sync with scanned cookies",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q1 2026"
+    },
+    "id": "1766834500005-cookie-policy",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "AI Cookie Classification",
+    "status": "TODO",
+    "comment": "Planned: ML-based automatic cookie categorization",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q2 2026"
+    },
+    "id": "1766834500006-ai-cookies",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Zero-Latency Edge Banner",
+    "status": "TODO",
+    "comment": "Planned: Global CDN deployment for sub-50ms load times",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q2 2026"
+    },
+    "id": "1766834500007-edge-banner",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "WordPress Plugin",
+    "status": "TODO",
+    "comment": "Planned: One-click WP integration",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q2 2026"
+    },
+    "id": "1766834500008-wordpress",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Shopify App",
+    "status": "TODO",
+    "comment": "Planned: Native Shopify integration",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q2 2026"
+    },
+    "id": "1766834500009-shopify",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Google CMP Partner Certification",
+    "status": "DOING",
+    "comment": "In progress: TCF 2.2 compliance and certification process",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q3 2026"
+    },
+    "id": "1766834500010-google-cmp",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "A/B Testing Engine",
+    "status": "TODO",
+    "comment": "Planned: Visual A/B test builder for banner optimization",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q3 2026"
+    },
+    "id": "1766834500011-ab-testing",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "Mobile SDK",
+    "status": "TODO",
+    "comment": "Planned: iOS & Android native SDKs",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q4 2026"
+    },
+    "id": "1766834500012-mobile-sdk",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
+  },
+  {
+    "type": "status_change",
+    "taskName": "White-Label Reseller Program",
+    "status": "TODO",
+    "comment": "Planned: Fully rebrandable solution for agencies",
+    "metadata": {
+      "branch": "main",
+      "quarter": "Q4 2026"
+    },
+    "id": "1766834500013-whitelabel",
+    "timestamp": "2025-12-27T12:00:00.000Z",
+    "processed": false
   }
 ]
