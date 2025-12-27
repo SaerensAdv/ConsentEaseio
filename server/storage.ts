@@ -1,4 +1,4 @@
-import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, webVitalsMetrics, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan, type WebVitalsMetric, type InsertWebVitalsMetric } from "@shared/schema";
+import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, webVitalsMetrics, agencies, agencyClients, agencyMembers, agencyInvites, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan, type WebVitalsMetric, type InsertWebVitalsMetric, type Agency, type InsertAgency, type AgencyClient, type InsertAgencyClient, type AgencyMember, type InsertAgencyMember, type AgencyInvite, type InsertAgencyInvite } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 
@@ -134,6 +134,40 @@ export interface IStorage {
     p75Cls: number | null;
     p75Inp: number | null;
   }>;
+  
+  // Agency methods
+  getAgencyById(id: string): Promise<Agency | undefined>;
+  getAgencyBySlug(slug: string): Promise<Agency | undefined>;
+  getAgencyByOwnerId(ownerId: string): Promise<Agency | undefined>;
+  getFeaturedAgencies(): Promise<Agency[]>;
+  createAgency(agency: InsertAgency): Promise<Agency>;
+  updateAgency(id: string, updates: Partial<Agency>): Promise<Agency>;
+  deleteAgency(id: string): Promise<void>;
+  
+  // Agency client methods
+  getAgencyClients(agencyId: string): Promise<(AgencyClient & { user: User })[]>;
+  getAgencyClientById(id: string): Promise<AgencyClient | undefined>;
+  getClientsByUserId(userId: string): Promise<(AgencyClient & { agency: Agency })[]>;
+  createAgencyClient(client: InsertAgencyClient): Promise<AgencyClient>;
+  updateAgencyClient(id: string, updates: Partial<AgencyClient>): Promise<AgencyClient>;
+  deleteAgencyClient(id: string): Promise<void>;
+  
+  // Agency member methods
+  getAgencyMembers(agencyId: string): Promise<(AgencyMember & { user: User })[]>;
+  getAgencyMemberByUserId(agencyId: string, userId: string): Promise<AgencyMember | undefined>;
+  createAgencyMember(member: InsertAgencyMember): Promise<AgencyMember>;
+  updateAgencyMember(id: string, updates: Partial<AgencyMember>): Promise<AgencyMember>;
+  deleteAgencyMember(id: string): Promise<void>;
+  
+  // Agency invite methods  
+  getAgencyInviteByToken(token: string): Promise<AgencyInvite | undefined>;
+  getAgencyInvitesByAgencyId(agencyId: string): Promise<AgencyInvite[]>;
+  createAgencyInvite(invite: InsertAgencyInvite): Promise<AgencyInvite>;
+  deleteAgencyInvite(id: string): Promise<void>;
+  deleteExpiredAgencyInvites(agencyId: string): Promise<void>;
+  
+  // Agency stats
+  updateAgencyStats(agencyId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -780,6 +814,200 @@ export class DatabaseStorage implements IStorage {
       p75Cls: clsValues.length > 0 ? Math.round(p75(clsValues.map(v => v * 1000))! / 1000 * 1000) / 1000 : null,
       p75Inp: p75(inpValues)
     };
+  }
+  
+  // Agency methods
+  async getAgencyById(id: string): Promise<Agency | undefined> {
+    const [agency] = await db.select().from(agencies).where(eq(agencies.id, id));
+    return agency || undefined;
+  }
+  
+  async getAgencyBySlug(slug: string): Promise<Agency | undefined> {
+    const [agency] = await db.select().from(agencies).where(eq(agencies.slug, slug));
+    return agency || undefined;
+  }
+  
+  async getAgencyByOwnerId(ownerId: string): Promise<Agency | undefined> {
+    const [agency] = await db.select().from(agencies).where(eq(agencies.ownerId, ownerId));
+    return agency || undefined;
+  }
+  
+  async getFeaturedAgencies(): Promise<Agency[]> {
+    return await db.select().from(agencies)
+      .where(and(eq(agencies.isFeatured, true), eq(agencies.isActive, true)))
+      .orderBy(agencies.featuredOrder);
+  }
+  
+  async createAgency(agency: InsertAgency): Promise<Agency> {
+    const [created] = await db.insert(agencies).values(agency).returning();
+    return created;
+  }
+  
+  async updateAgency(id: string, updates: Partial<Agency>): Promise<Agency> {
+    const [updated] = await db.update(agencies).set(updates).where(eq(agencies.id, id)).returning();
+    return updated;
+  }
+  
+  async deleteAgency(id: string): Promise<void> {
+    await db.delete(agencies).where(eq(agencies.id, id));
+  }
+  
+  // Agency client methods
+  async getAgencyClients(agencyId: string): Promise<(AgencyClient & { user: User })[]> {
+    const results = await db.select({
+      id: agencyClients.id,
+      agencyId: agencyClients.agencyId,
+      userId: agencyClients.userId,
+      clientName: agencyClients.clientName,
+      notes: agencyClients.notes,
+      relationshipType: agencyClients.relationshipType,
+      status: agencyClients.status,
+      createdAt: agencyClients.createdAt,
+      user: users,
+    }).from(agencyClients)
+      .innerJoin(users, eq(agencyClients.userId, users.id))
+      .where(eq(agencyClients.agencyId, agencyId));
+    
+    return results;
+  }
+  
+  async getAgencyClientById(id: string): Promise<AgencyClient | undefined> {
+    const [client] = await db.select().from(agencyClients).where(eq(agencyClients.id, id));
+    return client || undefined;
+  }
+  
+  async getClientsByUserId(userId: string): Promise<(AgencyClient & { agency: Agency })[]> {
+    const results = await db.select({
+      id: agencyClients.id,
+      agencyId: agencyClients.agencyId,
+      userId: agencyClients.userId,
+      clientName: agencyClients.clientName,
+      notes: agencyClients.notes,
+      relationshipType: agencyClients.relationshipType,
+      status: agencyClients.status,
+      createdAt: agencyClients.createdAt,
+      agency: agencies,
+    }).from(agencyClients)
+      .innerJoin(agencies, eq(agencyClients.agencyId, agencies.id))
+      .where(eq(agencyClients.userId, userId));
+    
+    return results;
+  }
+  
+  async createAgencyClient(client: InsertAgencyClient): Promise<AgencyClient> {
+    const [created] = await db.insert(agencyClients).values(client).returning();
+    // Update agency stats
+    await this.updateAgencyStats(client.agencyId);
+    return created;
+  }
+  
+  async updateAgencyClient(id: string, updates: Partial<AgencyClient>): Promise<AgencyClient> {
+    const [updated] = await db.update(agencyClients).set(updates).where(eq(agencyClients.id, id)).returning();
+    return updated;
+  }
+  
+  async deleteAgencyClient(id: string): Promise<void> {
+    const [client] = await db.select().from(agencyClients).where(eq(agencyClients.id, id));
+    if (client) {
+      await db.delete(agencyClients).where(eq(agencyClients.id, id));
+      await this.updateAgencyStats(client.agencyId);
+    }
+  }
+  
+  // Agency member methods
+  async getAgencyMembers(agencyId: string): Promise<(AgencyMember & { user: User })[]> {
+    const results = await db.select({
+      id: agencyMembers.id,
+      agencyId: agencyMembers.agencyId,
+      userId: agencyMembers.userId,
+      role: agencyMembers.role,
+      invitedBy: agencyMembers.invitedBy,
+      invitedAt: agencyMembers.invitedAt,
+      acceptedAt: agencyMembers.acceptedAt,
+      user: users,
+    }).from(agencyMembers)
+      .innerJoin(users, eq(agencyMembers.userId, users.id))
+      .where(eq(agencyMembers.agencyId, agencyId));
+    
+    return results;
+  }
+  
+  async getAgencyMemberByUserId(agencyId: string, userId: string): Promise<AgencyMember | undefined> {
+    const [member] = await db.select().from(agencyMembers)
+      .where(and(eq(agencyMembers.agencyId, agencyId), eq(agencyMembers.userId, userId)));
+    return member || undefined;
+  }
+  
+  async createAgencyMember(member: InsertAgencyMember): Promise<AgencyMember> {
+    const [created] = await db.insert(agencyMembers).values(member).returning();
+    return created;
+  }
+  
+  async updateAgencyMember(id: string, updates: Partial<AgencyMember>): Promise<AgencyMember> {
+    const [updated] = await db.update(agencyMembers).set(updates).where(eq(agencyMembers.id, id)).returning();
+    return updated;
+  }
+  
+  async deleteAgencyMember(id: string): Promise<void> {
+    await db.delete(agencyMembers).where(eq(agencyMembers.id, id));
+  }
+  
+  // Agency invite methods
+  async getAgencyInviteByToken(token: string): Promise<AgencyInvite | undefined> {
+    const [invite] = await db.select().from(agencyInvites).where(eq(agencyInvites.token, token));
+    return invite || undefined;
+  }
+  
+  async getAgencyInvitesByAgencyId(agencyId: string): Promise<AgencyInvite[]> {
+    return await db.select().from(agencyInvites)
+      .where(eq(agencyInvites.agencyId, agencyId))
+      .orderBy(desc(agencyInvites.createdAt));
+  }
+  
+  async createAgencyInvite(invite: InsertAgencyInvite): Promise<AgencyInvite> {
+    const [created] = await db.insert(agencyInvites).values(invite).returning();
+    return created;
+  }
+  
+  async deleteAgencyInvite(id: string): Promise<void> {
+    await db.delete(agencyInvites).where(eq(agencyInvites.id, id));
+  }
+  
+  async deleteExpiredAgencyInvites(agencyId: string): Promise<void> {
+    await db.delete(agencyInvites)
+      .where(and(
+        eq(agencyInvites.agencyId, agencyId),
+        sql`${agencyInvites.expiresAt} < NOW()`
+      ));
+  }
+  
+  // Agency stats
+  async updateAgencyStats(agencyId: string): Promise<void> {
+    // Count clients
+    const [clientResult] = await db.select({ count: count() })
+      .from(agencyClients)
+      .where(and(
+        eq(agencyClients.agencyId, agencyId),
+        eq(agencyClients.status, 'active')
+      ));
+    
+    // Count websites across all clients
+    const clientIds = await db.select({ userId: agencyClients.userId })
+      .from(agencyClients)
+      .where(eq(agencyClients.agencyId, agencyId));
+    
+    let totalWebsites = 0;
+    for (const client of clientIds) {
+      const [websiteResult] = await db.select({ count: count() })
+        .from(websites)
+        .where(eq(websites.userId, client.userId));
+      totalWebsites += websiteResult.count;
+    }
+    
+    await db.update(agencies).set({
+      clientCount: clientResult.count,
+      totalWebsites: totalWebsites,
+    }).where(eq(agencies.id, agencyId));
   }
 }
 

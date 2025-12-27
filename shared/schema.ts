@@ -226,3 +226,81 @@ export const diagnosticScans = pgTable("diagnostic_scans", {
 export const insertDiagnosticScanSchema = createInsertSchema(diagnosticScans).omit({ id: true, scannedAt: true });
 export type InsertDiagnosticScan = z.infer<typeof insertDiagnosticScanSchema>;
 export type DiagnosticScan = typeof diagnosticScans.$inferSelect;
+
+// Agencies table - Partner agencies that manage multiple client accounts
+export const agencies = pgTable("agencies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(), // URL-friendly identifier, e.g., "getlead"
+  description: text("description"),
+  logoUrl: text("logo_url"),
+  websiteUrl: text("website_url"),
+  contactEmail: text("contact_email"),
+  // Owner user (agency admin)
+  ownerId: varchar("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Spotlight/Featured settings
+  isFeatured: boolean("is_featured").default(false),
+  featuredOrder: integer("featured_order").default(0),
+  heroText: text("hero_text"), // Tagline for spotlight
+  // Stats (cached for performance)
+  clientCount: integer("client_count").default(0),
+  totalWebsites: integer("total_websites").default(0),
+  // Status
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertAgencySchema = createInsertSchema(agencies).omit({ id: true, createdAt: true, clientCount: true, totalWebsites: true });
+export type InsertAgency = z.infer<typeof insertAgencySchema>;
+export type Agency = typeof agencies.$inferSelect;
+
+// Agency clients table - Links user accounts to agencies
+export const agencyClients = pgTable("agency_clients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agencyId: varchar("agency_id").notNull().references(() => agencies.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Client metadata
+  clientName: text("client_name"), // Optional display name within agency
+  notes: text("notes"), // Internal notes for agency
+  // Relationship type
+  relationshipType: text("relationship_type").notNull().default("managed"), // managed, lifetime, referred
+  // Status
+  status: text("status").notNull().default("active"), // active, suspended, churned
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertAgencyClientSchema = createInsertSchema(agencyClients).omit({ id: true, createdAt: true });
+export type InsertAgencyClient = z.infer<typeof insertAgencyClientSchema>;
+export type AgencyClient = typeof agencyClients.$inferSelect;
+
+// Agency team members table - Additional users who can manage agency
+export const agencyMembers = pgTable("agency_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agencyId: varchar("agency_id").notNull().references(() => agencies.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"), // owner, admin, member
+  invitedBy: varchar("invited_by").references(() => users.id),
+  invitedAt: timestamp("invited_at").notNull().defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+});
+
+export const insertAgencyMemberSchema = createInsertSchema(agencyMembers).omit({ id: true, invitedAt: true });
+export type InsertAgencyMember = z.infer<typeof insertAgencyMemberSchema>;
+export type AgencyMember = typeof agencyMembers.$inferSelect;
+
+// Agency invites table - Pending invites for clients or team members
+export const agencyInvites = pgTable("agency_invites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agencyId: varchar("agency_id").notNull().references(() => agencies.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  inviteType: text("invite_type").notNull(), // client, team_member
+  role: text("role"), // For team members: admin, member
+  invitedBy: varchar("invited_by").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertAgencyInviteSchema = createInsertSchema(agencyInvites).omit({ id: true, createdAt: true });
+export type InsertAgencyInvite = z.infer<typeof insertAgencyInviteSchema>;
+export type AgencyInvite = typeof agencyInvites.$inferSelect;
