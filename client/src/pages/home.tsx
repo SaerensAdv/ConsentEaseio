@@ -1,16 +1,36 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X, Clock, FileCheck, Lock, BarChart3, AlertTriangle } from "lucide-react";
+import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X, Clock, FileCheck, Lock, BarChart3, AlertTriangle, Building2, ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PlanComparisonTable from "@/components/PlanComparisonTable";
 import { AnimatedHeroShowcase } from "@/components/AnimatedHeroShowcase";
 import { IntroOverlay, useIntroOverlay } from "@/components/IntroOverlay";
 
+interface FeaturedAgency {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  heroText: string | null;
+}
+
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { showIntro, completeIntro } = useIntroOverlay();
+
+  const { data: featuredAgencies = [] } = useQuery<FeaturedAgency[]>({
+    queryKey: ["/api/agencies/featured"],
+    queryFn: async () => {
+      const res = await fetch("/api/agencies/featured");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
 
   const features = [
     {
@@ -509,6 +529,89 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Featured Partners Section */}
+        {featuredAgencies.length > 0 && (
+          <section className="py-20 md:py-28">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
+                  <Building2 className="w-4 h-4" />
+                  Trusted Partners
+                </div>
+                <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                  Work with our certified partners
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Our partner agencies are experts in GDPR compliance and can help you implement ConsentEase for your business.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredAgencies.map((agency) => (
+                  <motion.div
+                    key={agency.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Card className="h-full hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          {agency.logoUrl ? (
+                            <img 
+                              src={agency.logoUrl} 
+                              alt={agency.name}
+                              className="w-12 h-12 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Building2 className="w-6 h-6 text-primary" />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-semibold text-lg">{agency.name}</h3>
+                            {agency.heroText && (
+                              <p className="text-sm text-muted-foreground">{agency.heroText}</p>
+                            )}
+                          </div>
+                        </div>
+                        {agency.description && (
+                          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                            {agency.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Link href={`/agency/${agency.slug}`}>
+                            <Button size="sm" variant="outline" className="gap-1">
+                              Learn More
+                              <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          </Link>
+                          {agency.websiteUrl && (
+                            <a href={agency.websiteUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" variant="ghost" className="gap-1">
+                                <ExternalLink className="w-3 h-3" />
+                                Website
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="text-center mt-8">
+                <p className="text-muted-foreground text-sm">
+                  Want to become a ConsentEase partner? <Link href="/contact" className="text-primary hover:underline">Get in touch</Link>
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Final CTA */}
         <section className="py-20 md:py-28">

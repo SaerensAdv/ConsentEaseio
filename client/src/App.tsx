@@ -14,6 +14,7 @@ import CookiesManagement from "@/pages/dashboard/cookies";
 import ConsentLogs from "@/pages/dashboard/consent-logs";
 import Diagnostics from "@/pages/dashboard/diagnostics";
 import AgencyDashboard from "@/pages/dashboard/agency";
+import AgencyProfilePage from "@/pages/agency/[slug]";
 import Onboarding from "@/pages/onboarding";
 import PricingPage from "@/pages/pricing";
 import CompareIndex from "@/pages/compare/index";
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/compare/cookie-script" component={CompareCookieScript}/>
       <Route path="/compare/cookieyes" component={CompareCookieYes}/>
       <Route path="/compare/axeptio" component={CompareAxeptio}/>
+      <Route path="/agency/:slug" component={AgencyProfilePage}/>
       <Route path="/login" component={LoginPage}/>
       <Route path="/forgot-password" component={ForgotPassword}/>
       <Route path="/reset-password" component={ResetPassword}/>

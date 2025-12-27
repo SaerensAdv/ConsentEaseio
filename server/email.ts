@@ -137,3 +137,67 @@ export async function sendVerificationEmail(email: string, verificationToken: st
   console.log(`Verification email sent, result:`, result);
   return result;
 }
+
+export async function sendAgencyClientInviteEmail(
+  clientEmail: string, 
+  agencyName: string, 
+  inviteUrl: string,
+  personalMessage?: string
+) {
+  console.log(`Attempting to send agency invite email to ${clientEmail} from ${agencyName}...`);
+  
+  const { client, fromEmail } = await getResendClient();
+  
+  const result = await client.emails.send({
+    from: fromEmail,
+    to: clientEmail,
+    subject: `${agencyName} invites you to ConsentEase`,
+    html: `
+      <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="color: #726CEA; font-size: 28px; margin: 0;">ConsentEase</h1>
+        </div>
+        
+        <h2 style="color: #1e1e1e; font-size: 24px; margin-bottom: 16px;">You've Been Invited!</h2>
+        
+        <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          <strong>${agencyName}</strong> has invited you to join ConsentEase, the simple and affordable way to make your website GDPR and CCPA compliant.
+        </p>
+        
+        ${personalMessage ? `
+        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+          <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0; font-style: italic;">
+            "${personalMessage}"
+          </p>
+          <p style="color: #999; font-size: 12px; margin: 8px 0 0 0;">— ${agencyName}</p>
+        </div>
+        ` : ''}
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${inviteUrl}" style="display: inline-block; background-color: #726CEA; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+            Accept Invitation
+          </a>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #333; font-size: 16px; margin: 0 0 12px 0;">What you get:</h3>
+          <ul style="color: #666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+            <li>GDPR & CCPA compliant consent banner</li>
+            <li>Google Consent Mode v2 support</li>
+            <li>Setup in under 2 minutes</li>
+            <li>Support from ${agencyName}</li>
+          </ul>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+        
+        <p style="color: #999; font-size: 12px; text-align: center;">
+          ConsentEase - GDPR/CCPA Consent Management Made Simple
+        </p>
+      </div>
+    `
+  });
+  
+  console.log(`Agency invite email sent, result:`, result);
+  return result;
+}

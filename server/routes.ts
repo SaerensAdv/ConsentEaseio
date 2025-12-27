@@ -1936,6 +1936,221 @@ export async function registerRoutes(
     }
   });
 
+  // Send client invite email
+  app.post("/api/agency/invites", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const { email, message } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      // Create invite record
+      const invite = await storage.createAgencyInvite({
+        agencyId: agency.id,
+        email,
+        invitedById: req.user.id,
+        message,
+      });
+      
+      // Send invite email
+      const { sendAgencyClientInviteEmail, getBaseUrl } = await import('./email');
+      const inviteUrl = `${getBaseUrl()}/agency/${agency.slug}?invite=${invite.id}`;
+      
+      await sendAgencyClientInviteEmail(email, agency.name, inviteUrl, message);
+      
+      res.status(201).json({ success: true, inviteId: invite.id });
+    } catch (error) {
+      console.error('Failed to send invite:', error);
+      res.status(500).json({ error: "Failed to send invite" });
+    }
+  });
+
+  // Get pending invites for agency
+  app.get("/api/agency/invites", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const invites = await storage.getAgencyInvitesByAgencyId(agency.id);
+      res.json(invites);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch invites" });
+    }
+  });
+
+  // Get aggregate analytics for all agency clients
+  app.get("/api/agency/analytics", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const clients = await storage.getAgencyClients(agency.id);
+      
+      // Get all website IDs across clients
+      const allWebsiteIds: string[] = [];
+      for (const client of clients) {
+        const websites = await storage.getWebsitesByUserId(client.userId);
+        allWebsiteIds.push(...websites.map((w: any) => w.id));
+      }
+      
+      if (allWebsiteIds.length === 0) {
+        return res.json({
+          totalImpressions: 0,
+          totalAccepts: 0,
+          totalRejects: 0,
+          totalCustomizes: 0,
+          acceptanceRate: 0,
+          websiteCount: 0,
+          clientCount: clients.length,
+          byClient: [],
+        });
+      }
+      
+      // Aggregate analytics across all websites
+      let totalImpressions = 0;
+      let totalAccepts = 0;
+      let totalRejects = 0;
+      let totalCustomizes = 0;
+      
+      const byClient: any[] = [];
+      
+      for (const client of clients) {
+        const websites = await storage.getWebsitesByUserId(client.userId);
+        let clientImpressions = 0;
+        let clientAccepts = 0;
+        let clientRejects = 0;
+        
+        for (const website of websites) {
+          const events = await storage.getAnalyticsEvents(website.id);
+          const impressions = events.filter((e: any) => e.eventType === 'impression').length;
+          const accepts = events.filter((e: any) => e.eventType === 'accept_all' || e.eventType === 'accept').length;
+          const rejects = events.filter((e: any) => e.eventType === 'reject_all' || e.eventType === 'reject').length;
+          const customizes = events.filter((e: any) => e.eventType === 'customize' || e.eventType === 'save_preferences').length;
+          
+          totalImpressions += impressions;
+          totalAccepts += accepts;
+          totalRejects += rejects;
+          totalCustomizes += customizes;
+          
+          clientImpressions += impressions;
+          clientAccepts += accepts;
+          clientRejects += rejects;
+        }
+        
+        byClient.push({
+          clientId: client.id,
+          clientName: client.clientName,
+          websiteCount: websites.length,
+          impressions: clientImpressions,
+          accepts: clientAccepts,
+          rejects: clientRejects,
+          acceptanceRate: clientImpressions > 0 ? Math.round((clientAccepts / clientImpressions) * 100) : 0,
+        });
+      }
+      
+      const acceptanceRate = totalImpressions > 0 
+        ? Math.round((totalAccepts / totalImpressions) * 100) 
+        : 0;
+      
+      res.json({
+        totalImpressions,
+        totalAccepts,
+        totalRejects,
+        totalCustomizes,
+        acceptanceRate,
+        websiteCount: allWebsiteIds.length,
+        clientCount: clients.length,
+        byClient,
+      });
+    } catch (error) {
+      console.error('Failed to fetch agency analytics:', error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Bulk update banner config across multiple websites
+  app.post("/api/agency/bulk-update", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const { websiteIds, updates } = req.body;
+      
+      if (!websiteIds || !Array.isArray(websiteIds) || websiteIds.length === 0) {
+        return res.status(400).json({ error: "Website IDs are required" });
+      }
+      
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json({ error: "Updates object is required" });
+      }
+      
+      // Verify all websites belong to agency clients
+      const clients = await storage.getAgencyClients(agency.id);
+      const clientUserIds = clients.map((c: any) => c.userId);
+      
+      const results: any[] = [];
+      for (const websiteId of websiteIds) {
+        const website = await storage.getWebsiteById(websiteId);
+        if (!website || !clientUserIds.includes(website.userId)) {
+          results.push({ websiteId, success: false, error: "Not authorized" });
+          continue;
+        }
+        
+        try {
+          // Get existing config
+          const existingConfig = await storage.getBannerConfigByWebsiteId(websiteId);
+          if (existingConfig) {
+            await storage.updateBannerConfig(existingConfig.id, updates);
+            results.push({ websiteId, success: true });
+          } else {
+            results.push({ websiteId, success: false, error: "No banner config" });
+          }
+        } catch (err) {
+          results.push({ websiteId, success: false, error: "Update failed" });
+        }
+      }
+      
+      const successCount = results.filter(r => r.success).length;
+      res.json({ 
+        success: true, 
+        updated: successCount, 
+        failed: results.length - successCount,
+        results 
+      });
+    } catch (error) {
+      console.error('Failed to bulk update:', error);
+      res.status(500).json({ error: "Failed to bulk update" });
+    }
+  });
+
   return httpServer;
 }
 
