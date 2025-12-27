@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Globe, Copy, Check, Code, Zap, Shield, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { ClaritySettings } from "@/components/ClaritySettings";
 
 interface Website {
   id: string;
   domain: string;
   publicId: string;
+  clarityProjectId: string | null;
 }
 
 interface BannerConfig {
@@ -300,6 +302,17 @@ gtag('set', 'url_passthrough', true);
             </p>
           </CardContent>
         </Card>
+
+        {/* Microsoft Clarity Integration */}
+        {activeWebsite && (
+          <div className="mt-6">
+            <ClaritySettings 
+              websiteId={activeWebsite.id}
+              domain={activeWebsite.domain}
+              clarityProjectId={activeWebsite.clarityProjectId}
+            />
+          </div>
+        )}
 
         <div className="mt-6 flex justify-center">
           <Button variant="outline" onClick={() => setLocation("/dashboard/banner")}>

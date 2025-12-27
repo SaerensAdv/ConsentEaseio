@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Pie, PieChart } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Users, CheckCircle2, XCircle, MousePointerClick, Loader2 } from "lucide-react";
 import { LiveEventFeed } from "@/components/LiveEventFeed";
+import { WebVitalsCard } from "@/components/WebVitalsCard";
 
 interface Website {
   id: string;
@@ -262,8 +263,9 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Live Event Feed */}
-      <div className="mt-4">
+      {/* Web Vitals & Live Event Feed */}
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <WebVitalsCard websiteId={activeWebsiteId || null} />
         <LiveEventFeed websiteId={activeWebsiteId || null} />
       </div>
 

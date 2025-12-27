@@ -6,7 +6,18 @@ export interface GeoLocation {
   isEU: boolean;
   isCalifornia: boolean;
   jurisdiction: 'gdpr' | 'ccpa' | 'both' | 'none';
+  flag?: string;
+  languages?: string[];
+  currency?: string;
 }
+
+interface CountryData {
+  flag: string;
+  languages: string[];
+  currency: string;
+}
+
+const countryDataCache = new Map<string, CountryData>();
 
 const EU_COUNTRY_CODES = [
   'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
@@ -17,6 +28,40 @@ const EU_COUNTRY_CODES = [
 
 const geoCache = new Map<string, { data: GeoLocation; expires: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000;
+
+async function getCountryData(countryCode: string): Promise<CountryData | null> {
+  if (!countryCode || countryCode === 'XX') return null;
+  
+  const cached = countryDataCache.get(countryCode);
+  if (cached) return cached;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const response = await fetch(
+      `https://restcountries.com/v3.1/alpha/${countryCode}?fields=flag,languages,currencies`,
+      { signal: controller.signal }
+    );
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    const countryData: CountryData = {
+      flag: data.flag || '',
+      languages: data.languages ? Object.values(data.languages) as string[] : [],
+      currency: data.currencies ? Object.keys(data.currencies)[0] || '' : ''
+    };
+    
+    countryDataCache.set(countryCode, countryData);
+    return countryData;
+  } catch {
+    return null;
+  }
+}
 
 export async function getGeoLocation(ip: string): Promise<GeoLocation | null> {
   if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
@@ -72,6 +117,9 @@ export async function getGeoLocation(ip: string): Promise<GeoLocation | null> {
       jurisdiction = 'ccpa';
     }
 
+    // Fetch additional country data from REST Countries API (non-blocking)
+    const countryData = await getCountryData(countryCode);
+
     const geoData: GeoLocation = {
       country: data.country || 'Unknown',
       countryCode,
@@ -79,7 +127,10 @@ export async function getGeoLocation(ip: string): Promise<GeoLocation | null> {
       city: data.city || '',
       isEU,
       isCalifornia,
-      jurisdiction
+      jurisdiction,
+      flag: countryData?.flag,
+      languages: countryData?.languages,
+      currency: countryData?.currency
     };
 
     geoCache.set(ip, { data: geoData, expires: Date.now() + CACHE_TTL });

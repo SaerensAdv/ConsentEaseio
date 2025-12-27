@@ -34,6 +34,7 @@ export const websites = pgTable("websites", {
   lastScan: timestamp("last_scan"),
   cookiesFound: integer("cookies_found").default(0),
   scriptsFound: integer("scripts_found").default(0),
+  clarityProjectId: text("clarity_project_id"), // Microsoft Clarity integration
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -161,6 +162,24 @@ export const consentLogs = pgTable("consent_logs", {
 export const insertConsentLogSchema = createInsertSchema(consentLogs).omit({ id: true, timestamp: true });
 export type InsertConsentLog = z.infer<typeof insertConsentLogSchema>;
 export type ConsentLog = typeof consentLogs.$inferSelect;
+
+// Web Vitals metrics table
+export const webVitalsMetrics = pgTable("web_vitals_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
+  lcp: integer("lcp"), // Largest Contentful Paint in ms
+  cls: decimal("cls", { precision: 6, scale: 4 }), // Cumulative Layout Shift (0.xxx)
+  inp: integer("inp"), // Interaction to Next Paint in ms
+  fcp: integer("fcp"), // First Contentful Paint in ms
+  ttfb: integer("ttfb"), // Time to First Byte in ms
+  bannerDelay: integer("banner_delay"), // Time from banner shown to user interaction in ms
+  country: text("country"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+export const insertWebVitalsMetricSchema = createInsertSchema(webVitalsMetrics).omit({ id: true, timestamp: true });
+export type InsertWebVitalsMetric = z.infer<typeof insertWebVitalsMetricSchema>;
+export type WebVitalsMetric = typeof webVitalsMetrics.$inferSelect;
 
 // Diagnostic scans table - for implementation verification
 export const diagnosticScans = pgTable("diagnostic_scans", {

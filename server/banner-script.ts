@@ -1,4 +1,4 @@
-export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true): string {
+export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true, clarityProjectId?: string | null): string {
   // Prioritize custom domain (consentease.io) if available
   let apiBaseUrl = 'https://consentease.io';
   
@@ -45,6 +45,36 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
   var categories = [];
+  var CLARITY_ID = ${clarityProjectId ? `"${clarityProjectId}"` : 'null'};
+  var clarityInjected = false;
+  
+  // Inject Microsoft Clarity only when analytics consent is granted
+  function injectClarityIfConsented(consent) {
+    if (!CLARITY_ID || clarityInjected) return;
+    
+    // Check if analytics or marketing consent is granted
+    var hasAnalyticsConsent = false;
+    if (typeof consent === 'string') {
+      hasAnalyticsConsent = consent === 'accept';
+    } else if (typeof consent === 'object' && consent !== null) {
+      hasAnalyticsConsent = consent.analytics === true || consent.marketing === true;
+    }
+    
+    if (!hasAnalyticsConsent) return;
+    
+    clarityInjected = true;
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", CLARITY_ID);
+  }
+  
+  // Check if user already consented and inject Clarity if appropriate
+  var existingConsentForClarity = getStoredConsent();
+  if (existingConsentForClarity) {
+    injectClarityIfConsented(existingConsentForClarity);
+  }
   
   window.dataLayer = window.dataLayer || [];
   if (typeof window.gtag !== 'function') {
@@ -84,6 +114,107 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   }
   
   var geoData = null;
+  var webVitals = { lcp: null, cls: null, inp: null, fcp: null, ttfb: null };
+  var bannerShownTime = null;
+  var bannerInteractionTime = null;
+  
+  // Web Vitals measurement functions
+  function measureWebVitals() {
+    // Largest Contentful Paint (LCP)
+    if ('PerformanceObserver' in window) {
+      try {
+        var lcpObserver = new PerformanceObserver(function(list) {
+          var entries = list.getEntries();
+          if (entries.length > 0) {
+            webVitals.lcp = Math.round(entries[entries.length - 1].startTime);
+          }
+        });
+        lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+        
+        // First Contentful Paint (FCP)
+        var fcpObserver = new PerformanceObserver(function(list) {
+          var entries = list.getEntries();
+          entries.forEach(function(entry) {
+            if (entry.name === 'first-contentful-paint') {
+              webVitals.fcp = Math.round(entry.startTime);
+            }
+          });
+        });
+        fcpObserver.observe({ type: 'paint', buffered: true });
+        
+        // Cumulative Layout Shift (CLS)
+        var clsValue = 0;
+        var clsObserver = new PerformanceObserver(function(list) {
+          list.getEntries().forEach(function(entry) {
+            if (!entry.hadRecentInput) {
+              clsValue += entry.value;
+              webVitals.cls = Math.round(clsValue * 1000) / 1000;
+            }
+          });
+        });
+        clsObserver.observe({ type: 'layout-shift', buffered: true });
+        
+        // Interaction to Next Paint (INP)
+        var inpValue = 0;
+        var inpObserver = new PerformanceObserver(function(list) {
+          list.getEntries().forEach(function(entry) {
+            if (entry.duration > inpValue) {
+              inpValue = entry.duration;
+              webVitals.inp = Math.round(inpValue);
+            }
+          });
+        });
+        inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 16 });
+      } catch (e) {}
+      
+      // Time to First Byte (TTFB)
+      try {
+        var navEntry = performance.getEntriesByType('navigation')[0];
+        if (navEntry) {
+          webVitals.ttfb = Math.round(navEntry.responseStart);
+        }
+      } catch (e) {}
+    }
+  }
+  
+  function reportWebVitals() {
+    // Only report if we have meaningful data
+    if (!webVitals.lcp && !webVitals.cls && !webVitals.inp) return;
+    
+    var bannerDelay = bannerInteractionTime && bannerShownTime 
+      ? bannerInteractionTime - bannerShownTime 
+      : null;
+    
+    try {
+      fetch(API_BASE + '/api/analytics/vitals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          websiteId: CONFIG.publicId,
+          lcp: webVitals.lcp,
+          cls: webVitals.cls,
+          inp: webVitals.inp,
+          fcp: webVitals.fcp,
+          ttfb: webVitals.ttfb,
+          bannerDelay: bannerDelay,
+          country: geoData ? geoData.countryCode : null
+        })
+      });
+    } catch (e) {}
+  }
+  
+  // Start measuring immediately
+  measureWebVitals();
+  
+  // Report vitals when page is about to unload or after 10 seconds
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        reportWebVitals();
+      }
+    });
+    setTimeout(reportWebVitals, 10000);
+  }
   
   function trackEvent(eventType, details) {
     try {
@@ -119,6 +250,8 @@ export function generateBannerScript(config: any, publicId: string, showBranding
           country: 'Unknown',
           countryCode: 'XX',
           isEU: true,
+          flag: '',
+          languages: [],
           config: {
             rejectText: 'Reject All',
             legalBasis: 'GDPR'
@@ -126,6 +259,21 @@ export function generateBannerScript(config: any, publicId: string, showBranding
         };
         return geoData;
       });
+  }
+  
+  // Get preferred language based on geo and browser
+  function getPreferredLanguage() {
+    // First check browser language
+    var browserLang = navigator.language || navigator.userLanguage;
+    if (browserLang) {
+      var langCode = browserLang.split('-')[0].toLowerCase();
+      return langCode;
+    }
+    // Fall back to geo-detected language
+    if (geoData && geoData.languages && geoData.languages.length > 0) {
+      return geoData.languages[0].toLowerCase().split(' ')[0];
+    }
+    return 'en';
   }
   
   function logConsentProof(action, consentChoices) {
@@ -168,6 +316,9 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     }
     
     gtag('consent', 'update', consentUpdate);
+    
+    // Inject Clarity if consent was granted
+    injectClarityIfConsented(consent);
     
     window.dispatchEvent(new CustomEvent('consentEaseUpdate', {
       detail: { consent: consent }
@@ -287,11 +438,12 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     var rejectText = geoConfig.rejectText || CONFIG.rejectText;
     var settingsText = CONFIG.settingsText;
     
-    // Add jurisdiction badge if detected
+    // Add jurisdiction badge with flag if detected
     var jurisdictionBadge = '';
     if (geoData && geoData.jurisdiction && geoData.jurisdiction !== 'none') {
+      var flag = geoData.flag || '';
       var badgeText = geoData.jurisdiction === 'gdpr' ? 'GDPR' : geoData.jurisdiction === 'ccpa' ? 'CCPA' : 'GDPR & CCPA';
-      jurisdictionBadge = '<span style="display:inline-block;background:' + CONFIG.primaryColor + '20;color:' + CONFIG.primaryColor + ';font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:500;">' + badgeText + '</span>';
+      jurisdictionBadge = '<span style="display:inline-block;background:' + CONFIG.primaryColor + '20;color:' + CONFIG.primaryColor + ';font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:500;">' + (flag ? flag + ' ' : '') + badgeText + '</span>';
     }
     
     var iconHtml = CONFIG.showIcon ? \`
@@ -340,6 +492,7 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     });
     
     trackEvent('banner_shown');
+    bannerShownTime = performance.now();
   }
   
   function showPreferencesModal() {
@@ -469,6 +622,7 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   }
   
   function handleConsent(consent) {
+    bannerInteractionTime = performance.now();
     if (consent === 'accept') {
       var fullConsent = { necessary: true, functional: true, analytics: true, marketing: true };
       storeConsent(fullConsent);
@@ -487,6 +641,8 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   window.ConsentEase = {
     getConsent: getStoredConsent,
     getGeoData: function() { return geoData; },
+    getLanguage: getPreferredLanguage,
+    getWebVitals: function() { return webVitals; },
     updateConsent: function(consent) {
       storeConsent(consent);
       updateGoogleConsent(consent);
@@ -509,7 +665,8 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       });
     },
     getCategories: function() { return categories; },
-    getJurisdiction: function() { return geoData ? geoData.jurisdiction : null; }
+    getJurisdiction: function() { return geoData ? geoData.jurisdiction : null; },
+    getFlag: function() { return geoData ? geoData.flag : null; }
   };
   
   function init() {

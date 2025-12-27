@@ -718,6 +718,76 @@ export async function registerRoutes(
     }
   });
 
+  // CORS preflight for web vitals endpoint
+  app.options("/api/analytics/vitals", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+  });
+
+  // Public endpoint for recording web vitals (no auth needed)
+  app.post("/api/analytics/vitals", async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    try {
+      const { websiteId: publicId, lcp, cls, inp, fcp, ttfb, bannerDelay, country } = req.body;
+      
+      if (!publicId) {
+        return res.status(400).json({ error: "Missing websiteId" });
+      }
+      
+      // Resolve publicId to internal websiteId
+      const website = await storage.getWebsiteByPublicId(publicId);
+      if (!website) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Only record if we have meaningful data
+      if (lcp === null && cls === null && inp === null) {
+        return res.status(200).json({ success: true, recorded: false });
+      }
+      
+      await storage.createWebVitalsMetric({
+        websiteId: website.id,
+        lcp: lcp || null,
+        cls: cls?.toString() || null,
+        inp: inp || null,
+        fcp: fcp || null,
+        ttfb: ttfb || null,
+        bannerDelay: bannerDelay || null,
+        country: country || null,
+      });
+      
+      res.status(201).json({ success: true, recorded: true });
+    } catch (error) {
+      console.error("Web vitals error:", error);
+      res.status(500).json({ error: "Failed to record vitals" });
+    }
+  });
+
+  // Get web vitals summary for a website
+  app.get("/api/websites/:id/vitals", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const daysBack = parseInt(req.query.days as string) || 7;
+      const summary = await storage.getWebVitalsSummary(req.params.id, daysBack);
+      res.json(summary);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch web vitals" });
+    }
+  });
+
   // Public geolocation endpoint for banner script
   app.options("/api/geo", (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -757,6 +827,9 @@ export async function registerRoutes(
         region: geo.region,
         isEU: geo.isEU,
         isCalifornia: geo.isCalifornia,
+        flag: geo.flag,
+        languages: geo.languages,
+        currency: geo.currency,
         config: getJurisdictionConfig(geo.jurisdiction)
       });
     } catch (error) {
@@ -803,7 +876,7 @@ export async function registerRoutes(
       const user = await storage.getUser(website.userId);
       const showBranding = !user || user.plan === 'solo'; // Solo shows branding, Pro/Agency can hide it
       
-      const script = generateBannerScript(config, website.publicId, showBranding);
+      const script = generateBannerScript(config, website.publicId, showBranding, website.clarityProjectId);
       res.type('application/javascript').send(script);
     } catch (error) {
       console.error('Error generating banner script:', error);

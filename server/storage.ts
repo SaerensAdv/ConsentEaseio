@@ -1,4 +1,4 @@
-import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan } from "@shared/schema";
+import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, webVitalsMetrics, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan, type WebVitalsMetric, type InsertWebVitalsMetric } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 
@@ -91,6 +91,22 @@ export interface IStorage {
   getDiagnosticScansByWebsiteId(websiteId: string): Promise<DiagnosticScan[]>;
   getLatestDiagnosticScan(websiteId: string): Promise<DiagnosticScan | undefined>;
   updateDiagnosticScan(id: string, updates: Partial<DiagnosticScan>): Promise<DiagnosticScan>;
+  
+  // Web Vitals methods
+  createWebVitalsMetric(metric: InsertWebVitalsMetric): Promise<WebVitalsMetric>;
+  getWebVitalsByWebsiteId(websiteId: string, daysBack?: number): Promise<WebVitalsMetric[]>;
+  getWebVitalsSummary(websiteId: string, daysBack?: number): Promise<{
+    avgLcp: number | null;
+    avgCls: number | null;
+    avgInp: number | null;
+    avgFcp: number | null;
+    avgTtfb: number | null;
+    avgBannerDelay: number | null;
+    totalSamples: number;
+    p75Lcp: number | null;
+    p75Cls: number | null;
+    p75Inp: number | null;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -509,6 +525,82 @@ export class DatabaseStorage implements IStorage {
   async updateDiagnosticScan(id: string, updates: Partial<DiagnosticScan>): Promise<DiagnosticScan> {
     const [updated] = await db.update(diagnosticScans).set(updates).where(eq(diagnosticScans.id, id)).returning();
     return updated;
+  }
+
+  // Web Vitals methods
+  async createWebVitalsMetric(metric: InsertWebVitalsMetric): Promise<WebVitalsMetric> {
+    const [created] = await db.insert(webVitalsMetrics).values(metric).returning();
+    return created;
+  }
+
+  async getWebVitalsByWebsiteId(websiteId: string, daysBack = 7): Promise<WebVitalsMetric[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    return await db.select().from(webVitalsMetrics)
+      .where(and(
+        eq(webVitalsMetrics.websiteId, websiteId),
+        gte(webVitalsMetrics.timestamp, startDate)
+      ))
+      .orderBy(desc(webVitalsMetrics.timestamp));
+  }
+
+  async getWebVitalsSummary(websiteId: string, daysBack = 7): Promise<{
+    avgLcp: number | null;
+    avgCls: number | null;
+    avgInp: number | null;
+    avgFcp: number | null;
+    avgTtfb: number | null;
+    avgBannerDelay: number | null;
+    totalSamples: number;
+    p75Lcp: number | null;
+    p75Cls: number | null;
+    p75Inp: number | null;
+  }> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    const metrics = await db.select().from(webVitalsMetrics)
+      .where(and(
+        eq(webVitalsMetrics.websiteId, websiteId),
+        gte(webVitalsMetrics.timestamp, startDate)
+      ));
+    
+    if (metrics.length === 0) {
+      return {
+        avgLcp: null, avgCls: null, avgInp: null, avgFcp: null, avgTtfb: null,
+        avgBannerDelay: null, totalSamples: 0, p75Lcp: null, p75Cls: null, p75Inp: null
+      };
+    }
+    
+    // Calculate averages
+    const lcpValues = metrics.map(m => m.lcp).filter((v): v is number => v !== null);
+    const clsValues = metrics.map(m => m.cls).filter((v): v is string => v !== null).map(v => parseFloat(v));
+    const inpValues = metrics.map(m => m.inp).filter((v): v is number => v !== null);
+    const fcpValues = metrics.map(m => m.fcp).filter((v): v is number => v !== null);
+    const ttfbValues = metrics.map(m => m.ttfb).filter((v): v is number => v !== null);
+    const delayValues = metrics.map(m => m.bannerDelay).filter((v): v is number => v !== null);
+    
+    const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+    const p75 = (arr: number[]) => {
+      if (arr.length === 0) return null;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const index = Math.ceil(sorted.length * 0.75) - 1;
+      return Math.round(sorted[index]);
+    };
+    
+    return {
+      avgLcp: avg(lcpValues),
+      avgCls: clsValues.length > 0 ? Math.round(clsValues.reduce((a, b) => a + b, 0) / clsValues.length * 1000) / 1000 : null,
+      avgInp: avg(inpValues),
+      avgFcp: avg(fcpValues),
+      avgTtfb: avg(ttfbValues),
+      avgBannerDelay: avg(delayValues),
+      totalSamples: metrics.length,
+      p75Lcp: p75(lcpValues),
+      p75Cls: clsValues.length > 0 ? Math.round(p75(clsValues.map(v => v * 1000))! / 1000 * 1000) / 1000 : null,
+      p75Inp: p75(inpValues)
+    };
   }
 }
 
