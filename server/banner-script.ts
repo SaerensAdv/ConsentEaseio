@@ -74,6 +74,15 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     } catch (e) {}
   }
   
+  function getVisitorId() {
+    var key = 'ce_visitor_' + CONFIG.publicId;
+    var stored = localStorage.getItem(key);
+    if (stored) return stored;
+    var id = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem(key, id);
+    return id;
+  }
+  
   function trackEvent(eventType, details) {
     try {
       fetch(API_BASE + '/api/analytics/event', {
@@ -84,6 +93,23 @@ export function generateBannerScript(config: any, publicId: string, showBranding
           eventType: eventType,
           country: null,
           details: details || null
+        })
+      });
+    } catch (e) {}
+  }
+  
+  function logConsentProof(action, consentChoices) {
+    try {
+      fetch(API_BASE + '/api/consent/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          websiteId: CONFIG.publicId,
+          visitorId: getVisitorId(),
+          action: action,
+          consentChoices: consentChoices,
+          bannerVersion: '1.0',
+          policyVersion: null
         })
       });
     } catch (e) {}
@@ -367,6 +393,7 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       
       storeConsent(consent);
       updateGoogleConsent(consent);
+      logConsentProof('custom', consent);
       trackEvent('preferences_saved', consent);
       
       closePrefs();
@@ -401,10 +428,12 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       var fullConsent = { necessary: true, functional: true, analytics: true, marketing: true };
       storeConsent(fullConsent);
       updateGoogleConsent(fullConsent);
+      logConsentProof('accept_all', fullConsent);
     } else {
       var minConsent = { necessary: true, functional: false, analytics: false, marketing: false };
       storeConsent(minConsent);
       updateGoogleConsent(minConsent);
+      logConsentProof('reject_all', minConsent);
     }
     trackEvent(consent);
     closeBanner();

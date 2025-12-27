@@ -1176,5 +1176,398 @@ export async function registerRoutes(
     }
   });
 
+  // ==========================================
+  // CONSENT PROOF LOGGING ENDPOINTS
+  // ==========================================
+  
+  // CORS preflight for consent logging
+  app.options("/api/consent/log", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+  });
+
+  // Public endpoint for logging consent decisions (called from banner script)
+  app.post("/api/consent/log", async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    try {
+      const { 
+        websiteId: publicId, 
+        visitorId, 
+        action, 
+        consentChoices,
+        bannerVersion,
+        policyVersion 
+      } = req.body;
+      
+      if (!publicId || !visitorId || !action || !consentChoices) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const website = await storage.getWebsiteByPublicId(publicId);
+      if (!website) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Hash the IP for privacy compliance
+      const crypto = await import('crypto');
+      const clientIp = req.ip || req.socket.remoteAddress || '';
+      const ipHash = crypto.createHash('sha256').update(clientIp + 'consent-salt').digest('hex').substring(0, 16);
+      
+      // Calculate expiry (1 year from now)
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      
+      await storage.createConsentLog({
+        websiteId: website.id,
+        visitorId,
+        action,
+        ipHash,
+        userAgent: req.headers['user-agent'] || null,
+        country: req.body.country || null,
+        region: req.body.region || null,
+        consentChoices: typeof consentChoices === 'string' ? consentChoices : JSON.stringify(consentChoices),
+        bannerVersion: bannerVersion || '1.0',
+        policyVersion: policyVersion || null,
+        expiresAt,
+      });
+      
+      res.status(201).json({ success: true });
+    } catch (error) {
+      console.error('Error logging consent:', error);
+      res.status(500).json({ error: "Failed to log consent" });
+    }
+  });
+
+  // Get consent logs for a website (authenticated)
+  app.get("/api/websites/:id/consent-logs", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const [logs, total] = await Promise.all([
+        storage.getConsentLogsByWebsiteId(website.id, limit, offset),
+        storage.getConsentLogsCount(website.id),
+      ]);
+      
+      res.json({ logs, total, limit, offset });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch consent logs" });
+    }
+  });
+
+  // Export consent logs as CSV
+  app.get("/api/websites/:id/consent-logs/export", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Get date range from query params
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date();
+      
+      const logs = await storage.getConsentLogsByDateRange(website.id, startDate, endDate);
+      
+      // Generate CSV
+      const csvHeader = 'Timestamp,Visitor ID,Action,IP Hash,User Agent,Country,Region,Consent Choices,Banner Version,Policy Version,Expires At\n';
+      const csvRows = logs.map(log => {
+        const choices = log.consentChoices.replace(/"/g, '""');
+        const userAgent = (log.userAgent || '').replace(/"/g, '""');
+        return `"${log.timestamp.toISOString()}","${log.visitorId}","${log.action}","${log.ipHash || ''}","${userAgent}","${log.country || ''}","${log.region || ''}","${choices}","${log.bannerVersion || ''}","${log.policyVersion || ''}","${log.expiresAt?.toISOString() || ''}"`;
+      }).join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="consent-logs-${website.domain}-${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csvHeader + csvRows);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export consent logs" });
+    }
+  });
+
+  // ==========================================
+  // DIAGNOSTIC SCAN ENDPOINTS
+  // ==========================================
+  
+  // Run a diagnostic scan for a website
+  app.post("/api/websites/:id/diagnostic-scan", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      // Create pending scan record
+      const scan = await storage.createDiagnosticScan({
+        websiteId: website.id,
+        status: 'running',
+      });
+      
+      // Run diagnostic scan in background
+      runDiagnosticScan(scan.id, website).catch(err => {
+        console.error('Diagnostic scan error:', err);
+      });
+      
+      res.status(201).json({ scanId: scan.id, status: 'running' });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to start diagnostic scan" });
+    }
+  });
+
+  // Get diagnostic scans for a website
+  app.get("/api/websites/:id/diagnostic-scans", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const scans = await storage.getDiagnosticScansByWebsiteId(website.id);
+      res.json(scans);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch diagnostic scans" });
+    }
+  });
+
+  // Get latest diagnostic scan for a website
+  app.get("/api/websites/:id/diagnostic-scan/latest", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const scan = await storage.getLatestDiagnosticScan(website.id);
+      res.json(scan || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch diagnostic scan" });
+    }
+  });
+
   return httpServer;
+}
+
+// Helper function to run diagnostic scan
+async function runDiagnosticScan(scanId: string, website: { id: string; domain: string; publicId: string }): Promise<void> {
+  try {
+    const playwright = await import('playwright');
+    const browser = await playwright.chromium.launch({
+      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    
+    const page = await browser.newPage();
+    
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+    const rawData: Record<string, any> = {};
+    
+    let consentModeDetected = false;
+    let consentModeVersion: string | null = null;
+    let defaultConsentSet = false;
+    let updateConsentCalled = false;
+    let gtmDetected = false;
+    let gtagDetected = false;
+    let bannerScriptDetected = false;
+    let bannerScriptVersion: string | null = null;
+    
+    // Intercept console messages to detect gtag calls
+    const consoleMessages: string[] = [];
+    page.on('console', msg => {
+      consoleMessages.push(msg.text());
+    });
+    
+    // Intercept network requests
+    const scriptRequests: string[] = [];
+    page.on('request', request => {
+      if (request.resourceType() === 'script') {
+        scriptRequests.push(request.url());
+      }
+    });
+    
+    try {
+      // Try to navigate to the website
+      const url = website.domain.startsWith('http') ? website.domain : `https://${website.domain}`;
+      await page.goto(url, { timeout: 30000, waitUntil: 'networkidle' });
+      
+      // Wait a bit for scripts to execute
+      await page.waitForTimeout(2000);
+      
+      // Check for ConsentEase banner script
+      bannerScriptDetected = scriptRequests.some(url => 
+        url.includes('consentease') || 
+        url.includes(`/api/consent/${website.publicId}/script.js`)
+      );
+      
+      // Check for GTM
+      gtmDetected = scriptRequests.some(url => 
+        url.includes('googletagmanager.com/gtm.js') ||
+        url.includes('googletagmanager.com/gtag/js')
+      );
+      
+      // Check for gtag.js
+      gtagDetected = scriptRequests.some(url => 
+        url.includes('googletagmanager.com/gtag/js')
+      );
+      
+      // Evaluate page for consent mode
+      const pageAnalysis = await page.evaluate(() => {
+        const result: Record<string, any> = {
+          hasDataLayer: typeof (window as any).dataLayer !== 'undefined',
+          hasGtag: typeof (window as any).gtag === 'function',
+          dataLayerContents: [],
+          consentDefaultFound: false,
+          consentUpdateFound: false,
+        };
+        
+        if (result.hasDataLayer) {
+          const dataLayer = (window as any).dataLayer;
+          result.dataLayerContents = dataLayer.slice(0, 20).map((item: any) => {
+            if (typeof item === 'object') {
+              return JSON.stringify(item).substring(0, 200);
+            }
+            return String(item);
+          });
+          
+          // Look for consent commands
+          for (const item of dataLayer) {
+            if (Array.isArray(item) && item[0] === 'consent') {
+              if (item[1] === 'default') {
+                result.consentDefaultFound = true;
+              }
+              if (item[1] === 'update') {
+                result.consentUpdateFound = true;
+              }
+            }
+            // Also check object format
+            if (typeof item === 'object' && item['0'] === 'consent') {
+              if (item['1'] === 'default') {
+                result.consentDefaultFound = true;
+              }
+              if (item['1'] === 'update') {
+                result.consentUpdateFound = true;
+              }
+            }
+          }
+        }
+        
+        // Check for consent banner element
+        const bannerSelectors = [
+          '[data-consentease]',
+          '#consentease-banner',
+          '.consent-banner',
+          '#cookie-consent',
+          '.cookie-banner',
+        ];
+        result.bannerElementFound = bannerSelectors.some(sel => document.querySelector(sel) !== null);
+        
+        return result;
+      });
+      
+      rawData.pageAnalysis = pageAnalysis;
+      rawData.scriptRequests = scriptRequests.slice(0, 50);
+      rawData.consoleMessages = consoleMessages.slice(0, 20);
+      
+      // Analyze results
+      consentModeDetected = pageAnalysis.hasGtag || pageAnalysis.hasDataLayer;
+      defaultConsentSet = pageAnalysis.consentDefaultFound;
+      updateConsentCalled = pageAnalysis.consentUpdateFound;
+      
+      if (pageAnalysis.hasDataLayer && pageAnalysis.consentDefaultFound) {
+        consentModeVersion = 'v2';
+      } else if (pageAnalysis.hasDataLayer) {
+        consentModeVersion = 'v1';
+      }
+      
+      // Generate issues and recommendations
+      if (!bannerScriptDetected) {
+        issues.push('ConsentEase banner script not detected on the page');
+        recommendations.push('Add the ConsentEase embed script to your website. Copy it from the Embed Code section in your dashboard.');
+      }
+      
+      if (!gtmDetected && !gtagDetected) {
+        issues.push('Google Tag Manager or gtag.js not detected');
+        recommendations.push('If you use Google Analytics or other Google services, make sure GTM or gtag.js is installed.');
+      }
+      
+      if (gtmDetected && !defaultConsentSet) {
+        issues.push('Google Consent Mode default values not set before GTM loads');
+        recommendations.push('Ensure the ConsentEase script loads BEFORE Google Tag Manager to properly initialize consent defaults.');
+      }
+      
+      if (consentModeDetected && !defaultConsentSet) {
+        issues.push('Consent Mode detected but default consent state not set');
+        recommendations.push('The consent default should be set before any Google tags fire. Check your script loading order.');
+      }
+      
+      if (defaultConsentSet && !updateConsentCalled && !pageAnalysis.bannerElementFound) {
+        recommendations.push('Consent defaults are set, but no consent update was detected. Make sure users can interact with the banner.');
+      }
+      
+      if (issues.length === 0 && bannerScriptDetected && defaultConsentSet) {
+        recommendations.push('Your Consent Mode implementation looks good! Users will see proper consent signals sent to Google.');
+      }
+      
+    } catch (navError: any) {
+      issues.push(`Could not load website: ${navError.message}`);
+      recommendations.push('Make sure your website is publicly accessible and the domain is correct.');
+    }
+    
+    await browser.close();
+    
+    // Update scan with results
+    await storage.updateDiagnosticScan(scanId, {
+      status: 'completed',
+      consentModeDetected,
+      consentModeVersion,
+      defaultConsentSet,
+      updateConsentCalled,
+      gtmDetected,
+      gtagDetected,
+      bannerScriptDetected,
+      bannerScriptVersion,
+      issues: JSON.stringify(issues),
+      recommendations: JSON.stringify(recommendations),
+      rawData: JSON.stringify(rawData),
+    });
+    
+  } catch (error: any) {
+    console.error('Diagnostic scan failed:', error);
+    await storage.updateDiagnosticScan(scanId, {
+      status: 'failed',
+      issues: JSON.stringify([`Scan failed: ${error.message}`]),
+      recommendations: JSON.stringify(['Please try again. If the problem persists, contact support.']),
+    });
+  }
 }

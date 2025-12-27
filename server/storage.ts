@@ -1,4 +1,4 @@
-import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie } from "@shared/schema";
+import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 
@@ -79,6 +79,18 @@ export interface IStorage {
   updateCookie(id: string, updates: Partial<Cookie>): Promise<Cookie>;
   deleteCookie(id: string): Promise<void>;
   replaceAutoDetectedCookies(websiteId: string, newCookies: InsertCookie[]): Promise<void>;
+  
+  // Consent log methods
+  createConsentLog(log: InsertConsentLog): Promise<ConsentLog>;
+  getConsentLogsByWebsiteId(websiteId: string, limit?: number, offset?: number): Promise<ConsentLog[]>;
+  getConsentLogsCount(websiteId: string): Promise<number>;
+  getConsentLogsByDateRange(websiteId: string, startDate: Date, endDate: Date): Promise<ConsentLog[]>;
+  
+  // Diagnostic scan methods
+  createDiagnosticScan(scan: InsertDiagnosticScan): Promise<DiagnosticScan>;
+  getDiagnosticScansByWebsiteId(websiteId: string): Promise<DiagnosticScan[]>;
+  getLatestDiagnosticScan(websiteId: string): Promise<DiagnosticScan | undefined>;
+  updateDiagnosticScan(id: string, updates: Partial<DiagnosticScan>): Promise<DiagnosticScan>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -442,6 +454,61 @@ export class DatabaseStorage implements IStorage {
         await tx.insert(cookies).values(newCookies);
       }
     });
+  }
+
+  // Consent log methods
+  async createConsentLog(log: InsertConsentLog): Promise<ConsentLog> {
+    const [created] = await db.insert(consentLogs).values(log).returning();
+    return created;
+  }
+
+  async getConsentLogsByWebsiteId(websiteId: string, limit = 100, offset = 0): Promise<ConsentLog[]> {
+    return await db.select().from(consentLogs)
+      .where(eq(consentLogs.websiteId, websiteId))
+      .orderBy(desc(consentLogs.timestamp))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getConsentLogsCount(websiteId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(consentLogs)
+      .where(eq(consentLogs.websiteId, websiteId));
+    return result[0]?.count || 0;
+  }
+
+  async getConsentLogsByDateRange(websiteId: string, startDate: Date, endDate: Date): Promise<ConsentLog[]> {
+    return await db.select().from(consentLogs)
+      .where(and(
+        eq(consentLogs.websiteId, websiteId),
+        gte(consentLogs.timestamp, startDate),
+        sql`${consentLogs.timestamp} <= ${endDate}`
+      ))
+      .orderBy(desc(consentLogs.timestamp));
+  }
+
+  // Diagnostic scan methods
+  async createDiagnosticScan(scan: InsertDiagnosticScan): Promise<DiagnosticScan> {
+    const [created] = await db.insert(diagnosticScans).values(scan).returning();
+    return created;
+  }
+
+  async getDiagnosticScansByWebsiteId(websiteId: string): Promise<DiagnosticScan[]> {
+    return await db.select().from(diagnosticScans)
+      .where(eq(diagnosticScans.websiteId, websiteId))
+      .orderBy(desc(diagnosticScans.scannedAt));
+  }
+
+  async getLatestDiagnosticScan(websiteId: string): Promise<DiagnosticScan | undefined> {
+    const [scan] = await db.select().from(diagnosticScans)
+      .where(eq(diagnosticScans.websiteId, websiteId))
+      .orderBy(desc(diagnosticScans.scannedAt))
+      .limit(1);
+    return scan || undefined;
+  }
+
+  async updateDiagnosticScan(id: string, updates: Partial<DiagnosticScan>): Promise<DiagnosticScan> {
+    const [updated] = await db.update(diagnosticScans).set(updates).where(eq(diagnosticScans.id, id)).returning();
+    return updated;
   }
 }
 

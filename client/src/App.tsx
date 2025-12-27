@@ -11,6 +11,8 @@ import Analytics from "@/pages/dashboard/analytics";
 import Settings from "@/pages/dashboard/settings";
 import EmbedCode from "@/pages/dashboard/embed";
 import CookiesManagement from "@/pages/dashboard/cookies";
+import ConsentLogs from "@/pages/dashboard/consent-logs";
+import Diagnostics from "@/pages/dashboard/diagnostics";
 import Onboarding from "@/pages/onboarding";
 import ComparePage from "@/pages/compare";
 import LoginPage from "@/pages/login";
@@ -58,6 +60,8 @@ function Router() {
       <Route path="/dashboard/cookies" component={CookiesManagement}/>
       <Route path="/dashboard/embed" component={EmbedCode}/>
       <Route path="/dashboard/analytics" component={Analytics}/>
+      <Route path="/dashboard/consent-logs" component={ConsentLogs}/>
+      <Route path="/dashboard/diagnostics" component={Diagnostics}/>
       <Route path="/dashboard/settings" component={Settings}/>
       {/* Fallback to 404 */}
       <Route component={NotFound} />

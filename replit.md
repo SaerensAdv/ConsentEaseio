@@ -45,7 +45,7 @@ The platform is a full-stack application with:
   - `changelog.tsx` - Version history with categorized changes
   - `roadmap.tsx` - 2026 product roadmap with quarterly features
   - `legal/` - Legal pages (privacy.tsx, terms.tsx, cookies.tsx)
-  - `dashboard/` - Dashboard pages (websites, banner, embed, analytics, settings)
+  - `dashboard/` - Dashboard pages (websites, banner, embed, analytics, consent-logs, diagnostics, settings)
 
 ### Backend (Express + TypeScript)
 - `/server/index.ts` - App entry point with Stripe initialization
@@ -64,6 +64,8 @@ The platform is a full-stack application with:
   - cookie_categories (4 default: necessary, functional, analytics, marketing)
   - cookies (individual cookie definitions per category)
   - analytics_events
+  - consent_logs (compliance proof records with visitor ID, IP hash, consent choices)
+  - diagnostic_scans (Consent Mode implementation verification results)
 
 ### Styling
 - TailwindCSS v4

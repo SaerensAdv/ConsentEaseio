@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, Code, Cookie } from "lucide-react";
+import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, Code, Cookie, FileText, Stethoscope } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: Cookie, label: "Cookies", href: "/dashboard/cookies" },
     { icon: Code, label: "Embed Code", href: "/dashboard/embed" },
     { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+    { icon: FileText, label: "Consent Logs", href: "/dashboard/consent-logs" },
+    { icon: Stethoscope, label: "Diagnostics", href: "/dashboard/diagnostics" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ];
 

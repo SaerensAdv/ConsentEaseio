@@ -140,3 +140,47 @@ export const analyticsEvents = pgTable("analytics_events", {
 export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).omit({ id: true, timestamp: true });
 export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+// Consent proof logs table - for compliance documentation
+export const consentLogs = pgTable("consent_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
+  visitorId: text("visitor_id").notNull(), // Anonymized visitor identifier (hashed)
+  action: text("action").notNull(), // accept_all, reject_all, custom
+  ipHash: text("ip_hash"), // SHA-256 hashed IP for privacy compliance
+  userAgent: text("user_agent"),
+  country: text("country"),
+  region: text("region"),
+  consentChoices: text("consent_choices").notNull(), // JSON string: {"necessary":true,"analytics":true,"marketing":false}
+  bannerVersion: text("banner_version"), // Version of the banner shown
+  policyVersion: text("policy_version"), // Privacy policy version at time of consent
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"), // When this consent expires (typically 1 year)
+});
+
+export const insertConsentLogSchema = createInsertSchema(consentLogs).omit({ id: true, timestamp: true });
+export type InsertConsentLog = z.infer<typeof insertConsentLogSchema>;
+export type ConsentLog = typeof consentLogs.$inferSelect;
+
+// Diagnostic scans table - for implementation verification
+export const diagnosticScans = pgTable("diagnostic_scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  websiteId: varchar("website_id").notNull().references(() => websites.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"), // pending, running, completed, failed
+  consentModeDetected: boolean("consent_mode_detected"),
+  consentModeVersion: text("consent_mode_version"), // v1, v2
+  defaultConsentSet: boolean("default_consent_set"),
+  updateConsentCalled: boolean("update_consent_called"),
+  gtmDetected: boolean("gtm_detected"),
+  gtagDetected: boolean("gtag_detected"),
+  bannerScriptDetected: boolean("banner_script_detected"),
+  bannerScriptVersion: text("banner_script_version"),
+  issues: text("issues"), // JSON array of issues found
+  recommendations: text("recommendations"), // JSON array of recommendations
+  rawData: text("raw_data"), // Full diagnostic data as JSON
+  scannedAt: timestamp("scanned_at").notNull().defaultNow(),
+});
+
+export const insertDiagnosticScanSchema = createInsertSchema(diagnosticScans).omit({ id: true, scannedAt: true });
+export type InsertDiagnosticScan = z.infer<typeof insertDiagnosticScanSchema>;
+export type DiagnosticScan = typeof diagnosticScans.$inferSelect;
