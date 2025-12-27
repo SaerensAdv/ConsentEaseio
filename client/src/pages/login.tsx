@@ -154,15 +154,6 @@ export default function LoginPage() {
                 )}
               </Button>
 
-              {!isRegister && (
-                <div className="mt-4 p-4 bg-secondary/50 rounded-lg border border-border">
-                  <p className="text-sm font-medium mb-2">Demo Account:</p>
-                  <p className="text-sm text-muted-foreground">
-                    Email: demo@consentease.com<br />
-                    Password: demo123
-                  </p>
-                </div>
-              )}
             </form>
 
             <div className="mt-6 text-center">

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import crypto from "crypto";
 import { storage, PLAN_LIMITS, type PlanType, isUnlimited } from "./storage";
 import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema, insertCookieCategorySchema, insertCookieSchema } from "@shared/schema";
 import { z } from "zod";
@@ -408,38 +409,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Onboarding registration error:", error);
       res.status(500).json({ error: "Failed to create account" });
-    }
-  });
-  
-  // Demo login - auto-login with demo account for interactive tour
-  app.post("/api/demo/login", async (req, res) => {
-    try {
-      // Find demo account
-      const demoUser = await storage.getUserByEmail("demo@consentease.com");
-      
-      if (!demoUser) {
-        return res.status(404).json({ error: "Demo account not available" });
-      }
-      
-      // Log in as demo user
-      req.login(demoUser, (err) => {
-        if (err) {
-          console.error("Demo login error:", err);
-          return res.status(500).json({ error: "Failed to start demo" });
-        }
-        
-        res.json({ 
-          success: true,
-          user: { 
-            id: demoUser.id, 
-            email: demoUser.email, 
-            plan: demoUser.plan 
-          }
-        });
-      });
-    } catch (error) {
-      console.error("Demo login error:", error);
-      res.status(500).json({ error: "Failed to start demo" });
     }
   });
   
@@ -1955,11 +1924,14 @@ export async function registerRoutes(
       }
       
       // Create invite record
+      const token = crypto.randomBytes(32).toString('hex');
       const invite = await storage.createAgencyInvite({
         agencyId: agency.id,
         email,
-        invitedById: req.user.id,
-        message,
+        token,
+        inviteType: 'client',
+        invitedBy: req.user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       });
       
       // Send invite email
@@ -2043,7 +2015,7 @@ export async function registerRoutes(
         let clientRejects = 0;
         
         for (const website of websites) {
-          const events = await storage.getAnalyticsEvents(website.id);
+          const events = await storage.getAnalyticsByWebsiteId(website.id, 365);
           const impressions = events.filter((e: any) => e.eventType === 'impression').length;
           const accepts = events.filter((e: any) => e.eventType === 'accept_all' || e.eventType === 'accept').length;
           const rejects = events.filter((e: any) => e.eventType === 'reject_all' || e.eventType === 'reject').length;
