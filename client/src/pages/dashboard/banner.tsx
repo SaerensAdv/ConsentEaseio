@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe, Sparkles, Lock, X } from "lucide-react";
+import { Undo2, Save, Monitor, Smartphone, Palette, Layout, Type, Shield, BoxSelect, Loader2, Globe, Sparkles, Lock, X, Settings2, Link2, Clock, Timer, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -50,6 +50,25 @@ interface BannerConfig {
   animation: string;
   buttonStyle: string;
   buttonShape: string;
+  borderColor: string;
+  borderWidth: number;
+  secondaryButtonColor: string;
+  maxWidth: number;
+  showOverlay: boolean;
+  overlayOpacity: number;
+  logoUrl: string | null;
+  displayDelay: number;
+  autoHideDelay: number | null;
+  showCloseButton: boolean;
+  reconsentDays: number;
+  respectDnt: boolean;
+  privacyPolicyUrl: string | null;
+  privacyPolicyText: string;
+  cookiePolicyUrl: string | null;
+  cookiePolicyText: string;
+  customFooter: string | null;
+  language: string;
+  translations: string | null;
 }
 
 const defaultConfig = {
@@ -72,6 +91,25 @@ const defaultConfig = {
   animation: "slide-up",
   buttonStyle: "filled",
   buttonShape: "rounded",
+  borderColor: "#e5e7eb",
+  borderWidth: 1,
+  secondaryButtonColor: "#6b7280",
+  maxWidth: 400,
+  showOverlay: false,
+  overlayOpacity: 50,
+  logoUrl: null as string | null,
+  displayDelay: 0,
+  autoHideDelay: null as number | null,
+  showCloseButton: false,
+  reconsentDays: 365,
+  respectDnt: false,
+  privacyPolicyUrl: null as string | null,
+  privacyPolicyText: "Privacy Policy",
+  cookiePolicyUrl: null as string | null,
+  cookiePolicyText: "Cookie Policy",
+  customFooter: null as string | null,
+  language: "en",
+  translations: null as string | null,
 };
 
 export default function BannerConfigurator() {
@@ -156,6 +194,25 @@ export default function BannerConfigurator() {
         animation: bannerConfig.animation,
         buttonStyle: bannerConfig.buttonStyle,
         buttonShape: bannerConfig.buttonShape,
+        borderColor: bannerConfig.borderColor || "#e5e7eb",
+        borderWidth: bannerConfig.borderWidth || 1,
+        secondaryButtonColor: bannerConfig.secondaryButtonColor || "#6b7280",
+        maxWidth: bannerConfig.maxWidth || 400,
+        showOverlay: bannerConfig.showOverlay || false,
+        overlayOpacity: bannerConfig.overlayOpacity || 50,
+        logoUrl: bannerConfig.logoUrl,
+        displayDelay: bannerConfig.displayDelay || 0,
+        autoHideDelay: bannerConfig.autoHideDelay,
+        showCloseButton: bannerConfig.showCloseButton || false,
+        reconsentDays: bannerConfig.reconsentDays || 365,
+        respectDnt: bannerConfig.respectDnt || false,
+        privacyPolicyUrl: bannerConfig.privacyPolicyUrl,
+        privacyPolicyText: bannerConfig.privacyPolicyText || "Privacy Policy",
+        cookiePolicyUrl: bannerConfig.cookiePolicyUrl,
+        cookiePolicyText: bannerConfig.cookiePolicyText || "Cookie Policy",
+        customFooter: bannerConfig.customFooter,
+        language: bannerConfig.language || "en",
+        translations: bannerConfig.translations,
       });
     }
   }, [bannerConfig]);
@@ -202,6 +259,25 @@ export default function BannerConfigurator() {
         animation: bannerConfig.animation,
         buttonStyle: bannerConfig.buttonStyle,
         buttonShape: bannerConfig.buttonShape,
+        borderColor: bannerConfig.borderColor || "#e5e7eb",
+        borderWidth: bannerConfig.borderWidth || 1,
+        secondaryButtonColor: bannerConfig.secondaryButtonColor || "#6b7280",
+        maxWidth: bannerConfig.maxWidth || 400,
+        showOverlay: bannerConfig.showOverlay || false,
+        overlayOpacity: bannerConfig.overlayOpacity || 50,
+        logoUrl: bannerConfig.logoUrl,
+        displayDelay: bannerConfig.displayDelay || 0,
+        autoHideDelay: bannerConfig.autoHideDelay,
+        showCloseButton: bannerConfig.showCloseButton || false,
+        reconsentDays: bannerConfig.reconsentDays || 365,
+        respectDnt: bannerConfig.respectDnt || false,
+        privacyPolicyUrl: bannerConfig.privacyPolicyUrl,
+        privacyPolicyText: bannerConfig.privacyPolicyText || "Privacy Policy",
+        cookiePolicyUrl: bannerConfig.cookiePolicyUrl,
+        cookiePolicyText: bannerConfig.cookiePolicyText || "Cookie Policy",
+        customFooter: bannerConfig.customFooter,
+        language: bannerConfig.language || "en",
+        translations: bannerConfig.translations,
       });
     }
   };
@@ -295,10 +371,12 @@ export default function BannerConfigurator() {
           <Card className="lg:col-span-4 h-full overflow-hidden flex flex-col border-none shadow-lg" data-tour="banner-styles">
             <div className="p-1">
               <Tabs defaultValue="appearance" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="appearance" className="gap-2"><Palette className="w-4 h-4"/> Style</TabsTrigger>
-                  <TabsTrigger value="content" className="gap-2"><Type className="w-4 h-4"/> Content</TabsTrigger>
-                  <TabsTrigger value="layout" className="gap-2"><Layout className="w-4 h-4"/> Layout</TabsTrigger>
+                <TabsList className="w-full grid grid-cols-5 h-auto">
+                  <TabsTrigger value="appearance" className="gap-1 flex-col py-2 text-xs"><Palette className="w-4 h-4"/> Style</TabsTrigger>
+                  <TabsTrigger value="content" className="gap-1 flex-col py-2 text-xs"><Type className="w-4 h-4"/> Content</TabsTrigger>
+                  <TabsTrigger value="layout" className="gap-1 flex-col py-2 text-xs"><Layout className="w-4 h-4"/> Layout</TabsTrigger>
+                  <TabsTrigger value="behavior" className="gap-1 flex-col py-2 text-xs"><Settings2 className="w-4 h-4"/> Behavior</TabsTrigger>
+                  <TabsTrigger value="links" className="gap-1 flex-col py-2 text-xs"><Link2 className="w-4 h-4"/> Links</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -447,6 +525,115 @@ export default function BannerConfigurator() {
                         </Select>
                       </div>
                      </div>
+                     <div className="space-y-2">
+                       <Label className="text-xs text-muted-foreground">Secondary Button Color</Label>
+                       <div className="flex items-center gap-2">
+                         <div className="h-8 w-8 rounded-full border border-border shadow-sm overflow-hidden relative">
+                           <input 
+                             type="color" 
+                             value={config.secondaryButtonColor}
+                             onChange={(e) => setConfig({...config, secondaryButtonColor: e.target.value})}
+                             className="absolute inset-[-50%] w-[200%] h-[200%] p-0 border-0 cursor-pointer"
+                           />
+                         </div>
+                         <Input 
+                           value={config.secondaryButtonColor}
+                           onChange={(e) => setConfig({...config, secondaryButtonColor: e.target.value})}
+                           className="font-mono text-xs h-8"
+                           maxLength={7}
+                         />
+                       </div>
+                     </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Border</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Border Color</Label>
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full border border-border shadow-sm overflow-hidden relative">
+                            <input 
+                              type="color" 
+                              value={config.borderColor}
+                              onChange={(e) => setConfig({...config, borderColor: e.target.value})}
+                              className="absolute inset-[-50%] w-[200%] h-[200%] p-0 border-0 cursor-pointer"
+                            />
+                          </div>
+                          <Input 
+                            value={config.borderColor}
+                            onChange={(e) => setConfig({...config, borderColor: e.target.value})}
+                            className="font-mono text-xs h-8"
+                            maxLength={7}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground">Width</Label>
+                          <span className="text-xs text-muted-foreground">{config.borderWidth}px</span>
+                        </div>
+                        <Slider 
+                          value={[config.borderWidth]} 
+                          min={0} 
+                          max={4} 
+                          step={1}
+                          onValueChange={(val) => setConfig({...config, borderWidth: val[0]})} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Overlay</Label>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Show Overlay</Label>
+                        <p className="text-xs text-muted-foreground">Dark backdrop behind banner</p>
+                      </div>
+                      <Switch 
+                        checked={config.showOverlay}
+                        onCheckedChange={(checked) => setConfig({...config, showOverlay: checked})}
+                      />
+                    </div>
+                    {config.showOverlay && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground">Opacity</Label>
+                          <span className="text-xs text-muted-foreground">{config.overlayOpacity}%</span>
+                        </div>
+                        <Slider 
+                          value={[config.overlayOpacity]} 
+                          min={10} 
+                          max={90} 
+                          step={5}
+                          onValueChange={(val) => setConfig({...config, overlayOpacity: val[0]})} 
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Size</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Max Width</Label>
+                        <span className="text-xs text-muted-foreground">{config.maxWidth}px</span>
+                      </div>
+                      <Slider 
+                        value={[config.maxWidth]} 
+                        min={300} 
+                        max={600} 
+                        step={25}
+                        onValueChange={(val) => setConfig({...config, maxWidth: val[0]})} 
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -604,6 +791,202 @@ export default function BannerConfigurator() {
                       checked={config.showIcon}
                       onCheckedChange={(checked) => setConfig({...config, showIcon: checked})}
                     />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "behavior" && (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Timing</Label>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Display Delay</Label>
+                          <span className="text-xs text-muted-foreground">{config.displayDelay}s</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Wait before showing banner</p>
+                        <Slider 
+                          value={[config.displayDelay]} 
+                          min={0} 
+                          max={10} 
+                          step={1}
+                          onValueChange={(val) => setConfig({...config, displayDelay: val[0]})} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Auto-hide Timer</Label>
+                          <span className="text-xs text-muted-foreground">
+                            {config.autoHideDelay ? `${config.autoHideDelay}s` : 'Off'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Hide banner automatically (0 = disabled)</p>
+                        <Slider 
+                          value={[config.autoHideDelay || 0]} 
+                          min={0} 
+                          max={60} 
+                          step={5}
+                          onValueChange={(val) => setConfig({...config, autoHideDelay: val[0] === 0 ? null : val[0]})} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Consent Settings</Label>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Re-consent Period</Label>
+                          <span className="text-xs text-muted-foreground">{config.reconsentDays} days</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Ask for consent again after</p>
+                        <Slider 
+                          value={[config.reconsentDays]} 
+                          min={30} 
+                          max={730} 
+                          step={30}
+                          onValueChange={(val) => setConfig({...config, reconsentDays: val[0]})} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Controls</Label>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Show Close Button</Label>
+                        <p className="text-xs text-muted-foreground">Allow dismissing without consent</p>
+                      </div>
+                      <Switch 
+                        checked={config.showCloseButton}
+                        onCheckedChange={(checked) => setConfig({...config, showCloseButton: checked})}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Respect Do Not Track</Label>
+                        <p className="text-xs text-muted-foreground">Honor browser DNT setting</p>
+                      </div>
+                      <Switch 
+                        checked={config.respectDnt}
+                        onCheckedChange={(checked) => setConfig({...config, respectDnt: checked})}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Language</Label>
+                    <Select value={config.language} onValueChange={(val) => setConfig({...config, language: val})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="nl">Nederlands</SelectItem>
+                        <SelectItem value="de">Deutsch</SelectItem>
+                        <SelectItem value="fr">Français</SelectItem>
+                        <SelectItem value="es">Español</SelectItem>
+                        <SelectItem value="it">Italiano</SelectItem>
+                        <SelectItem value="pt">Português</SelectItem>
+                        <SelectItem value="pl">Polski</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose a default language for the banner UI labels
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "links" && (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Privacy Policy</Label>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Link Text</Label>
+                        <Input 
+                          value={config.privacyPolicyText}
+                          onChange={(e) => setConfig({...config, privacyPolicyText: e.target.value})}
+                          placeholder="Privacy Policy"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">URL</Label>
+                        <Input 
+                          value={config.privacyPolicyUrl || ''}
+                          onChange={(e) => setConfig({...config, privacyPolicyUrl: e.target.value || null})}
+                          placeholder="https://yoursite.com/privacy"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Cookie Policy</Label>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Link Text</Label>
+                        <Input 
+                          value={config.cookiePolicyText}
+                          onChange={(e) => setConfig({...config, cookiePolicyText: e.target.value})}
+                          placeholder="Cookie Policy"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">URL</Label>
+                        <Input 
+                          value={config.cookiePolicyUrl || ''}
+                          onChange={(e) => setConfig({...config, cookiePolicyUrl: e.target.value || null})}
+                          placeholder="https://yoursite.com/cookies"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Custom Footer</Label>
+                    <div className="space-y-2">
+                      <textarea 
+                        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+                        value={config.customFooter || ''}
+                        onChange={(e) => setConfig({...config, customFooter: e.target.value || null})}
+                        placeholder="Add custom text at the bottom of your banner..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Appears below the buttons. HTML is not supported.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Logo</Label>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Logo URL</Label>
+                      <Input 
+                        value={config.logoUrl || ''}
+                        onChange={(e) => setConfig({...config, logoUrl: e.target.value || null})}
+                        placeholder="https://yoursite.com/logo.png"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Display your logo at the top of the banner
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
