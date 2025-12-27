@@ -32,6 +32,7 @@ interface RoadmapItem {
 }
 
 const roadmap2026: RoadmapItem[] = [
+  // Q1 - Policy Generators & Multi-Language
   {
     title: "Privacy Policy Generator",
     description: "Generate legally compliant privacy policies tailored to your business, jurisdiction, and data practices.",
@@ -67,6 +68,22 @@ const roadmap2026: RoadmapItem[] = [
     pricing: "€9/one-time or included in Agency"
   },
   {
+    title: "Multi-Language Banner Support",
+    description: "Automatically detect visitor language and show localized consent banners.",
+    quarter: "Q1",
+    status: "planned",
+    type: "feature",
+    icon: Globe,
+    details: [
+      "Auto-detect browser language",
+      "20+ language translations included",
+      "Custom translations editor",
+      "RTL language support",
+      "Language-specific legal requirements"
+    ]
+  },
+  // Q2 - Analytics & Integrations
+  {
     title: "Advanced Analytics Dashboard",
     description: "Deep insights into user consent behavior with geographic breakdowns and trend analysis.",
     quarter: "Q2",
@@ -83,24 +100,9 @@ const roadmap2026: RoadmapItem[] = [
     ]
   },
   {
-    title: "Multi-Language Banner Support",
-    description: "Automatically detect visitor language and show localized consent banners.",
-    quarter: "Q2",
-    status: "planned",
-    type: "feature",
-    icon: Globe,
-    details: [
-      "Auto-detect browser language",
-      "20+ language translations included",
-      "Custom translations editor",
-      "RTL language support",
-      "Language-specific legal requirements"
-    ]
-  },
-  {
     title: "WordPress Plugin",
     description: "One-click WordPress integration with native admin panel configuration.",
-    quarter: "Q3",
+    quarter: "Q2",
     status: "planned",
     type: "integration",
     icon: Package,
@@ -115,7 +117,7 @@ const roadmap2026: RoadmapItem[] = [
   {
     title: "Shopify App",
     description: "Native Shopify app for e-commerce consent management with checkout integration.",
-    quarter: "Q3",
+    quarter: "Q2",
     status: "planned",
     type: "integration",
     icon: Package,
@@ -127,25 +129,26 @@ const roadmap2026: RoadmapItem[] = [
       "Shopify Analytics integration"
     ]
   },
+  // Q3 - Enterprise & API
   {
-    title: "Enterprise SSO & Team Management",
-    description: "SAML/OAuth SSO, role-based access, and team collaboration features.",
-    quarter: "Q4",
+    title: "Team Management & Collaboration",
+    description: "Invite team members, assign roles, and collaborate on consent management.",
+    quarter: "Q3",
     status: "planned",
     type: "feature",
     icon: Lock,
     details: [
-      "SAML 2.0 and OAuth 2.0 SSO",
-      "Role-based access control",
       "Team member invitations",
-      "Audit logs for compliance",
-      "Custom branding for agencies"
+      "Role-based access control (Admin, Editor, Viewer)",
+      "Activity audit logs",
+      "Shared website management",
+      "Team billing & usage reports"
     ]
   },
   {
     title: "API Access & Webhooks",
     description: "Full REST API for custom integrations and real-time webhook notifications.",
-    quarter: "Q4",
+    quarter: "Q3",
     status: "planned",
     type: "feature",
     icon: Rocket,
@@ -154,7 +157,68 @@ const roadmap2026: RoadmapItem[] = [
       "Webhooks for consent events",
       "Bulk operations for agencies",
       "Rate limiting based on plan",
-      "SDKs for popular languages"
+      "JavaScript & PHP SDKs"
+    ]
+  },
+  {
+    title: "Wix Integration",
+    description: "Seamless Wix website builder integration with drag-and-drop setup.",
+    quarter: "Q3",
+    status: "planned",
+    type: "integration",
+    icon: Package,
+    details: [
+      "Install from Wix App Market",
+      "Native Wix Editor integration",
+      "Auto-match site theme",
+      "Wix Analytics sync",
+      "One-click activation"
+    ]
+  },
+  // Q4 - Enterprise SSO & Advanced Features
+  {
+    title: "Enterprise SSO",
+    description: "SAML and OAuth SSO for enterprise customers with custom identity providers.",
+    quarter: "Q4",
+    status: "planned",
+    type: "feature",
+    icon: Lock,
+    details: [
+      "SAML 2.0 support",
+      "OAuth 2.0 / OpenID Connect",
+      "Azure AD, Okta, Google Workspace",
+      "Just-in-time user provisioning",
+      "Custom domain login"
+    ]
+  },
+  {
+    title: "Consent Proof & Audit Reports",
+    description: "Generate legally valid consent proof documentation for compliance audits.",
+    quarter: "Q4",
+    status: "planned",
+    type: "feature",
+    icon: FileText,
+    details: [
+      "Timestamped consent records",
+      "IP address and device logging",
+      "Exportable audit reports",
+      "Consent version history",
+      "Regulator-ready documentation"
+    ]
+  },
+  {
+    title: "Squarespace Integration",
+    description: "Native Squarespace integration for designers and creative professionals.",
+    quarter: "Q4",
+    status: "planned",
+    type: "integration",
+    icon: Package,
+    details: [
+      "Install via Squarespace Extensions",
+      "Style sync with site design",
+      "Code-free configuration",
+      "Squarespace Commerce support",
+      "Custom CSS override options"
     ]
   },
 ];
