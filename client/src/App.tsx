@@ -13,6 +13,7 @@ import EmbedCode from "@/pages/dashboard/embed";
 import CookiesManagement from "@/pages/dashboard/cookies";
 import ConsentLogs from "@/pages/dashboard/consent-logs";
 import Diagnostics from "@/pages/dashboard/diagnostics";
+import AgencyDashboard from "@/pages/dashboard/agency";
 import Onboarding from "@/pages/onboarding";
 import PricingPage from "@/pages/pricing";
 import CompareIndex from "@/pages/compare/index";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/dashboard/analytics" component={Analytics}/>
       <Route path="/dashboard/consent-logs" component={ConsentLogs}/>
       <Route path="/dashboard/diagnostics" component={Diagnostics}/>
+      <Route path="/dashboard/agency" component={AgencyDashboard}/>
       <Route path="/dashboard/settings" component={Settings}/>
       {/* Fallback to 404 */}
       <Route component={NotFound} />

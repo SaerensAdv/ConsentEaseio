@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, Code, Cookie, FileText, Stethoscope } from "lucide-react";
+import { Shield, LayoutDashboard, Globe, BarChart3, Settings, LogOut, Menu, Code, Cookie, FileText, Stethoscope, Building2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return user?.email?.split("@")[0] || "User";
   };
 
-  const navItems = [
+  const baseNavItems = [
     { icon: Globe, label: "Websites", href: "/dashboard" },
     { icon: LayoutDashboard, label: "Banner Design", href: "/dashboard/banner" },
     { icon: Cookie, label: "Cookies", href: "/dashboard/cookies" },
@@ -62,6 +62,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: Stethoscope, label: "Diagnostics", href: "/dashboard/diagnostics" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ];
+
+  const agencyNavItem = { icon: Building2, label: "Agency", href: "/dashboard/agency" };
+  
+  const navItems = user?.plan === 'agency' 
+    ? [agencyNavItem, ...baseNavItems] 
+    : baseNavItems;
 
   return (
     <div className="min-h-screen bg-secondary/30 flex">
