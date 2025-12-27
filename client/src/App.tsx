@@ -14,7 +14,17 @@ import CookiesManagement from "@/pages/dashboard/cookies";
 import ConsentLogs from "@/pages/dashboard/consent-logs";
 import Diagnostics from "@/pages/dashboard/diagnostics";
 import Onboarding from "@/pages/onboarding";
-import ComparePage from "@/pages/compare";
+import PricingPage from "@/pages/pricing";
+import CompareIndex from "@/pages/compare/index";
+import CompareOneTrust from "@/pages/compare/onetrust";
+import CompareCookiebot from "@/pages/compare/cookiebot";
+import CompareUsercentrics from "@/pages/compare/usercentrics";
+import CompareComplianz from "@/pages/compare/complianz";
+import CompareIubenda from "@/pages/compare/iubenda";
+import CompareCookieFirst from "@/pages/compare/cookiefirst";
+import CompareCookieScript from "@/pages/compare/cookie-script";
+import CompareCookieYes from "@/pages/compare/cookieyes";
+import CompareAxeptio from "@/pages/compare/axeptio";
 import LoginPage from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -37,7 +47,17 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home}/>
-      <Route path="/compare" component={ComparePage}/>
+      <Route path="/pricing" component={PricingPage}/>
+      <Route path="/compare" component={CompareIndex}/>
+      <Route path="/compare/onetrust" component={CompareOneTrust}/>
+      <Route path="/compare/cookiebot" component={CompareCookiebot}/>
+      <Route path="/compare/usercentrics" component={CompareUsercentrics}/>
+      <Route path="/compare/complianz" component={CompareComplianz}/>
+      <Route path="/compare/iubenda" component={CompareIubenda}/>
+      <Route path="/compare/cookiefirst" component={CompareCookieFirst}/>
+      <Route path="/compare/cookie-script" component={CompareCookieScript}/>
+      <Route path="/compare/cookieyes" component={CompareCookieYes}/>
+      <Route path="/compare/axeptio" component={CompareAxeptio}/>
       <Route path="/login" component={LoginPage}/>
       <Route path="/forgot-password" component={ForgotPassword}/>
       <Route path="/reset-password" component={ResetPassword}/>

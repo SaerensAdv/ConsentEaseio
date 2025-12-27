@@ -315,8 +315,8 @@ export default function Home() {
                 <h4 className="font-semibold mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li><Link href="/features" className="hover:text-primary">Features</Link></li>
-                  <li><a href="#pricing" className="hover:text-primary">Pricing</a></li>
-                  <li><Link href="/compare" className="hover:text-primary">Compare to OneTrust</Link></li>
+                  <li><Link href="/pricing" className="hover:text-primary">Pricing</Link></li>
+                  <li><Link href="/compare" className="hover:text-primary">Compare to...</Link></li>
                 </ul>
               </div>
               <div>
