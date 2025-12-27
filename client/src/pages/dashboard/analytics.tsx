@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Pie, PieChart } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Users, CheckCircle2, XCircle, MousePointerClick, Loader2 } from "lucide-react";
+import { LiveEventFeed } from "@/components/LiveEventFeed";
 
 interface Website {
   id: string;
@@ -259,6 +260,11 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Live Event Feed */}
+      <div className="mt-4">
+        <LiveEventFeed websiteId={activeWebsiteId || null} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 mt-4">

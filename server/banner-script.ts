@@ -83,6 +83,8 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     return id;
   }
   
+  var geoData = null;
+  
   function trackEvent(eventType, details) {
     try {
       fetch(API_BASE + '/api/analytics/event', {
@@ -91,11 +93,39 @@ export function generateBannerScript(config: any, publicId: string, showBranding
         body: JSON.stringify({
           websiteId: CONFIG.publicId,
           eventType: eventType,
-          country: null,
+          country: geoData ? geoData.countryCode : null,
           details: details || null
         })
       });
     } catch (e) {}
+  }
+  
+  function fetchGeoLocation() {
+    return fetch(API_BASE + '/api/geo')
+      .then(function(res) { 
+        if (!res.ok) {
+          throw new Error('Geo lookup failed');
+        }
+        return res.json(); 
+      })
+      .then(function(data) {
+        geoData = data;
+        return data;
+      })
+      .catch(function() { 
+        // Default to GDPR on any error (safer default for compliance)
+        geoData = { 
+          jurisdiction: 'gdpr', 
+          country: 'Unknown',
+          countryCode: 'XX',
+          isEU: true,
+          config: {
+            rejectText: 'Reject All',
+            legalBasis: 'GDPR'
+          }
+        };
+        return geoData;
+      });
   }
   
   function logConsentProof(action, consentChoices) {
@@ -249,6 +279,21 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     var banner = document.createElement('div');
     banner.className = 'ce-banner';
     
+    // Use geo-based config if available, otherwise fall back to user config
+    var geoConfig = geoData && geoData.config ? geoData.config : {};
+    var heading = CONFIG.heading;
+    var description = CONFIG.description;
+    var acceptText = CONFIG.acceptText;
+    var rejectText = geoConfig.rejectText || CONFIG.rejectText;
+    var settingsText = CONFIG.settingsText;
+    
+    // Add jurisdiction badge if detected
+    var jurisdictionBadge = '';
+    if (geoData && geoData.jurisdiction && geoData.jurisdiction !== 'none') {
+      var badgeText = geoData.jurisdiction === 'gdpr' ? 'GDPR' : geoData.jurisdiction === 'ccpa' ? 'CCPA' : 'GDPR & CCPA';
+      jurisdictionBadge = '<span style="display:inline-block;background:' + CONFIG.primaryColor + '20;color:' + CONFIG.primaryColor + ';font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:500;">' + badgeText + '</span>';
+    }
+    
     var iconHtml = CONFIG.showIcon ? \`
       <div class="ce-banner-icon">
         <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -266,14 +311,14 @@ export function generateBannerScript(config: any, publicId: string, showBranding
         <div class="ce-banner-header">
           \${iconHtml}
           <div class="ce-banner-text">
-            <h3>\${CONFIG.heading}</h3>
-            <p>\${CONFIG.description}</p>
+            <h3>\${heading}\${jurisdictionBadge}</h3>
+            <p>\${description}</p>
           </div>
         </div>
         <div class="ce-banner-buttons">
-          <button class="ce-btn ce-btn-settings">\${CONFIG.settingsText}</button>
-          <button class="ce-btn ce-btn-reject">\${CONFIG.rejectText}</button>
-          <button class="ce-btn ce-btn-accept">\${CONFIG.acceptText}</button>
+          <button class="ce-btn ce-btn-settings">\${settingsText}</button>
+          <button class="ce-btn ce-btn-reject">\${rejectText}</button>
+          <button class="ce-btn ce-btn-accept">\${acceptText}</button>
         </div>
       </div>
       \${brandingHtml}
@@ -441,6 +486,7 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   
   window.ConsentEase = {
     getConsent: getStoredConsent,
+    getGeoData: function() { return geoData; },
     updateConsent: function(consent) {
       storeConsent(consent);
       updateGoogleConsent(consent);
@@ -448,21 +494,22 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     },
     showBanner: function() {
       if (!document.getElementById('ce-consent-banner')) {
-        fetchCategories().then(function() {
+        Promise.all([fetchGeoLocation(), fetchCategories()]).then(function() {
           injectStyles();
           createBanner();
         });
       }
     },
     showPreferences: function() {
-      fetchCategories().then(function() {
+      Promise.all([fetchGeoLocation(), fetchCategories()]).then(function() {
         if (!document.getElementById('ce-prefs-modal')) {
           injectStyles();
           showPreferencesModal();
         }
       });
     },
-    getCategories: function() { return categories; }
+    getCategories: function() { return categories; },
+    getJurisdiction: function() { return geoData ? geoData.jurisdiction : null; }
   };
   
   function init() {
@@ -471,7 +518,8 @@ export function generateBannerScript(config: any, publicId: string, showBranding
       return;
     }
     
-    fetchCategories().then(function() {
+    // Fetch geolocation and categories in parallel, then show banner
+    Promise.all([fetchGeoLocation(), fetchCategories()]).then(function() {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
           injectStyles();

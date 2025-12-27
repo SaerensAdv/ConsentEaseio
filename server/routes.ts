@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage, PLAN_LIMITS, type PlanType, isUnlimited } from "./storage";
 import { insertWebsiteSchema, insertBannerConfigSchema, insertAnalyticsEventSchema, insertCookieCategorySchema, insertCookieSchema } from "@shared/schema";
 import { z } from "zod";
@@ -7,6 +8,22 @@ import { generateBannerScript } from "./banner-script";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import { scanWebsite, type ClassifiedCookie } from "./cookie-scanner";
+import { getGeoLocation, getJurisdictionConfig } from "./geolocation";
+
+// Store WebSocket connections per website for real-time analytics
+const analyticsConnections = new Map<string, Set<WebSocket>>();
+
+function broadcastAnalyticsEvent(websiteId: string, event: any) {
+  const connections = analyticsConnections.get(websiteId);
+  if (connections) {
+    const message = JSON.stringify({ type: 'analytics_event', data: event });
+    connections.forEach(ws => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+      }
+    });
+  }
+}
 
 // Helper to generate random public IDs
 function generatePublicId(): string {
@@ -122,6 +139,42 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // ==========================================
+  // WEBSOCKET SERVER FOR REAL-TIME ANALYTICS
+  // ==========================================
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws/analytics' });
+  
+  wss.on('connection', (ws, req) => {
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const websiteId = url.searchParams.get('websiteId');
+    
+    if (!websiteId) {
+      ws.close(1008, 'Missing websiteId');
+      return;
+    }
+    
+    if (!analyticsConnections.has(websiteId)) {
+      analyticsConnections.set(websiteId, new Set());
+    }
+    analyticsConnections.get(websiteId)!.add(ws);
+    
+    console.log(`WebSocket connected for website: ${websiteId}`);
+    
+    ws.on('close', () => {
+      const connections = analyticsConnections.get(websiteId);
+      if (connections) {
+        connections.delete(ws);
+        if (connections.size === 0) {
+          analyticsConnections.delete(websiteId);
+        }
+      }
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+  });
   
   // ==========================================
   // PUBLIC ONBOARDING ENDPOINTS (No auth required)
@@ -651,9 +704,70 @@ export async function registerRoutes(
         country: country || null,
       });
       
+      // Broadcast event to connected WebSocket clients for real-time updates
+      broadcastAnalyticsEvent(website.id, {
+        id: event.id,
+        eventType,
+        country: country || null,
+        timestamp: new Date().toISOString(),
+      });
+      
       res.status(201).json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  // Public geolocation endpoint for banner script
+  app.options("/api/geo", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+  });
+
+  app.get("/api/geo", async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    
+    try {
+      // Get client IP from various headers (for proxies) or socket
+      const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() 
+        || req.headers['x-real-ip'] as string
+        || req.ip 
+        || req.socket.remoteAddress 
+        || '127.0.0.1';
+      
+      const geo = await getGeoLocation(clientIp);
+      
+      if (!geo) {
+        // Default to GDPR if we can't determine location (safer default)
+        return res.json({
+          jurisdiction: 'gdpr',
+          country: 'Unknown',
+          countryCode: 'XX',
+          config: getJurisdictionConfig('gdpr')
+        });
+      }
+      
+      res.json({
+        jurisdiction: geo.jurisdiction,
+        country: geo.country,
+        countryCode: geo.countryCode,
+        region: geo.region,
+        isEU: geo.isEU,
+        isCalifornia: geo.isCalifornia,
+        config: getJurisdictionConfig(geo.jurisdiction)
+      });
+    } catch (error) {
+      console.error('Geolocation error:', error);
+      // Default to GDPR on error
+      res.json({
+        jurisdiction: 'gdpr',
+        country: 'Unknown',
+        countryCode: 'XX',
+        config: getJurisdictionConfig('gdpr')
+      });
     }
   });
 
