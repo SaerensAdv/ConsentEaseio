@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Shield, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Shield, Check, ArrowRight, ArrowLeft, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { CompetitorData } from "@/data/competitors";
@@ -34,7 +34,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
       </nav>
 
       <main className="pt-32 pb-24">
-        <div className="max-w-4xl mx-auto px-6 text-center mb-20">
+        <div className="max-w-4xl mx-auto px-6 text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
             <span className="flex h-2 w-2 rounded-full bg-primary"></span>
             Honest Comparison
@@ -47,7 +47,52 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
           </p>
         </div>
 
+        <div className="max-w-5xl mx-auto px-6 mb-16">
+          <h2 className="text-2xl font-bold mb-6 text-center">{competitor.name} Pricing</h2>
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Card className="p-6 bg-secondary/30">
+              <div className="flex items-center gap-3 mb-4">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="font-semibold">Free Trial</span>
+              </div>
+              <p className="text-2xl font-bold">{competitor.trialLength}</p>
+            </Card>
+            <Card className="p-6 bg-primary/5 border-primary/20">
+              <div className="flex items-center gap-3 mb-4">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <span className="font-semibold">ConsentEase Trial</span>
+              </div>
+              <p className="text-2xl font-bold text-primary">7 days free</p>
+            </Card>
+          </div>
+          
+          <Card className="overflow-hidden">
+            <div className="bg-secondary/50 p-4 border-b">
+              <h3 className="font-semibold text-center">{competitor.name} Pricing Tiers</h3>
+            </div>
+            <div className="divide-y">
+              {competitor.pricingTiers.map((tier, i) => (
+                <div key={i} className="flex items-center justify-between p-4 hover:bg-secondary/10">
+                  <div>
+                    <span className="font-medium">{tier.name}</span>
+                    {tier.details && <span className="text-sm text-muted-foreground ml-2">— {tier.details}</span>}
+                  </div>
+                  <span className="font-bold">{tier.price}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {competitor.supportedAAPs && competitor.supportedAAPs.length > 0 && (
+            <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
+              <span className="text-sm text-muted-foreground">Supported Mobile Attribution Partners: </span>
+              <span className="text-sm font-medium">{competitor.supportedAAPs.join(", ")}</span>
+            </div>
+          )}
+        </div>
+
         <div className="max-w-5xl mx-auto px-6 mb-24">
+          <h2 className="text-2xl font-bold mb-6 text-center">Feature Comparison</h2>
           <Card className="border-none shadow-2xl overflow-hidden">
             <div className="grid md:grid-cols-3 bg-secondary/30 divide-y md:divide-y-0 md:divide-x border-b">
               <div className="p-8 flex flex-col items-center justify-center text-center">
@@ -70,7 +115,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
                     {row.feature}
                   </div>
                   <div className="p-6 font-bold text-foreground flex items-center justify-center bg-primary/5">
-                    {row.us.includes("Included") || row.us.includes("2 minutes") || row.us.includes("Automatic") ? (
+                    {row.us.includes("Included") || row.us.includes("2 minutes") || row.us.includes("Automatic") || row.us.includes("cheaper") ? (
                       <span className="flex items-center gap-2 text-primary"><Check className="w-5 h-5" /> {row.us}</span>
                     ) : row.us}
                   </div>
