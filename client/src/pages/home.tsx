@@ -322,6 +322,7 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold mb-4">Resources</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link href="/blog" className="hover:text-primary">Blog</Link></li>
                   <li><Link href="/docs" className="hover:text-primary">Documentation</Link></li>
                   <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
                   <li><Link href="/changelog" className="hover:text-primary">Changelog</Link></li>
