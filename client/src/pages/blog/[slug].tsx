@@ -144,7 +144,7 @@ export default function BlogPost() {
               <h1 className="text-3xl md:text-5xl font-display font-bold mb-6 leading-tight">
                 {article.title}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pb-8 border-b">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground pb-6">
                 <span className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   {article.author}
@@ -158,6 +158,15 @@ export default function BlogPost() {
                   })}
                 </span>
               </div>
+              {article.image && (
+                <div className="rounded-xl overflow-hidden mb-8">
+                  <img 
+                    src={article.image} 
+                    alt={article.title}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             <div 

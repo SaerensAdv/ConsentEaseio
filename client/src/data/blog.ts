@@ -8,6 +8,7 @@ export interface BlogArticle {
   readingTime: string;
   category: "gdpr" | "ccpa" | "consent" | "guides" | "news";
   tags: string[];
+  image?: string;
   seo: {
     title: string;
     description: string;
@@ -25,6 +26,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     readingTime: "5 min read",
     category: "gdpr",
     tags: ["GDPR", "Privacy", "Compliance", "Small Business"],
+    image: "/blog/gdpr-guide.jpg",
     seo: {
       title: "What is GDPR? Simple Guide for Small Businesses (2025)",
       description: "Learn what GDPR means for your small business. Plain English explanation of EU privacy law, who it applies to, and how to get compliant quickly.",
@@ -95,6 +97,7 @@ ConsentEase makes GDPR compliance simple. Add a professional cookie consent bann
     readingTime: "6 min read",
     category: "consent",
     tags: ["Google Consent Mode", "Google Ads", "Analytics", "EU Regulations"],
+    image: "/blog/consent-mode.jpg",
     seo: {
       title: "Google Consent Mode v2 Explained: Complete Guide (2025)",
       description: "Learn what Google Consent Mode v2 is, why you need it for EU advertising, and how to implement it on your website. Step-by-step guide included.",
@@ -181,6 +184,7 @@ ConsentEase includes full Google Consent Mode v2 support out of the box. No conf
     readingTime: "4 min read",
     category: "guides",
     tags: ["Cookie Consent", "UX", "Best Practices", "Compliance"],
+    image: "/blog/best-practices.jpg",
     seo: {
       title: "Cookie Consent Best Practices: Complete Guide (2025)",
       description: "Learn cookie consent best practices for 2025. Design tips, legal requirements, and common mistakes to avoid. Make your consent banner user-friendly.",
@@ -263,6 +267,7 @@ ConsentEase helps you build beautiful, compliant cookie banners in minutes. Our 
     readingTime: "5 min read",
     category: "ccpa",
     tags: ["CCPA", "GDPR", "Privacy Laws", "Compliance"],
+    image: "/blog/ccpa-vs-gdpr.jpg",
     seo: {
       title: "CCPA vs GDPR: Key Differences Explained (2025)",
       description: "Compare CCPA and GDPR privacy laws. Learn the key differences, who each law applies to, and how to comply with both regulations.",
@@ -336,6 +341,7 @@ ConsentEase automatically detects visitor locations and shows the appropriate co
     readingTime: "4 min read",
     category: "guides",
     tags: ["SEO", "Cookie Consent", "Core Web Vitals", "Performance"],
+    image: "/blog/seo-impact.jpg",
     seo: {
       title: "Cookie Consent and SEO: Does It Affect Rankings? (2025)",
       description: "Learn how cookie consent banners impact SEO. Understand Core Web Vitals, page speed, and how to implement consent without hurting rankings.",
@@ -408,6 +414,7 @@ Our banner is designed with SEO in mind:
     readingTime: "6 min read",
     category: "guides",
     tags: ["Cookie Audit", "Compliance", "Tutorial", "GDPR"],
+    image: "/blog/cookie-audit.jpg",
     seo: {
       title: "How to Audit Website Cookies: Step-by-Step Guide (2025)",
       description: "Learn how to audit cookies on your website. Find all tracking cookies, categorize them for GDPR compliance, and document them properly.",

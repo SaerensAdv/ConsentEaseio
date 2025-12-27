@@ -8,34 +8,45 @@ import { BLOG_ARTICLES, CATEGORY_LABELS, type BlogArticle } from "@/data/blog";
 function ArticleCard({ article }: { article: BlogArticle }) {
   return (
     <Link href={`/blog/${article.slug}`}>
-      <Card className="h-full p-6 hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group" data-testid={`card-article-${article.slug}`}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded">
-            {CATEGORY_LABELS[article.category]}
-          </span>
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {article.readingTime}
-          </span>
-        </div>
-        <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">
-          {article.title}
-        </h3>
-        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-          {article.excerpt}
-        </p>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {new Date(article.publishedAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-          <span className="text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-            Read <ArrowRight className="w-4 h-4" />
-          </span>
+      <Card className="h-full overflow-hidden hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group" data-testid={`card-article-${article.slug}`}>
+        {article.image && (
+          <div className="aspect-video overflow-hidden">
+            <img 
+              src={article.image} 
+              alt={article.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+        )}
+        <div className="p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded">
+              {CATEGORY_LABELS[article.category]}
+            </span>
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {article.readingTime}
+            </span>
+          </div>
+          <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">
+            {article.title}
+          </h3>
+          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+            {article.excerpt}
+          </p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {new Date(article.publishedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            <span className="text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+              Read <ArrowRight className="w-4 h-4" />
+            </span>
+          </div>
         </div>
       </Card>
     </Link>
@@ -129,13 +140,21 @@ export default function BlogIndex() {
                     </span>
                   </div>
                 </div>
-                <div className="bg-secondary/30 p-8 md:p-12 flex items-center justify-center">
-                  <div className="text-center">
-                    <Shield className="w-24 h-24 text-primary/20 mx-auto mb-4" />
-                    <span className="text-primary font-medium flex items-center justify-center gap-2 group-hover:gap-3 transition-all">
-                      Read Article <ArrowRight className="w-5 h-5" />
-                    </span>
-                  </div>
+                <div className="bg-secondary/30 flex items-center justify-center overflow-hidden">
+                  {featuredArticle.image ? (
+                    <img 
+                      src={featuredArticle.image} 
+                      alt={featuredArticle.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="p-8 md:p-12 text-center">
+                      <Shield className="w-24 h-24 text-primary/20 mx-auto mb-4" />
+                      <span className="text-primary font-medium flex items-center justify-center gap-2 group-hover:gap-3 transition-all">
+                        Read Article <ArrowRight className="w-5 h-5" />
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
