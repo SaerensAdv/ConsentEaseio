@@ -4,6 +4,7 @@ import { Shield, Calendar, Clock, ArrowLeft, ArrowRight, User } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getArticleBySlug, getRelatedArticles, CATEGORY_LABELS, type BlogArticle } from "@/data/blog";
+import { marked } from "marked";
 
 function ArticleJsonLd({ article }: { article: BlogArticle }) {
   const jsonLd = {
@@ -161,7 +162,7 @@ export default function BlogPost() {
 
             <div 
               className="prose prose-lg max-w-none prose-headings:font-display prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-table:text-sm"
-              dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
+              dangerouslySetInnerHTML={{ __html: marked.parse(article.content) as string }}
             />
 
             <div className="mt-12 pt-8 border-t">
@@ -222,62 +223,4 @@ export default function BlogPost() {
       </div>
     </>
   );
-}
-
-function formatContent(markdown: string): string {
-  const tableRegex = /\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g;
-  let html = markdown.replace(tableRegex, (_, header, body) => {
-    const headers = header.split('|').filter((h: string) => h.trim());
-    const rows = body.trim().split('\n').map((row: string) => 
-      row.split('|').filter((c: string) => c.trim())
-    );
-    
-    let table = '<table><thead><tr>';
-    headers.forEach((h: string) => { table += `<th>${h.trim()}</th>`; });
-    table += '</tr></thead><tbody>';
-    rows.forEach((row: string[]) => {
-      table += '<tr>';
-      row.forEach((cell: string) => { table += `<td>${cell.trim()}</td>`; });
-      table += '</tr>';
-    });
-    table += '</tbody></table>';
-    return table;
-  });
-
-  html = html
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-  html = html.replace(/(^- .+\n?)+/gm, (match) => {
-    const items = match.trim().split('\n').map(line => 
-      `<li>${line.replace(/^- /, '')}</li>`
-    ).join('');
-    return `<ul>${items}</ul>`;
-  });
-
-  html = html.replace(/(^\d+\. .+\n?)+/gm, (match) => {
-    const items = match.trim().split('\n').map(line => 
-      `<li>${line.replace(/^\d+\. /, '')}</li>`
-    ).join('');
-    return `<ol>${items}</ol>`;
-  });
-
-  html = html
-    .split('\n\n')
-    .map(block => {
-      const trimmed = block.trim();
-      if (!trimmed) return '';
-      if (trimmed.startsWith('<h') || trimmed.startsWith('<ul') || 
-          trimmed.startsWith('<ol') || trimmed.startsWith('<table')) {
-        return trimmed;
-      }
-      return `<p>${trimmed}</p>`;
-    })
-    .join('\n');
-
-  return html.replace(/<p><\/p>/g, '').replace(/<p>\s*<\/p>/g, '');
 }
