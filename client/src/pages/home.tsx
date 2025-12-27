@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X } from "lucide-react";
+import { Check, ArrowRight, Shield, Zap, Palette, Globe, Menu, X, Clock, FileCheck, Lock, BarChart3, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,22 +14,45 @@ export default function Home() {
 
   const features = [
     {
-      icon: Zap,
-      title: "Zero-Config Setup",
-      description: "Scan first, ask questions later. We crawl your site, identify cookies, and configure your banner automatically in under 60 seconds."
-    },
-    {
-      icon: Palette,
-      title: "Visual Control",
-      description: "25+ design settings to make the banner match your brand. Don't let a legal requirement ruin your site's aesthetic."
+      icon: Clock,
+      title: "Live in 2 Minutes",
+      description: "Add your domain, customize your banner, copy one line of code. No developers needed. No complex setup wizards. Just compliance."
     },
     {
       icon: Shield,
-      title: "True Compliance",
-      description: "GDPR, CCPA, and ePrivacy Directive ready. We handle the complex legal logic so you can focus on your business."
+      title: "Full Legal Coverage",
+      description: "GDPR, CCPA, ePrivacy Directive, and Google Consent Mode v2. Pre-configured for compliance so you don't have to interpret regulations."
+    },
+    {
+      icon: Palette,
+      title: "Matches Your Brand",
+      description: "Your consent banner shouldn't look like legal fine print. 25+ design options to seamlessly blend with your website's look and feel."
+    },
+    {
+      icon: FileCheck,
+      title: "Audit-Ready Logs",
+      description: "Every consent is timestamped and stored. When regulators ask for proof, you'll have it. Exportable reports for peace of mind."
+    },
+    {
+      icon: Lock,
+      title: "EU Data Residency",
+      description: "Your visitor data never leaves the European Union. Hosted on secure, encrypted infrastructure that meets the strictest standards."
+    },
+    {
+      icon: BarChart3,
+      title: "Consent Analytics",
+      description: "See exactly how visitors interact with your banner. Optimize consent rates without compromising on compliance."
     }
   ];
 
+  const compliancePoints = [
+    "Automatic cookie detection and categorization",
+    "Pre-consent blocking of non-essential scripts",
+    "Google Consent Mode v2 with proper initialization",
+    "Granular category controls (Analytics, Marketing, Functional)",
+    "12-month consent storage per GDPR guidelines",
+    "One-click consent withdrawal for visitors"
+  ];
 
   return (
     <>
@@ -50,6 +73,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+            <Link href="/compare" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Compare</Link>
             <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
             <div className="flex items-center gap-4 ml-4">
               <Link href="/login">
@@ -72,6 +96,7 @@ export default function Home() {
           <div className="md:hidden absolute top-20 left-0 right-0 bg-background border-b border-border p-6 flex flex-col gap-4 shadow-xl">
             <a href="#features" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>Features</a>
             <a href="#pricing" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+            <Link href="/compare" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>Compare</Link>
             <a href="#about" className="text-lg font-medium" onClick={() => setIsMenuOpen(false)}>About</a>
             <hr className="border-border" />
             <Link href="/login">
@@ -86,7 +111,7 @@ export default function Home() {
 
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32 overflow-hidden">
+        <section className="relative pt-16 md:pt-24 pb-24 md:pb-32 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -99,35 +124,43 @@ export default function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                GDPR & Google Consent Mode v2 Ready
+                Google Consent Mode v2 Certified
               </div>
-              <h1 className="text-5xl md:text-7xl font-display font-bold leading-[1.1] tracking-tight mb-6">
-                Privacy compliance for <span className="text-gradient">humans</span>, not lawyers.
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] tracking-tight mb-6">
+                GDPR compliance <span className="text-gradient">without the complexity</span>
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-lg">
-                The consent banner that installs in 2 minutes, costs less than a coffee, and keeps you compliant forever.
+              <p className="text-xl text-muted-foreground mb-4 leading-relaxed max-w-xl">
+                Fines up to €20 million. Complex regulations. Expensive consultants.
+              </p>
+              <p className="text-xl mb-8 leading-relaxed max-w-xl">
+                <strong>Or:</strong> A 2-minute setup, €5/month, and complete peace of mind.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/onboarding">
                   <Button size="lg" className="text-lg h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 transition-all hover:scale-105">
-                    Get Compliant Now
+                    Get Compliant in 2 Minutes
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
                 <Link href="/demo">
                   <Button size="lg" variant="outline" className="text-lg h-14 px-8 border-2 hover:bg-secondary/50" data-testid="button-view-demo">
-                    View Live Demo
+                    See Live Demo
                   </Button>
                 </Link>
               </div>
-              <div className="mt-8 flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-medium overflow-hidden">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="Avatar" />
-                    </div>
-                  ))}
+              <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="w-4 h-4 text-green-500" />
+                  7-day free trial
                 </div>
-                <p>Trusted by 1,000+ businesses</p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="w-4 h-4 text-green-500" />
+                  No credit card required
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Cancel anytime
+                </div>
               </div>
             </motion.div>
 
@@ -143,17 +176,92 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Trust Bar */}
+        <section className="py-8 border-y bg-muted/30">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold">GDPR & CCPA</p>
+                  <p className="text-sm text-muted-foreground">Fully Compliant</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold">EU Data Center</p>
+                  <p className="text-sm text-muted-foreground">Your Data Stays in Europe</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold">256-bit Encryption</p>
+                  <p className="text-sm text-muted-foreground">Bank-Level Security</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Problem Statement */}
+        <section className="py-20 md:py-28">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium mb-6">
+              <AlertTriangle className="w-4 h-4" />
+              The Reality of Non-Compliance
+            </div>
+            <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">
+              €20 million in fines. 4% of annual revenue. 
+              <span className="block text-muted-foreground mt-2">Is your website protected?</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+              Since 2018, data protection authorities have issued over €4 billion in GDPR fines. 
+              Small businesses are increasingly targeted. The question isn't <em>if</em> you need 
+              consent management—it's whether you can afford not to have it.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <div className="bg-muted/30 rounded-xl p-6 border">
+                <p className="text-3xl font-bold text-primary mb-2">€4B+</p>
+                <p className="text-muted-foreground">Total GDPR fines issued since 2018</p>
+              </div>
+              <div className="bg-muted/30 rounded-xl p-6 border">
+                <p className="text-3xl font-bold text-primary mb-2">400%</p>
+                <p className="text-muted-foreground">Increase in enforcement actions in 2024</p>
+              </div>
+              <div className="bg-muted/30 rounded-xl p-6 border">
+                <p className="text-3xl font-bold text-primary mb-2">2 min</p>
+                <p className="text-muted-foreground">Time to protect your business with ConsentEase</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Features Section */}
-        <section id="features" className="py-24 bg-secondary/30">
+        <section id="features" className="py-20 md:py-28 bg-secondary/30">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Everything you need to dominate online</h2>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
+                <Zap className="w-4 h-4" />
+                Built for Small Business
+              </div>
+              <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">
+                Enterprise-grade compliance at small business prices
+              </h2>
               <p className="text-lg text-muted-foreground">
-                Actually, just everything you need to be compliant. We stripped away the enterprise bloat.
+                The same protection that Fortune 500 companies pay €30,000/year for. 
+                We've stripped away the complexity and kept what actually matters.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, idx) => (
                 <motion.div 
                   key={idx}
@@ -181,47 +289,134 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Comparison/Pain Point Section */}
-        <section className="py-24">
+        {/* Compliance Checklist */}
+        <section className="py-20 md:py-28">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="bg-primary rounded-3xl p-8 md:p-16 text-primary-foreground relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
-              <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">Stop paying for complexity.</h2>
-                  <p className="text-primary-foreground/80 text-lg mb-8 max-w-md">
-                    Enterprise tools charge $30,000/year for features you'll never use. We built the tool for business owners who just want to get back to work.
-                  </p>
-                  <ul className="space-y-4 mb-8">
-                    {[
-                      "No sales calls or hidden pricing",
-                      "No 'contact us for enterprise' buttons",
-                      "No confusing compliance questionnaires"
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-accent-foreground text-xs">
-                          <Check className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="font-medium">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
+                  <FileCheck className="w-4 h-4" />
+                  Complete Compliance
                 </div>
-                <div className="bg-background/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                      <span className="font-semibold">Enterprise CMP</span>
-                      <span className="opacity-60">$30,000/yr</span>
+                <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+                  Everything regulators require. Nothing you don't need.
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  We've studied hundreds of enforcement decisions to build a consent solution 
+                  that meets every regulatory requirement—without the enterprise complexity.
+                </p>
+                <ul className="space-y-4">
+                  {compliancePoints.map((point, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 text-green-600" />
+                      </div>
+                      <span className="text-lg">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-gradient rounded-2xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-6">What you get with ConsentEase</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between py-3 border-b border-white/20">
+                    <span>Cookie consent banner</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-white/20">
+                    <span>Google Consent Mode v2</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-white/20">
+                    <span>Automatic cookie scanning</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-white/20">
+                    <span>Consent logs for audits</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-white/20">
+                    <span>Analytics dashboard</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span>Human support (no bots)</span>
+                    <Check className="w-5 h-5" />
+                  </div>
+                </div>
+                <div className="mt-8 pt-6 border-t border-white/20">
+                  <p className="text-white/80 mb-2">Starting at</p>
+                  <p className="text-4xl font-bold">€5<span className="text-lg font-normal text-white/80">/month</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Section */}
+        <section className="py-20 md:py-28 bg-secondary/30">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="bg-background rounded-3xl p-8 md:p-12 border shadow-xl">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+                    Stop paying for features you'll never use
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-8">
+                    Enterprise CMPs charge €30,000/year for complex dashboards, multi-team permissions, 
+                    and "strategic consulting." You just need a consent banner that works.
+                  </p>
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-500" />
+                      <span>No sales calls or demos required</span>
                     </div>
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                      <span className="font-semibold">Dedicated Legal Team</span>
-                      <span className="opacity-60">$150,000/yr</span>
+                    <div className="flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-500" />
+                      <span>No annual contracts or hidden fees</span>
                     </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xl font-bold text-accent">ConsentEase</span>
-                      <span className="text-xl font-bold text-accent">€5/mo</span>
+                    <div className="flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-500" />
+                      <span>No compliance jargon or legal speak</span>
                     </div>
                   </div>
+                  <Link href="/compare">
+                    <Button variant="outline" className="gap-2">
+                      See Full Comparison <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  <div className="bg-muted/50 rounded-xl p-6 border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-muted-foreground">OneTrust / Cookiebot</span>
+                      <span className="text-muted-foreground">~€30,000/year</span>
+                    </div>
+                    <div className="w-full h-2 bg-muted rounded-full">
+                      <div className="w-full h-2 bg-red-400 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-xl p-6 border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-muted-foreground">Legal consultant setup</span>
+                      <span className="text-muted-foreground">€5,000–15,000</span>
+                    </div>
+                    <div className="w-full h-2 bg-muted rounded-full">
+                      <div className="w-2/3 h-2 bg-orange-400 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="bg-primary/5 rounded-xl p-6 border-2 border-primary">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-primary">ConsentEase</span>
+                      <span className="font-bold text-primary">€60/year</span>
+                    </div>
+                    <div className="w-full h-2 bg-muted rounded-full">
+                      <div className="w-[3%] h-2 bg-primary rounded-full"></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center mt-4">
+                    Same compliance. 500x less cost.
+                  </p>
                 </div>
               </div>
             </div>
@@ -229,12 +424,18 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="py-24">
+        <section id="pricing" className="py-20 md:py-28">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Transparent Pricing</h2>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
+                Simple Pricing
+              </div>
+              <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">
+                One price. Full protection. No surprises.
+              </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                No hidden fees. No surprises. Choose the plan that fits your needs.
+                All plans include complete GDPR/CCPA compliance features. 
+                Choose based on how many websites you need to protect.
               </p>
             </div>
 
@@ -247,52 +448,94 @@ export default function Home() {
             >
               <PlanComparisonTable />
             </motion.div>
+
+            <div className="mt-8 text-center">
+              <p className="text-muted-foreground">
+                All plans include a 7-day free trial. No credit card required.
+              </p>
+            </div>
           </div>
         </section>
 
         {/* About Section */}
-        <section id="about" className="py-24 bg-secondary/30">
+        <section id="about" className="py-20 md:py-28 bg-secondary/30">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">Built by people who understand your frustration.</h2>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
+                  Our Story
+                </div>
+                <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+                  We built the tool we wished existed
+                </h2>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  We started ConsentEase after being quoted €25,000 for a "basic" consent management setup. 
-                  That's when we realized: privacy compliance shouldn't require a mortgage.
+                  When we were quoted €25,000 for a "basic" consent management setup for a client's 
+                  small e-commerce site, we knew something was broken. Privacy compliance shouldn't 
+                  require a second mortgage.
                 </p>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  Our mission is simple: make GDPR compliance accessible to every business, 
-                  from solo entrepreneurs to growing agencies.
+                  ConsentEase was born from frustration—and a belief that every business, regardless of 
+                  size, deserves access to proper compliance tools. We're based in Belgium, in the heart 
+                  of EU privacy regulation, and we eat our own cooking.
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Globe className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold">Based in Belgium</p>
-                    <p className="text-sm text-muted-foreground">EU-first, privacy-focused</p>
+                    <p className="font-semibold">Based in Belgium, EU</p>
+                    <p className="text-sm text-muted-foreground">Privacy-first, always</p>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-background p-6 rounded-xl shadow-sm border">
                   <p className="text-4xl font-bold font-display text-primary mb-2">1,000+</p>
-                  <p className="text-muted-foreground">Active websites</p>
+                  <p className="text-muted-foreground">Websites protected</p>
                 </div>
                 <div className="bg-background p-6 rounded-xl shadow-sm border">
                   <p className="text-4xl font-bold font-display text-primary mb-2">50M+</p>
-                  <p className="text-muted-foreground">Consents managed</p>
+                  <p className="text-muted-foreground">Consents processed</p>
                 </div>
                 <div className="bg-background p-6 rounded-xl shadow-sm border">
                   <p className="text-4xl font-bold font-display text-primary mb-2">99.9%</p>
-                  <p className="text-muted-foreground">Uptime</p>
+                  <p className="text-muted-foreground">Uptime guarantee</p>
                 </div>
                 <div className="bg-background p-6 rounded-xl shadow-sm border">
-                  <p className="text-4xl font-bold font-display text-primary mb-2">2 min</p>
-                  <p className="text-muted-foreground">Average setup time</p>
+                  <p className="text-4xl font-bold font-display text-primary mb-2">&lt;24h</p>
+                  <p className="text-muted-foreground">Support response</p>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-20 md:py-28">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">
+              Your compliance journey starts here
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join 1,000+ businesses that chose simplicity over complexity. 
+              Set up in 2 minutes. Protected forever.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/onboarding">
+                <Button size="lg" className="text-lg h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25">
+                  Start Your Free Trial
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button size="lg" variant="outline" className="text-lg h-14 px-8 border-2">
+                  Talk to a Human
+                </Button>
+              </Link>
+            </div>
+            <p className="mt-6 text-sm text-muted-foreground">
+              No credit card required. 7-day free trial. Cancel anytime.
+            </p>
           </div>
         </section>
 
@@ -307,16 +550,21 @@ export default function Home() {
                   </div>
                   ConsentEase
                 </Link>
-                <p className="text-muted-foreground max-w-xs">
-                  The privacy compliance platform built for business owners, not compliance officers.
+                <p className="text-muted-foreground max-w-xs mb-4">
+                  GDPR and CCPA compliance made simple. Protect your business without the enterprise price tag.
                 </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="w-4 h-4" />
+                  <span>EU Data Residency</span>
+                </div>
               </div>
               <div>
                 <h4 className="font-semibold mb-4">Product</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="/features" className="hover:text-primary">Features</Link></li>
-                  <li><Link href="/pricing" className="hover:text-primary">Pricing</Link></li>
-                  <li><Link href="/compare" className="hover:text-primary">Compare to...</Link></li>
+                  <li><a href="#features" className="hover:text-primary">Features</a></li>
+                  <li><a href="#pricing" className="hover:text-primary">Pricing</a></li>
+                  <li><Link href="/compare" className="hover:text-primary">Compare CMPs</Link></li>
+                  <li><Link href="/demo" className="hover:text-primary">Live Demo</Link></li>
                 </ul>
               </div>
               <div>
@@ -326,14 +574,14 @@ export default function Home() {
                   <li><Link href="/docs" className="hover:text-primary">Documentation</Link></li>
                   <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
                   <li><Link href="/changelog" className="hover:text-primary">Changelog</Link></li>
-                  <li><Link href="/roadmap" className="hover:text-primary">Roadmap 2026</Link></li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-4">Company</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="/about" className="hover:text-primary">About Us</Link></li>
+                  <li><a href="#about" className="hover:text-primary">About Us</a></li>
                   <li><Link href="/contact" className="hover:text-primary">Contact</Link></li>
+                  <li><Link href="/roadmap" className="hover:text-primary">Roadmap</Link></li>
                 </ul>
               </div>
               <div>
@@ -342,6 +590,7 @@ export default function Home() {
                   <li><Link href="/privacy" className="hover:text-primary">Privacy Policy</Link></li>
                   <li><Link href="/terms" className="hover:text-primary">Terms of Service</Link></li>
                   <li><Link href="/cookies" className="hover:text-primary">Cookie Policy</Link></li>
+                  <li><Link href="/dpa" className="hover:text-primary">DPA</Link></li>
                 </ul>
               </div>
             </div>

@@ -36,6 +36,7 @@ import AboutPage from "@/pages/about";
 import ContactPage from "@/pages/contact";
 import FAQPage from "@/pages/faq";
 import DocsPage from "@/pages/docs";
+import DPAPage from "@/pages/dpa";
 import FeaturesPage from "@/pages/features";
 import DemoPage from "@/pages/demo";
 import ChangelogPage from "@/pages/changelog";
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy}/>
       <Route path="/terms" component={TermsOfService}/>
       <Route path="/cookies" component={CookiePolicy}/>
+      <Route path="/dpa" component={DPAPage}/>
       <Route path="/dashboard" component={DashboardWebsites}/>
       <Route path="/dashboard/websites" component={DashboardWebsites}/>
       <Route path="/dashboard/banner" component={BannerConfigurator}/>
