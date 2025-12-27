@@ -299,7 +299,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="bg-background border-t border-border pt-16 pb-8">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-5 gap-12 mb-12">
+            <div className="grid md:grid-cols-6 gap-8 mb-12">
               <div className="col-span-2">
                 <Link href="/" className="text-xl font-display font-bold flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-md bg-gradient flex items-center justify-center text-white">
@@ -324,6 +324,13 @@ export default function Home() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li><Link href="/docs" className="hover:text-primary">Documentation</Link></li>
                   <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
+                  <li><Link href="/changelog" className="hover:text-primary">Changelog</Link></li>
+                  <li><Link href="/roadmap" className="hover:text-primary">Roadmap 2026</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-4">Company</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
                   <li><Link href="/about" className="hover:text-primary">About Us</Link></li>
                   <li><Link href="/contact" className="hover:text-primary">Contact</Link></li>
                 </ul>

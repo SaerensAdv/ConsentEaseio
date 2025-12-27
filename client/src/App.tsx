@@ -26,6 +26,8 @@ import FAQPage from "@/pages/faq";
 import DocsPage from "@/pages/docs";
 import FeaturesPage from "@/pages/features";
 import DemoPage from "@/pages/demo";
+import ChangelogPage from "@/pages/changelog";
+import RoadmapPage from "@/pages/roadmap";
 import { DemoProvider } from "@/contexts/DemoContext";
 import { DemoTour } from "@/components/DemoTour";
 
@@ -45,6 +47,8 @@ function Router() {
       <Route path="/faq" component={FAQPage}/>
       <Route path="/docs" component={DocsPage}/>
       <Route path="/features" component={FeaturesPage}/>
+      <Route path="/changelog" component={ChangelogPage}/>
+      <Route path="/roadmap" component={RoadmapPage}/>
       <Route path="/privacy" component={PrivacyPolicy}/>
       <Route path="/terms" component={TermsOfService}/>
       <Route path="/cookies" component={CookiePolicy}/>
