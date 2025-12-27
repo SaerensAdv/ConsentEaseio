@@ -42,6 +42,8 @@ The platform is a full-stack application with:
   - `faq.tsx` - Frequently asked questions with accordion
   - `docs.tsx` - Documentation with tabbed setup guides
   - `features.tsx` - Feature breakdown with comparison table
+  - `changelog.tsx` - Version history with categorized changes
+  - `roadmap.tsx` - 2026 product roadmap with quarterly features
   - `legal/` - Legal pages (privacy.tsx, terms.tsx, cookies.tsx)
   - `dashboard/` - Dashboard pages (websites, banner, embed, analytics, settings)
 
@@ -127,6 +129,12 @@ Note: Without STRIPE_WEBHOOK_SECRET configured, trial expiration won't auto-upda
 - Endpoint: `/api/demo/login` - auto-authenticates demo user
 
 ## Recent Changes
+- December 27, 2025: Added changelog and roadmap pages:
+  - Changelog page (/changelog) with version history and categorized changes
+  - Roadmap page (/roadmap) with 2026 quarterly feature plans
+  - Upcoming add-ons: Privacy Policy Generator (€9), Cookie Policy Generator (€9)
+  - Disabled intro overlay on mobile for better performance
+  - Updated footer navigation with Resources, Company, and Legal sections
 - December 26, 2025: Added Playwright-based cookie scanner:
   - Scans websites using headless Chromium browser
   - Detects and classifies cookies automatically (100+ known cookies in knowledge base)
