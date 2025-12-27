@@ -9,6 +9,7 @@ import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import { scanWebsite, type ClassifiedCookie } from "./cookie-scanner";
 import { getGeoLocation, getJurisdictionConfig } from "./geolocation";
+import { translations, supportedLanguages, getTranslation } from "@shared/translations";
 
 // Store WebSocket connections per website for real-time analytics
 const analyticsConnections = new Map<string, Set<WebSocket>>();
@@ -669,6 +670,25 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/websites/:id/analytics/advanced", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const website = await storage.getWebsiteById(req.params.id);
+      if (!website || website.userId !== req.user.id) {
+        return res.status(404).json({ error: "Website not found" });
+      }
+      
+      const daysBack = parseInt(req.query.days as string) || 14;
+      const advanced = await storage.getAdvancedAnalytics(req.params.id, daysBack);
+      res.json(advanced);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch advanced analytics" });
+    }
+  });
+
   // CORS preflight for analytics endpoint
   app.options("/api/analytics/event", (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -842,6 +862,37 @@ export async function registerRoutes(
         config: getJurisdictionConfig('gdpr')
       });
     }
+  });
+
+  // Public endpoint to get translations for banner
+  app.options("/api/translations", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+  });
+
+  app.get("/api/translations", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    
+    const lang = req.query.lang as string || 'en';
+    const translation = getTranslation(lang);
+    
+    res.json({
+      translation,
+      languages: supportedLanguages,
+    });
+  });
+
+  app.get("/api/translations/all", (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    
+    res.json({
+      translations,
+      languages: supportedLanguages,
+    });
   });
 
   // Public endpoint to serve the consent banner script

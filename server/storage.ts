@@ -50,6 +50,33 @@ export interface IStorage {
     countryBreakdown: Array<{ country: string; count: number }>;
   }>;
   getMonthlyViewsForUser(userId: string): Promise<number>;
+  getAdvancedAnalytics(websiteId: string, daysBack: number): Promise<{
+    trends: {
+      currentPeriod: { views: number; accepts: number; rejects: number; rate: number };
+      previousPeriod: { views: number; accepts: number; rejects: number; rate: number };
+      change: number;
+    };
+    funnel: {
+      impressions: number;
+      interactions: number;
+      settingsClicks: number;
+      accepts: number;
+      rejects: number;
+      customSaves: number;
+      dismissed: number;
+    };
+    geographic: Array<{
+      country: string;
+      countryCode: string;
+      flag: string;
+      views: number;
+      accepts: number;
+      rejects: number;
+      acceptRate: number;
+    }>;
+    hourlyDistribution: Array<{ hour: number; count: number }>;
+    weeklyTrend: Array<{ week: string; views: number; acceptRate: number }>;
+  }>;
   
   // Password reset token methods
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
@@ -300,6 +327,158 @@ export class DatabaseStorage implements IStorage {
       );
     
     return result[0]?.count || 0;
+  }
+
+  async getAdvancedAnalytics(websiteId: string, daysBack: number): Promise<{
+    trends: {
+      currentPeriod: { views: number; accepts: number; rejects: number; rate: number };
+      previousPeriod: { views: number; accepts: number; rejects: number; rate: number };
+      change: number;
+    };
+    funnel: {
+      impressions: number;
+      interactions: number;
+      settingsClicks: number;
+      accepts: number;
+      rejects: number;
+      customSaves: number;
+      dismissed: number;
+    };
+    geographic: Array<{
+      country: string;
+      countryCode: string;
+      flag: string;
+      views: number;
+      accepts: number;
+      rejects: number;
+      acceptRate: number;
+    }>;
+    hourlyDistribution: Array<{ hour: number; count: number }>;
+    weeklyTrend: Array<{ week: string; views: number; acceptRate: number }>;
+  }> {
+    const countryFlags: Record<string, { code: string; flag: string }> = {
+      'United States': { code: 'US', flag: '🇺🇸' },
+      'United Kingdom': { code: 'GB', flag: '🇬🇧' },
+      'Germany': { code: 'DE', flag: '🇩🇪' },
+      'France': { code: 'FR', flag: '🇫🇷' },
+      'Netherlands': { code: 'NL', flag: '🇳🇱' },
+      'Belgium': { code: 'BE', flag: '🇧🇪' },
+      'Spain': { code: 'ES', flag: '🇪🇸' },
+      'Italy': { code: 'IT', flag: '🇮🇹' },
+      'Portugal': { code: 'PT', flag: '🇵🇹' },
+      'Poland': { code: 'PL', flag: '🇵🇱' },
+      'Canada': { code: 'CA', flag: '🇨🇦' },
+      'Australia': { code: 'AU', flag: '🇦🇺' },
+      'Japan': { code: 'JP', flag: '🇯🇵' },
+      'Brazil': { code: 'BR', flag: '🇧🇷' },
+      'India': { code: 'IN', flag: '🇮🇳' },
+      'China': { code: 'CN', flag: '🇨🇳' },
+      'Mexico': { code: 'MX', flag: '🇲🇽' },
+      'Sweden': { code: 'SE', flag: '🇸🇪' },
+      'Norway': { code: 'NO', flag: '🇳🇴' },
+      'Denmark': { code: 'DK', flag: '🇩🇰' },
+      'Finland': { code: 'FI', flag: '🇫🇮' },
+      'Ireland': { code: 'IE', flag: '🇮🇪' },
+      'Austria': { code: 'AT', flag: '🇦🇹' },
+      'Switzerland': { code: 'CH', flag: '🇨🇭' },
+    };
+
+    const currentEvents = await this.getAnalyticsByWebsiteId(websiteId, daysBack);
+    const previousEvents = await this.getAnalyticsByWebsiteId(websiteId, daysBack * 2);
+    
+    const currentCutoff = new Date();
+    currentCutoff.setDate(currentCutoff.getDate() - daysBack);
+    const previousOnlyEvents = previousEvents.filter(e => e.timestamp < currentCutoff);
+
+    const calcStats = (events: AnalyticsEvent[]) => {
+      const views = events.filter(e => e.eventType === 'banner_shown').length;
+      const accepts = events.filter(e => e.eventType === 'accept').length;
+      const rejects = events.filter(e => e.eventType === 'reject').length;
+      const rate = views > 0 ? (accepts / views) * 100 : 0;
+      return { views, accepts, rejects, rate };
+    };
+
+    const currentPeriod = calcStats(currentEvents);
+    const previousPeriod = calcStats(previousOnlyEvents);
+    const change = previousPeriod.rate > 0 
+      ? ((currentPeriod.rate - previousPeriod.rate) / previousPeriod.rate) * 100 
+      : 0;
+
+    const funnel = {
+      impressions: currentEvents.filter(e => e.eventType === 'banner_shown').length,
+      interactions: currentEvents.filter(e => ['accept', 'reject', 'settings_click', 'preferences_saved', 'banner_dismissed'].includes(e.eventType)).length,
+      settingsClicks: currentEvents.filter(e => e.eventType === 'settings_click').length,
+      accepts: currentEvents.filter(e => e.eventType === 'accept').length,
+      rejects: currentEvents.filter(e => e.eventType === 'reject').length,
+      customSaves: currentEvents.filter(e => e.eventType === 'preferences_saved').length,
+      dismissed: currentEvents.filter(e => e.eventType === 'banner_dismissed').length,
+    };
+
+    const geoMap = new Map<string, { views: number; accepts: number; rejects: number }>();
+    currentEvents.forEach(event => {
+      const country = event.country || 'Unknown';
+      if (!geoMap.has(country)) {
+        geoMap.set(country, { views: 0, accepts: 0, rejects: 0 });
+      }
+      const stats = geoMap.get(country)!;
+      if (event.eventType === 'banner_shown') stats.views++;
+      if (event.eventType === 'accept') stats.accepts++;
+      if (event.eventType === 'reject') stats.rejects++;
+    });
+
+    const geographic = Array.from(geoMap.entries())
+      .map(([country, stats]) => ({
+        country,
+        countryCode: countryFlags[country]?.code || 'XX',
+        flag: countryFlags[country]?.flag || '🌍',
+        views: stats.views,
+        accepts: stats.accepts,
+        rejects: stats.rejects,
+        acceptRate: stats.views > 0 ? (stats.accepts / stats.views) * 100 : 0,
+      }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 15);
+
+    const hourlyMap = new Map<number, number>();
+    currentEvents.forEach(event => {
+      if (event.eventType === 'banner_shown') {
+        const hour = event.timestamp.getHours();
+        hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
+      }
+    });
+    const hourlyDistribution = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      count: hourlyMap.get(hour) || 0,
+    }));
+
+    const weeklyMap = new Map<string, { views: number; accepts: number }>();
+    currentEvents.forEach(event => {
+      const weekStart = new Date(event.timestamp);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+      if (!weeklyMap.has(weekKey)) {
+        weeklyMap.set(weekKey, { views: 0, accepts: 0 });
+      }
+      const stats = weeklyMap.get(weekKey)!;
+      if (event.eventType === 'banner_shown') stats.views++;
+      if (event.eventType === 'accept') stats.accepts++;
+    });
+
+    const weeklyTrend = Array.from(weeklyMap.entries())
+      .map(([week, stats]) => ({
+        week,
+        views: stats.views,
+        acceptRate: stats.views > 0 ? (stats.accepts / stats.views) * 100 : 0,
+      }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+
+    return {
+      trends: { currentPeriod, previousPeriod, change },
+      funnel,
+      geographic,
+      hourlyDistribution,
+      weeklyTrend,
+    };
   }
 
   // Password reset token methods

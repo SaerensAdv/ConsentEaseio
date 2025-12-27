@@ -1,4 +1,10 @@
+import { translations, getTranslation } from "@shared/translations";
+
 export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true, clarityProjectId?: string | null): string {
+  // Get translations for the configured language
+  const lang = config.language || 'en';
+  const t = getTranslation(lang);
+  
   // Prioritize custom domain (consentease.io) if available
   let apiBaseUrl = 'https://consentease.io';
   
@@ -56,11 +62,12 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     privacyPolicyUrl: config.privacyPolicyUrl,
     privacyPolicyText: config.privacyPolicyText ?? 'Privacy Policy',
     cookiePolicyUrl: config.cookiePolicyUrl,
-    cookiePolicyText: config.cookiePolicyText ?? 'Cookie Policy',
+    cookiePolicyText: config.cookiePolicyText ?? t.cookiePolicyText,
     customFooter: config.customFooter,
-    language: config.language ?? 'en',
+    language: lang,
   })};
   
+  var TRANSLATIONS = ${JSON.stringify(t)};
   var CONSENT_KEY = 'ce_consent_' + CONFIG.publicId;
   var categories = [];
   var CLARITY_ID = ${clarityProjectId ? `"${clarityProjectId}"` : 'null'};
@@ -603,13 +610,13 @@ export function generateBannerScript(config: any, publicId: string, showBranding
         var cookiesHtml = '';
         if (cat.cookies && cat.cookies.length > 0) {
           var cookiesList = cat.cookies.map(function(cookie) {
-            return '<div class="ce-prefs-cookie"><span class="ce-prefs-cookie-name">' + cookie.name + '</span><span class="ce-prefs-cookie-expiry">' + (cookie.expiry || 'Session') + '</span></div>';
+            return '<div class="ce-prefs-cookie"><span class="ce-prefs-cookie-name">' + cookie.name + '</span><span class="ce-prefs-cookie-expiry">' + (cookie.expiry || TRANSLATIONS.session) + '</span></div>';
           }).join('');
-          cookiesHtml = '<div class="ce-prefs-cookies"><div class="ce-prefs-cookies-title">Cookies (' + cat.cookies.length + ')</div>' + cookiesList + '</div>';
+          cookiesHtml = '<div class="ce-prefs-cookies"><div class="ce-prefs-cookies-title">' + TRANSLATIONS.cookies + ' (' + cat.cookies.length + ')</div>' + cookiesList + '</div>';
         }
         
         var toggleClass = 'ce-toggle' + (categoryStates[cat.name] ? ' active' : '') + (cat.isRequired ? ' disabled' : '');
-        var requiredBadge = cat.isRequired ? '<span class="ce-required">Required</span>' : '';
+        var requiredBadge = cat.isRequired ? '<span class="ce-required">' + TRANSLATIONS.required + '</span>' : '';
         
         return '<div class="ce-prefs-category" data-category="' + cat.name + '">' +
           '<div class="ce-prefs-cat-header">' +
@@ -625,16 +632,16 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     prefsOverlay.innerHTML = \`
       <div class="ce-prefs-modal">
         <div class="ce-prefs-header">
-          <h3>Cookie Preferences</h3>
-          <p>Customize your cookie preferences below. Required cookies are necessary for the website to function properly.</p>
+          <h3>\${TRANSLATIONS.preferencesTitle}</h3>
+          <p>\${TRANSLATIONS.preferencesDescription}</p>
         </div>
         <div class="ce-prefs-body">
           \${renderCategories()}
         </div>
         <div class="ce-prefs-footer">
-          <button class="ce-btn ce-btn-reject" id="ce-prefs-reject">Reject All</button>
-          <button class="ce-btn ce-btn-accept" id="ce-prefs-accept">Accept All</button>
-          <button class="ce-btn ce-btn-accept" id="ce-prefs-save">Save Preferences</button>
+          <button class="ce-btn ce-btn-reject" id="ce-prefs-reject">\${TRANSLATIONS.rejectAll}</button>
+          <button class="ce-btn ce-btn-accept" id="ce-prefs-accept">\${TRANSLATIONS.acceptAll}</button>
+          <button class="ce-btn ce-btn-accept" id="ce-prefs-save">\${TRANSLATIONS.savePreferences}</button>
         </div>
       </div>
     \`;
