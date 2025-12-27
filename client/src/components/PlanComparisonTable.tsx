@@ -1,4 +1,4 @@
-import { Check, X, Sparkles } from "lucide-react";
+import { Check, X, Sparkles, Loader2 } from "lucide-react";
 import { PLANS, PLAN_FEATURES, type PlanFeature } from "@shared/plans";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -145,10 +145,12 @@ export default function PlanComparisonTable({
 
 export function PlanComparisonCards({ 
   currentPlan, 
-  onSelectPlan 
+  onSelectPlan,
+  loadingPlan 
 }: { 
   currentPlan?: string;
   onSelectPlan?: (planId: string) => void;
+  loadingPlan?: string | null;
 }) {
   return (
     <div className="grid md:grid-cols-3 gap-6" data-testid="plan-comparison-cards">
@@ -214,10 +216,19 @@ export function PlanComparisonCards({
                 "w-full",
                 plan.popular && "shadow-lg shadow-primary/20"
               )}
-              disabled={currentPlan === plan.id}
+              disabled={currentPlan === plan.id || loadingPlan === plan.id}
               data-testid={`button-choose-${plan.id}`}
             >
-              {currentPlan === plan.id ? "Current Plan" : `Choose ${plan.name}`}
+              {loadingPlan === plan.id ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : currentPlan === plan.id ? (
+                "Current Plan"
+              ) : (
+                `Choose ${plan.name}`
+              )}
             </Button>
           ) : (
             <Link href="/onboarding">

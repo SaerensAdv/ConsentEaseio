@@ -610,6 +610,7 @@ export default function Settings() {
                 setSelectedPlan(planId);
                 handleUpgrade(planId);
               }}
+              loadingPlan={checkoutMutation.isPending ? selectedPlan : null}
             />
           </div>
         </DialogContent>
