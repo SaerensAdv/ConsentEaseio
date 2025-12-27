@@ -348,7 +348,7 @@ export default function Home() {
               <p>&copy; 2025 ConsentEase. All rights reserved.</p>
               <a href="https://saerens.agency?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <span className="text-xs">A product by</span>
-                <img src="https://saerens.agency/logo.svg" alt="Saerens Agency" className="h-5" />
+                <img src="https://saerensadvertising.com/logo.svg" alt="Saerens Agency" className="h-5" />
               </a>
             </div>
           </div>
