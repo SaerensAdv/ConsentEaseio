@@ -65,6 +65,29 @@ export const bannerConfigs = pgTable("banner_configs", {
   animation: text("animation").notNull().default("slide-up"),
   buttonStyle: text("button_style").notNull().default("filled"),
   buttonShape: text("button_shape").notNull().default("rounded"),
+  // New styling options
+  borderColor: text("border_color").default("#e5e7eb"),
+  borderWidth: integer("border_width").default(1),
+  secondaryButtonColor: text("secondary_button_color").default("#6b7280"),
+  maxWidth: integer("max_width").default(400),
+  showOverlay: boolean("show_overlay").default(false),
+  overlayOpacity: integer("overlay_opacity").default(50),
+  logoUrl: text("logo_url"),
+  // Behavior options
+  displayDelay: integer("display_delay").default(0),
+  autoHideDelay: integer("auto_hide_delay"),
+  showCloseButton: boolean("show_close_button").default(false),
+  reconsentDays: integer("reconsent_days").default(365),
+  respectDnt: boolean("respect_dnt").default(false),
+  // Links & content
+  privacyPolicyUrl: text("privacy_policy_url"),
+  privacyPolicyText: text("privacy_policy_text").default("Privacy Policy"),
+  cookiePolicyUrl: text("cookie_policy_url"),
+  cookiePolicyText: text("cookie_policy_text").default("Cookie Policy"),
+  customFooter: text("custom_footer"),
+  // Multi-language
+  language: text("language").default("en"),
+  translations: text("translations"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
