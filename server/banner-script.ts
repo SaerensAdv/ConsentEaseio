@@ -1,9 +1,35 @@
 import { translations, getTranslation } from "@shared/translations";
 
+const englishDefaults = {
+  heading: "We value your privacy",
+  description: "We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking \"Accept All\", you consent to our use of cookies.",
+  acceptText: "Accept All",
+  rejectText: "Reject All",
+  settingsText: "Preferences",
+  privacyPolicyText: "Privacy Policy",
+  cookiePolicyText: "Cookie Policy",
+};
+
+function useTranslationOrCustom(configValue: string | null | undefined, translationValue: string, defaultValue: string): string {
+  if (!configValue || configValue === defaultValue) {
+    return translationValue;
+  }
+  return configValue;
+}
+
 export function generateBannerScript(config: any, publicId: string, showBranding: boolean = true, clarityProjectId?: string | null): string {
   // Get translations for the configured language
   const lang = config.language || 'en';
   const t = getTranslation(lang);
+  
+  // Apply translations to text fields, preserving custom values
+  const heading = useTranslationOrCustom(config.heading, t.heading, englishDefaults.heading);
+  const description = useTranslationOrCustom(config.description, t.description, englishDefaults.description);
+  const acceptText = useTranslationOrCustom(config.acceptText, t.acceptText, englishDefaults.acceptText);
+  const rejectText = useTranslationOrCustom(config.rejectText, t.rejectText, englishDefaults.rejectText);
+  const settingsText = useTranslationOrCustom(config.settingsText, t.settingsText, englishDefaults.settingsText);
+  const privacyPolicyText = useTranslationOrCustom(config.privacyPolicyText, t.privacyPolicyText, englishDefaults.privacyPolicyText);
+  const cookiePolicyText = useTranslationOrCustom(config.cookiePolicyText, t.cookiePolicyText, englishDefaults.cookiePolicyText);
   
   // Prioritize custom domain (consentease.io) if available
   let apiBaseUrl = 'https://consentease.io';
@@ -28,11 +54,11 @@ export function generateBannerScript(config: any, publicId: string, showBranding
   var API_BASE = "${apiBaseUrl}";
   var CONFIG = ${JSON.stringify({
     publicId,
-    heading: config.heading,
-    description: config.description,
-    acceptText: config.acceptText,
-    rejectText: config.rejectText,
-    settingsText: config.settingsText,
+    heading,
+    description,
+    acceptText,
+    rejectText,
+    settingsText,
     position: config.position,
     primaryColor: config.primaryColor,
     backgroundColor: config.backgroundColor,
@@ -60,9 +86,9 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     reconsentDays: config.reconsentDays ?? 365,
     respectDnt: config.respectDnt ?? false,
     privacyPolicyUrl: config.privacyPolicyUrl,
-    privacyPolicyText: config.privacyPolicyText ?? 'Privacy Policy',
+    privacyPolicyText,
     cookiePolicyUrl: config.cookiePolicyUrl,
-    cookiePolicyText: config.cookiePolicyText ?? t.cookiePolicyText,
+    cookiePolicyText,
     customFooter: config.customFooter,
     language: lang,
   })};

@@ -71,6 +71,132 @@ interface BannerConfig {
   translations: string | null;
 }
 
+const translationData: Record<string, Record<string, string>> = {
+  en: {
+    heading: "We value your privacy",
+    description: "We use cookies to enhance your browsing experience and analyze our traffic. By clicking Accept All, you consent to our use of cookies.",
+    acceptAll: "Accept All",
+    rejectAll: "Reject All",
+    settings: "Preferences",
+    preferencesTitle: "Cookie Preferences",
+    savePreferences: "Save Preferences",
+    required: "Required",
+    cookies: "Cookies",
+  },
+  nl: {
+    heading: "Wij respecteren uw privacy",
+    description: "Wij gebruiken cookies om uw browse-ervaring te verbeteren en ons verkeer te analyseren.",
+    acceptAll: "Alles Accepteren",
+    rejectAll: "Alles Weigeren",
+    settings: "Voorkeuren",
+    preferencesTitle: "Cookievoorkeuren",
+    savePreferences: "Voorkeuren Opslaan",
+    required: "Vereist",
+    cookies: "Cookies",
+  },
+  de: {
+    heading: "Wir schätzen Ihre Privatsphäre",
+    description: "Wir verwenden Cookies, um Ihr Surferlebnis zu verbessern und unseren Datenverkehr zu analysieren.",
+    acceptAll: "Alle Akzeptieren",
+    rejectAll: "Alle Ablehnen",
+    settings: "Einstellungen",
+    preferencesTitle: "Cookie-Einstellungen",
+    savePreferences: "Einstellungen Speichern",
+    required: "Erforderlich",
+    cookies: "Cookies",
+  },
+  fr: {
+    heading: "Nous respectons votre vie privée",
+    description: "Nous utilisons des cookies pour améliorer votre expérience de navigation et analyser notre trafic.",
+    acceptAll: "Tout Accepter",
+    rejectAll: "Tout Refuser",
+    settings: "Préférences",
+    preferencesTitle: "Préférences de Cookies",
+    savePreferences: "Sauvegarder",
+    required: "Requis",
+    cookies: "Cookies",
+  },
+  es: {
+    heading: "Valoramos su privacidad",
+    description: "Utilizamos cookies para mejorar su experiencia de navegación y analizar nuestro tráfico.",
+    acceptAll: "Aceptar Todo",
+    rejectAll: "Rechazar Todo",
+    settings: "Preferencias",
+    preferencesTitle: "Preferencias de Cookies",
+    savePreferences: "Guardar",
+    required: "Obligatorio",
+    cookies: "Cookies",
+  },
+  it: {
+    heading: "Rispettiamo la tua privacy",
+    description: "Utilizziamo i cookie per migliorare la tua esperienza di navigazione e analizzare il nostro traffico.",
+    acceptAll: "Accetta Tutto",
+    rejectAll: "Rifiuta Tutto",
+    settings: "Preferenze",
+    preferencesTitle: "Preferenze Cookie",
+    savePreferences: "Salva",
+    required: "Obbligatorio",
+    cookies: "Cookie",
+  },
+  pt: {
+    heading: "Valorizamos sua privacidade",
+    description: "Usamos cookies para melhorar sua experiência de navegação e analisar nosso tráfego.",
+    acceptAll: "Aceitar Tudo",
+    rejectAll: "Recusar Tudo",
+    settings: "Preferências",
+    preferencesTitle: "Preferências de Cookies",
+    savePreferences: "Salvar",
+    required: "Obrigatório",
+    cookies: "Cookies",
+  },
+  pl: {
+    heading: "Cenimy Twoją prywatność",
+    description: "Używamy plików cookie, aby ulepszyć Twoje przeglądanie i analizować nasz ruch.",
+    acceptAll: "Akceptuj Wszystko",
+    rejectAll: "Odrzuć Wszystko",
+    settings: "Ustawienia",
+    preferencesTitle: "Ustawienia Cookies",
+    savePreferences: "Zapisz",
+    required: "Wymagane",
+    cookies: "Cookies",
+  },
+};
+
+function TranslationPreview({ language }: { language: string }) {
+  const t = translationData[language] || translationData.en;
+  
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="grid gap-2">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Heading:</span>
+          <span className="font-medium text-right max-w-[200px] truncate">{t.heading}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Accept:</span>
+          <span className="font-medium">{t.acceptAll}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Reject:</span>
+          <span className="font-medium">{t.rejectAll}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Settings:</span>
+          <span className="font-medium">{t.settings}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Save:</span>
+          <span className="font-medium">{t.savePreferences}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Required:</span>
+          <span className="font-medium">{t.required}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const defaultConfig = {
   heading: "We value your privacy",
   description: "We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking \"Accept All\", you consent to our use of cookies.",
@@ -902,6 +1028,21 @@ export default function BannerConfigurator() {
                     </Select>
                     <p className="text-xs text-muted-foreground">
                       Choose a default language for the banner UI labels
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Translation Preview</Label>
+                      <Languages className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                      <TranslationPreview language={config.language} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      These translations are automatically applied based on your selected language. The banner and preferences modal text will use these localized strings.
                     </p>
                   </div>
                 </div>
