@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import DashboardLayout from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,26 +99,30 @@ export default function DiagnosticsPage() {
 
   if (websitesLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (!websites || websites.length === 0) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Consent Mode Diagnostics</h1>
-          <p className="text-muted-foreground">Verify your Google Consent Mode v2 implementation.</p>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Consent Mode Diagnostics</h1>
+            <p className="text-muted-foreground">Verify your Google Consent Mode v2 implementation.</p>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No websites found. Add a website first to run diagnostics.</p>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No websites found. Add a website first to run diagnostics.</p>
-          </CardContent>
-        </Card>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -125,6 +130,7 @@ export default function DiagnosticsPage() {
   const recommendations = parseJsonArray(latestScan?.recommendations);
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
@@ -404,5 +410,6 @@ export default function DiagnosticsPage() {
         </p>
       </div>
     </div>
+    </DashboardLayout>
   );
 }

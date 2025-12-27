@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import DashboardLayout from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,30 +74,35 @@ export default function ConsentLogsPage() {
 
   if (websitesLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (!websites || websites.length === 0) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Consent Proof Logs</h1>
-          <p className="text-muted-foreground">View and export consent records for compliance documentation.</p>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Consent Proof Logs</h1>
+            <p className="text-muted-foreground">View and export consent records for compliance documentation.</p>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No websites found. Add a website first to view consent logs.</p>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No websites found. Add a website first to view consent logs.</p>
-          </CardContent>
-        </Card>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
@@ -249,5 +255,6 @@ export default function ConsentLogsPage() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }
