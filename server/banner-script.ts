@@ -257,7 +257,7 @@ export function generateBannerScript(config: any, publicId: string, showBranding
     
     var brandingHtml = CONFIG.showBranding ? \`
       <div class="ce-branding">
-        <a href="https://consentease.com" target="_blank" rel="noopener">Powered by ConsentEase</a>
+        <a href="https://consentease.com?utm_source=banner&utm_medium=branding&utm_campaign=powered_by" target="_blank" rel="noopener">Powered by ConsentEase</a>
       </div>
     \` : '';
     
