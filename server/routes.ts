@@ -1612,6 +1612,330 @@ export async function registerRoutes(
     }
   });
 
+  // ========================================
+  // AGENCY MANAGEMENT ROUTES
+  // ========================================
+
+  // Get current user's agency (if they own one)
+  app.get("/api/agency", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      res.json(agency);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agency" });
+    }
+  });
+
+  // Get featured agencies (public - for landing page spotlight)
+  app.get("/api/agencies/featured", async (req, res) => {
+    try {
+      const agencies = await storage.getFeaturedAgencies();
+      res.json(agencies.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        description: a.description,
+        logoUrl: a.logoUrl,
+        websiteUrl: a.websiteUrl,
+        heroText: a.heroText,
+      })));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch featured agencies" });
+    }
+  });
+
+  // Get agency by slug (public)
+  app.get("/api/agencies/:slug", async (req, res) => {
+    try {
+      const agency = await storage.getAgencyBySlug(req.params.slug);
+      if (!agency || !agency.isActive) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      // Return public info only
+      res.json({
+        id: agency.id,
+        name: agency.name,
+        slug: agency.slug,
+        description: agency.description,
+        logoUrl: agency.logoUrl,
+        websiteUrl: agency.websiteUrl,
+        heroText: agency.heroText,
+        isFeatured: agency.isFeatured,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agency" });
+    }
+  });
+
+  // Create agency (only for users with agency plan)
+  app.post("/api/agency", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      if (req.user.plan !== 'agency') {
+        return res.status(403).json({ error: "Agency plan required" });
+      }
+      
+      // Check if user already has an agency
+      const existing = await storage.getAgencyByOwnerId(req.user.id);
+      if (existing) {
+        return res.status(400).json({ error: "You already have an agency" });
+      }
+      
+      const { name, slug, description, logoUrl, websiteUrl, contactEmail, heroText } = req.body;
+      
+      if (!name || !slug) {
+        return res.status(400).json({ error: "Name and slug are required" });
+      }
+      
+      // Check slug uniqueness
+      const slugExists = await storage.getAgencyBySlug(slug);
+      if (slugExists) {
+        return res.status(400).json({ error: "Slug already taken" });
+      }
+      
+      const agency = await storage.createAgency({
+        name,
+        slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+        description,
+        logoUrl,
+        websiteUrl,
+        contactEmail,
+        heroText,
+        ownerId: req.user.id,
+      });
+      
+      // Add owner as agency member with owner role
+      await storage.createAgencyMember({
+        agencyId: agency.id,
+        userId: req.user.id,
+        role: 'owner',
+        acceptedAt: new Date(),
+      });
+      
+      res.status(201).json(agency);
+    } catch (error) {
+      console.error('Failed to create agency:', error);
+      res.status(500).json({ error: "Failed to create agency" });
+    }
+  });
+
+  // Update agency
+  app.patch("/api/agency", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const { name, description, logoUrl, websiteUrl, contactEmail, heroText } = req.body;
+      
+      const updated = await storage.updateAgency(agency.id, {
+        name: name ?? agency.name,
+        description: description ?? agency.description,
+        logoUrl: logoUrl ?? agency.logoUrl,
+        websiteUrl: websiteUrl ?? agency.websiteUrl,
+        contactEmail: contactEmail ?? agency.contactEmail,
+        heroText: heroText ?? agency.heroText,
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update agency" });
+    }
+  });
+
+  // Get agency clients
+  app.get("/api/agency/clients", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const clients = await storage.getAgencyClients(agency.id);
+      
+      // Enrich with website counts
+      const enrichedClients = await Promise.all(clients.map(async (client: any) => {
+        const websiteCount = await storage.countWebsitesByUserId(client.userId);
+        return {
+          ...client,
+          websiteCount,
+        };
+      }));
+      
+      res.json(enrichedClients);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch clients" });
+    }
+  });
+
+  // Add client to agency (link existing account by email)
+  app.post("/api/agency/clients", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const { email, clientName, notes, relationshipType } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "No user found with this email. They need to create an account first." });
+      }
+      
+      // Check if already a client
+      const existingClients = await storage.getAgencyClients(agency.id);
+      if (existingClients.some((c: any) => c.userId === user.id)) {
+        return res.status(400).json({ error: "This user is already a client" });
+      }
+      
+      const client = await storage.createAgencyClient({
+        agencyId: agency.id,
+        userId: user.id,
+        clientName: clientName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        notes,
+        relationshipType: relationshipType || 'managed',
+      });
+      
+      res.status(201).json(client);
+    } catch (error) {
+      console.error('Failed to add client:', error);
+      res.status(500).json({ error: "Failed to add client" });
+    }
+  });
+
+  // Update agency client
+  app.patch("/api/agency/clients/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const client = await storage.getAgencyClientById(req.params.id);
+      if (!client || client.agencyId !== agency.id) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      const { clientName, notes, status, relationshipType } = req.body;
+      
+      const updated = await storage.updateAgencyClient(client.id, {
+        clientName: clientName ?? client.clientName,
+        notes: notes ?? client.notes,
+        status: status ?? client.status,
+        relationshipType: relationshipType ?? client.relationshipType,
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update client" });
+    }
+  });
+
+  // Remove client from agency
+  app.delete("/api/agency/clients/:id", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const client = await storage.getAgencyClientById(req.params.id);
+      if (!client || client.agencyId !== agency.id) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      await storage.deleteAgencyClient(client.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove client" });
+    }
+  });
+
+  // Get all websites for agency (across all clients)
+  app.get("/api/agency/websites", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const agency = await storage.getAgencyByOwnerId(req.user.id);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      
+      const clients = await storage.getAgencyClients(agency.id);
+      
+      // Get websites for each client
+      const allWebsites: any[] = [];
+      for (const client of clients) {
+        const websites = await storage.getWebsitesByUserId(client.userId);
+        allWebsites.push(...websites.map((w: any) => ({
+          ...w,
+          clientId: client.id,
+          clientName: client.clientName,
+          clientEmail: client.user.email,
+        })));
+      }
+      
+      res.json(allWebsites);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch websites" });
+    }
+  });
+
+  // Check if current user is linked to any agency
+  app.get("/api/user/agency-link", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const links = await storage.getClientsByUserId(req.user.id);
+      res.json(links);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agency links" });
+    }
+  });
+
   return httpServer;
 }
 
