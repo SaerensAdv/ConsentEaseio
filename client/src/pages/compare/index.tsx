@@ -46,6 +46,11 @@ export default function CompareIndex() {
               <Link key={competitor.slug} href={`/compare/${competitor.slug}`}>
                 <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group">
                   <CardContent className="p-6">
+                    {competitor.logo && (
+                      <div className="h-8 mb-4 flex items-center">
+                        <img src={competitor.logo} alt={competitor.name} className="h-6 max-w-[120px] object-contain" />
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-display font-bold text-lg">{competitor.name}</h3>
                       <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />

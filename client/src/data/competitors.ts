@@ -13,6 +13,7 @@ export interface PricingTier {
 export interface CompetitorData {
   slug: string;
   name: string;
+  logo?: string;
   tagline: string;
   description: string;
   targetAudience: string;
@@ -57,6 +58,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "cookiebot",
     name: "Cookiebot",
+    logo: "/attached_assets/cookiebot_1766797596287.webp",
     tagline: "Cookie Consent Solution",
     description: "Cookiebot is one of the most popular cookie consent solutions. Here's how ConsentEase compares on pricing and simplicity.",
     targetAudience: "For Website Owners",
@@ -91,6 +93,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "usercentrics",
     name: "Usercentrics",
+    logo: "/attached_assets/usercentrics_1766797586505.webp",
     tagline: "Consent Management Platform",
     description: "Usercentrics is a German CMP with session-based pricing. Great for enterprise, but can get expensive quickly.",
     targetAudience: "For Marketing Teams",
@@ -126,6 +129,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "complianz",
     name: "Complianz",
+    logo: "/attached_assets/complianz_1766797615675.webp",
     tagline: "WordPress Privacy Plugin",
     description: "Complianz is a WordPress-focused privacy plugin with yearly pricing. Great for WordPress, but limited to that platform.",
     targetAudience: "For WordPress Users",
@@ -157,6 +161,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "iubenda",
     name: "Iubenda",
+    logo: "/attached_assets/iubenda_1766797582562.webp",
     tagline: "Legal Compliance Suite",
     description: "Iubenda offers a full legal compliance suite including privacy policies and terms generators. More features, but higher price.",
     targetAudience: "For Legal Compliance",
@@ -191,6 +196,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "cookiefirst",
     name: "CookieFirst",
+    logo: "/attached_assets/cookie-first_1766797593277.webp",
     tagline: "Cookie Consent Management",
     description: "CookieFirst is a straightforward cookie consent solution with simple pricing. Similar to ConsentEase but slightly higher priced.",
     targetAudience: "For Small Businesses",
@@ -222,6 +228,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "cookie-script",
     name: "Cookie Script",
+    logo: "/attached_assets/cookie-script_1766797600924.webp",
     tagline: "Easy Cookie Compliance",
     description: "Cookie Script offers simple cookie compliance with a generous free tier. Good budget option, but ConsentEase offers better value.",
     targetAudience: "For Website Owners",
@@ -255,6 +262,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "cookieyes",
     name: "CookieYes",
+    logo: "/attached_assets/cookieyes_1766797607935.webp",
     tagline: "GDPR Cookie Consent",
     description: "CookieYes is a popular GDPR consent solution with a free tier. Similar offering, but ConsentEase provides better value.",
     targetAudience: "For Website Owners",
@@ -287,6 +295,7 @@ export const COMPETITORS: CompetitorData[] = [
   {
     slug: "axeptio",
     name: "Axeptio",
+    logo: "/attached_assets/axeptio_1766797590002.webp",
     tagline: "Playful Cookie Consent",
     description: "Axeptio focuses on user-friendly, playful consent banners. More expensive, but offers a unique UX-focused approach.",
     targetAudience: "For UX-focused Teams",

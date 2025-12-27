@@ -39,6 +39,11 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
             <span className="flex h-2 w-2 rounded-full bg-primary"></span>
             Honest Comparison
           </div>
+          {competitor.logo && (
+            <div className="mb-6">
+              <img src={competitor.logo} alt={competitor.name} className="h-12 mx-auto" />
+            </div>
+          )}
           <h1 className="text-4xl md:text-6xl font-display font-bold mb-6">
             ConsentEase vs. {competitor.name}
           </h1>
@@ -103,6 +108,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
                 <span className="text-sm text-muted-foreground">For Business Owners</span>
               </div>
               <div className="p-8 flex flex-col items-center justify-center text-center opacity-60">
+                {competitor.logo && <img src={competitor.logo} alt={competitor.name} className="h-8 mb-2" />}
                 <h3 className="text-xl font-bold text-foreground mb-1">{competitor.name}</h3>
                 <span className="text-sm text-muted-foreground">{competitor.targetAudience}</span>
               </div>
