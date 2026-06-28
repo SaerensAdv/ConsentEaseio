@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /onboarding
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /verify-email-change
+
+User-agent: Googlebot
+Allow: /api/consent/
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /api/consent/
+Disallow: /api/
+
+Sitemap: https://consentease.io/sitemap.xml

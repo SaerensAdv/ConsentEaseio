@@ -1,18 +1,77 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, FileText, Clock, CheckCircle, XCircle, Settings2, RefreshCw, AlertCircle } from "lucide-react";
+import { DownloadSimple, FileText, Clock, CheckCircle, XCircle, SlidersHorizontal, ArrowsClockwise, WarningCircle, MagnifyingGlass, TrendUp, TrendDown, Minus, Funnel } from "@phosphor-icons/react"
 import type { Website, ConsentLog } from "@shared/schema";
 
+type DateRange = "today" | "7days" | "30days" | "all";
+
+interface ConsentLogStats {
+  totalRecords: number;
+  acceptCount: number;
+  rejectCount: number;
+  customCount: number;
+  dismissedCount: number;
+  acceptRate: number;
+  rejectRate: number;
+  mostCommonAction: string;
+  previousPeriodAcceptRate: number | null;
+  previousPeriodRejectRate: number | null;
+  trendAcceptRate: number | null;
+  trendRejectRate: number | null;
+}
+
+function getDateRange(range: DateRange): { dateFrom?: string; dateTo?: string } {
+  if (range === "all") return {};
+  const now = new Date();
+  const dateTo = now.toISOString();
+  const from = new Date();
+  if (range === "today") {
+    from.setHours(0, 0, 0, 0);
+  } else if (range === "7days") {
+    from.setDate(from.getDate() - 7);
+  } else if (range === "30days") {
+    from.setDate(from.getDate() - 30);
+  }
+  return { dateFrom: from.toISOString(), dateTo };
+}
+
+function formatActionLabel(action: string): string {
+  switch (action) {
+    case "accept_all": return "Accept All";
+    case "reject_all": return "Reject All";
+    case "custom": return "Custom";
+    case "dismissed": return "Dismissed";
+    default: return action;
+  }
+}
+
 export default function ConsentLogsPage() {
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('websiteId');
+  });
   const [page, setPage] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange>("30days");
+  const [actionFilter, setActionFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const limit = 50;
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    clearTimeout((window as any).__consentSearchTimeout);
+    (window as any).__consentSearchTimeout = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(0);
+    }, 400);
+  };
 
   const { data: websites, isLoading: websitesLoading } = useQuery<Website[]>({
     queryKey: ["/api/websites"],
@@ -20,11 +79,23 @@ export default function ConsentLogsPage() {
 
   const selectedWebsite = websites?.find((w) => w.id === selectedWebsiteId) || websites?.[0];
 
-  const { data: logsData, isLoading: logsLoading, refetch } = useQuery<{ logs: ConsentLog[]; total: number }>({
-    queryKey: ["/api/websites", selectedWebsite?.id, "consent-logs", { limit, offset: page * limit }],
+  const queryParams = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("limit", String(limit));
+    params.set("offset", String(page * limit));
+    const { dateFrom, dateTo } = getDateRange(dateRange);
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
+    if (actionFilter !== "all") params.set("action", actionFilter);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    return params.toString();
+  }, [page, dateRange, actionFilter, debouncedSearch]);
+
+  const { data: logsData, isLoading: logsLoading, error: logsError, refetch } = useQuery<{ logs: ConsentLog[]; total: number; stats: ConsentLogStats }>({
+    queryKey: ["/api/websites", selectedWebsite?.id, "consent-logs", queryParams],
     queryFn: async () => {
-      if (!selectedWebsite?.id) return { logs: [], total: 0 };
-      const res = await fetch(`/api/websites/${selectedWebsite.id}/consent-logs?limit=${limit}&offset=${page * limit}`, {
+      if (!selectedWebsite?.id) return { logs: [], total: 0, stats: { totalRecords: 0, acceptCount: 0, rejectCount: 0, customCount: 0, dismissedCount: 0, acceptRate: 0, rejectRate: 0, mostCommonAction: "none", previousPeriodAcceptRate: null, previousPeriodRejectRate: null, trendAcceptRate: null, trendRejectRate: null } };
+      const res = await fetch(`/api/websites/${selectedWebsite.id}/consent-logs?${queryParams}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch logs");
@@ -33,9 +104,15 @@ export default function ConsentLogsPage() {
     enabled: !!selectedWebsite?.id,
   });
 
+  const stats = logsData?.stats;
+
   const handleExport = () => {
     if (!selectedWebsite?.id) return;
-    window.open(`/api/websites/${selectedWebsite.id}/consent-logs/export`, "_blank");
+    const { dateFrom, dateTo } = getDateRange(dateRange);
+    const params = new URLSearchParams();
+    if (dateFrom) params.set("startDate", dateFrom);
+    if (dateTo) params.set("endDate", dateTo);
+    window.open(`/api/websites/${selectedWebsite.id}/consent-logs/export?${params.toString()}`, "_blank");
   };
 
   const formatDate = (date: string | Date) => {
@@ -51,11 +128,13 @@ export default function ConsentLogsPage() {
   const getActionBadge = (action: string) => {
     switch (action) {
       case "accept_all":
-        return <Badge className="bg-green-100 text-green-800" data-testid={`badge-action-${action}`}><CheckCircle className="w-3 h-3 mr-1" /> Accept All</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" data-testid={`badge-action-${action}`}><CheckCircle size={12} className="mr-1" /> Accept All</Badge>;
       case "reject_all":
-        return <Badge className="bg-red-100 text-red-800" data-testid={`badge-action-${action}`}><XCircle className="w-3 h-3 mr-1" /> Reject All</Badge>;
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" data-testid={`badge-action-${action}`}><XCircle size={12} className="mr-1" /> Reject All</Badge>;
       case "custom":
-        return <Badge className="bg-blue-100 text-blue-800" data-testid={`badge-action-${action}`}><Settings2 className="w-3 h-3 mr-1" /> Custom</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" data-testid={`badge-action-${action}`}><SlidersHorizontal size={12} className="mr-1" /> Custom</Badge>;
+      case "dismissed":
+        return <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" data-testid={`badge-action-${action}`}><Minus size={12} className="mr-1" /> Dismissed</Badge>;
       default:
         return <Badge data-testid={`badge-action-${action}`}>{action}</Badge>;
     }
@@ -65,18 +144,25 @@ export default function ConsentLogsPage() {
     try {
       const parsed = JSON.parse(choices);
       return Object.entries(parsed)
-        .map(([key, value]) => `${key}: ${value ? "✓" : "✗"}`)
+        .map(([key, value]) => `${key}: ${value ? "Y" : "N"}`)
         .join(", ");
     } catch {
       return choices;
     }
   };
 
+  const renderTrendIndicator = (trend: number | null) => {
+    if (trend === null) return <span className="text-xs text-muted-foreground">No prior data</span>;
+    if (Math.abs(trend) < 0.5) return <span className="flex items-center gap-1 text-xs text-muted-foreground"><Minus size={12} /> Stable</span>;
+    if (trend > 0) return <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><TrendUp size={12} /> +{trend.toFixed(1)}pp</span>;
+    return <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400"><TrendDown size={12} /> {trend.toFixed(1)}pp</span>;
+  };
+
   if (websitesLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+          <ArrowsClockwise size={24} className="animate-spin text-muted-foreground" />
         </div>
       </DashboardLayout>
     );
@@ -92,7 +178,7 @@ export default function ConsentLogsPage() {
           </div>
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+              <WarningCircle size={48} className="text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No websites found. Add a website first to view consent logs.</p>
             </CardContent>
           </Card>
@@ -129,39 +215,134 @@ export default function ConsentLogsPage() {
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={() => refetch()} data-testid="button-refresh">
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <ArrowsClockwise size={16} className="mr-2" />
             Refresh
           </Button>
           <Button onClick={handleExport} disabled={!logsData?.logs.length} data-testid="button-export">
-            <Download className="w-4 h-4 mr-2" />
+            <DownloadSimple size={16} className="mr-2" />
             Export CSV
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {logsError && (
+        <Card className="border-destructive bg-destructive/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <WarningCircle size={20} className="text-destructive shrink-0" />
+            <p className="text-sm text-destructive" data-testid="text-logs-error">
+              Failed to load consent logs. Please try refreshing.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto shrink-0" data-testid="button-retry-logs">
+              <ArrowsClockwise size={14} className="mr-1" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select
+          value={dateRange}
+          onValueChange={(value) => {
+            setDateRange(value as DateRange);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]" data-testid="select-date-range">
+            <Clock size={14} className="mr-2 shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="7days">Last 7 days</SelectItem>
+            <SelectItem value="30days">Last 30 days</SelectItem>
+            <SelectItem value="all">All time</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={actionFilter}
+          onValueChange={(value) => {
+            setActionFilter(value);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]" data-testid="select-action-filter">
+            <Funnel size={14} className="mr-2 shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All actions</SelectItem>
+            <SelectItem value="accept_all">Accept All</SelectItem>
+            <SelectItem value="reject_all">Reject All</SelectItem>
+            <SelectItem value="custom">Custom</SelectItem>
+            <SelectItem value="dismissed">Dismissed</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by visitor ID..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-visitor"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Records</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Accept Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-records">{logsData?.total || 0}</div>
+            <div className="text-2xl font-bold" data-testid="text-accept-rate">
+              {stats ? `${stats.acceptRate.toFixed(1)}%` : "—"}
+            </div>
+            <div className="mt-1" data-testid="text-accept-trend">
+              {stats ? renderTrendIndicator(stats.trendAcceptRate) : null}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Showing</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Reject Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-showing">{logsData?.logs.length || 0} records</div>
+            <div className="text-2xl font-bold" data-testid="text-reject-rate">
+              {stats ? `${stats.rejectRate.toFixed(1)}%` : "—"}
+            </div>
+            <div className="mt-1" data-testid="text-reject-trend">
+              {stats ? renderTrendIndicator(stats.trendRejectRate) : null}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Retention</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Most Common Action</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-retention">1 year</div>
+            <div className="text-2xl font-bold" data-testid="text-most-common-action">
+              {stats ? formatActionLabel(stats.mostCommonAction) : "—"}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {stats && stats.totalRecords > 0 ? `${stats.totalRecords} total records` : "No data"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm" data-testid="text-action-breakdown">
+              <span className="text-green-600 dark:text-green-400">{stats?.acceptCount ?? 0} accepted</span>
+              <span className="text-red-600 dark:text-red-400">{stats?.rejectCount ?? 0} rejected</span>
+              <span className="text-blue-600 dark:text-blue-400">{stats?.customCount ?? 0} custom</span>
+              <span className="text-amber-600 dark:text-amber-400">{stats?.dismissedCount ?? 0} dismissed</span>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -169,7 +350,7 @@ export default function ConsentLogsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+            <FileText size={20} />
             Consent Records
           </CardTitle>
           <CardDescription>
@@ -179,13 +360,17 @@ export default function ConsentLogsPage() {
         <CardContent>
           {logsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+              <ArrowsClockwise size={24} className="animate-spin text-muted-foreground" />
             </div>
           ) : !logsData?.logs.length ? (
             <div className="text-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No consent records yet.</p>
-              <p className="text-sm mt-2">Records will appear here when visitors interact with your consent banner.</p>
+              <FileText size={48} className="mx-auto mb-4 opacity-50" />
+              <p>No consent records found.</p>
+              <p className="text-sm mt-2">
+                {debouncedSearch || actionFilter !== "all" || dateRange !== "all"
+                  ? "Try adjusting your filters to see more results."
+                  : "Records will appear here when visitors interact with your consent banner."}
+              </p>
             </div>
           ) : (
             <>
@@ -206,7 +391,7 @@ export default function ConsentLogsPage() {
                       <TableRow key={log.id} data-testid={`row-consent-log-${log.id}`}>
                         <TableCell className="whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <Clock size={16} className="text-muted-foreground" />
                             {formatDate(log.timestamp)}
                           </div>
                         </TableCell>

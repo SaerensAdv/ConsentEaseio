@@ -1,0 +1,146 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "-apple-system",
+      "count": 90
+    },
+    {
+      "family": "BlinkMacSystemFont",
+      "count": 90
+    },
+    {
+      "family": "Segoe UI",
+      "count": 90
+    },
+    {
+      "family": "Roboto",
+      "count": 90
+    },
+    {
+      "family": "sans-serif",
+      "count": 90
+    },
+    {
+      "family": "Helvetica",
+      "count": 89
+    },
+    {
+      "family": "Arial",
+      "count": 89
+    },
+    {
+      "family": "Apple Color Emoji",
+      "count": 89
+    },
+    {
+      "family": "Segoe UI Emoji",
+      "count": 89
+    },
+    {
+      "family": "Segoe UI Symbol",
+      "count": 89
+    }
+  ],
+  "colors": {
+    "primary": "#596171",
+    "accent": "#353A44",
+    "background": "#FFFFFF",
+    "textPrimary": "#353A44",
+    "link": "#353A44"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "-apple-system",
+      "heading": "-apple-system"
+    },
+    "fontStacks": {
+      "body": [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica Neue",
+        "Ubuntu",
+        "sans-serif"
+      ],
+      "heading": [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica",
+        "Arial",
+        "sans-serif",
+        "Apple Color Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Symbol"
+      ],
+      "paragraph": [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica",
+        "Arial",
+        "sans-serif",
+        "Apple Color Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Symbol"
+      ]
+    },
+    "fontSizes": {
+      "h1": "32px",
+      "h2": "24px",
+      "body": "16px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 10,
+    "borderRadius": "0px"
+  },
+  "components": {
+    "input": {
+      "background": "transparent",
+      "textColor": "#353A44",
+      "borderColor": null,
+      "borderRadius": "6px",
+      "borderRadiusCorners": {
+        "topLeft": "6px",
+        "topRight": "6px",
+        "bottomRight": "6px",
+        "bottomLeft": "6px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "https://b.stripecdn.com/docs-statics-srv/assets/c6c415b86b6afa05cc32bde7bca87dcc.png",
+    "ogImage": "https://d37ugbyn3rpeym.cloudfront.net/docs/og-image/payments.checkout.free-trials.ogimage.png"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 2,
+    "reasoning": "Strong indicators: links to homepage, visible, top-left position, alt matches logo/brand, reasonable size, SVG format, body location without header (penalty). Score: 66 (clear winner by 33 points)",
+    "confidence": 0.9
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "confidence": 0
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}

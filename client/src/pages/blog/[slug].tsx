@@ -1,27 +1,30 @@
 import { useEffect } from "react";
 import { Link, useParams } from "wouter";
-import { Shield, Calendar, Clock, ArrowLeft, ArrowRight, User } from "lucide-react";
+import { Shield, Calendar, Clock, ArrowLeft, ArrowRight, User, CaretRight, House } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useCanonical } from "@/hooks/use-canonical";
 import { getArticleBySlug, getRelatedArticles, CATEGORY_LABELS, type BlogArticle } from "@/data/blog";
 import { marked } from "marked";
 
 function ArticleJsonLd({ article }: { article: BlogArticle }) {
-  const jsonLd = {
+  const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
+    image: article.image ? `https://consentease.io${article.image}` : undefined,
     author: {
       "@type": "Organization",
-      name: article.author,
+      name: "ConsentEase",
+      url: "https://consentease.io",
     },
     publisher: {
       "@type": "Organization",
       name: "ConsentEase",
       logo: {
         "@type": "ImageObject",
-        url: "https://consentease.io/logo.png",
+        url: "https://consentease.io/favicon.png",
       },
     },
     datePublished: article.publishedAt,
@@ -32,11 +35,75 @@ function ArticleJsonLd({ article }: { article: BlogArticle }) {
     },
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://consentease.io",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: "https://consentease.io/blog",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: article.title,
+        item: `https://consentease.io/blog/${article.slug}`,
+      },
+    ],
+  };
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+    </>
+  );
+}
+
+const AUTHOR_INFO: Record<string, { bio: string; links: { label: string; href: string }[] }> = {
+  "ConsentEase Team": {
+    bio: "The ConsentEase team consists of privacy experts, developers, and compliance specialists dedicated to making GDPR and CCPA compliance accessible for small businesses.",
+    links: [
+      { label: "About Us", href: "/about" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+};
+
+function AuthorBox({ author }: { author: string }) {
+  const info = AUTHOR_INFO[author] || AUTHOR_INFO["ConsentEase Team"];
+  
+  return (
+    <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-xl mt-12">
+      <div className="w-16 h-16 rounded-full bg-gradient flex items-center justify-center shrink-0 overflow-hidden">
+        <img src="/consentease-logo.webp" alt={author} className="w-10 h-10 object-contain" />
+      </div>
+      <div>
+        <div className="font-bold text-lg mb-1">{author}</div>
+        <div className="text-sm text-muted-foreground mb-3">{info.bio}</div>
+        <div className="flex items-center gap-4 text-sm">
+          {info.links.map((link) => (
+            <Link key={link.href} href={link.href} className="text-primary hover:underline">
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -60,6 +127,8 @@ export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = getArticleBySlug(slug || "");
 
+  useCanonical(`/blog/${slug}`);
+
   useEffect(() => {
     if (!article) return;
 
@@ -72,12 +141,18 @@ export default function BlogPost() {
     const originalOgTitle = ogTitle?.getAttribute("content") || "";
     const ogDescription = document.querySelector('meta[property="og:description"]');
     const originalOgDescription = ogDescription?.getAttribute("content") || "";
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    const originalTwitterTitle = twitterTitle?.getAttribute("content") || "";
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    const originalTwitterDescription = twitterDescription?.getAttribute("content") || "";
 
     document.title = article.seo.title;
     if (metaDescription) metaDescription.setAttribute("content", article.seo.description);
     if (metaKeywords) metaKeywords.setAttribute("content", article.seo.keywords.join(", "));
     if (ogTitle) ogTitle.setAttribute("content", article.seo.title);
     if (ogDescription) ogDescription.setAttribute("content", article.seo.description);
+    if (twitterTitle) twitterTitle.setAttribute("content", article.seo.title);
+    if (twitterDescription) twitterDescription.setAttribute("content", article.seo.description);
 
     return () => {
       document.title = originalTitle;
@@ -85,6 +160,8 @@ export default function BlogPost() {
       if (metaKeywords) metaKeywords.setAttribute("content", originalKeywords);
       if (ogTitle) ogTitle.setAttribute("content", originalOgTitle);
       if (ogDescription) ogDescription.setAttribute("content", originalOgDescription);
+      if (twitterTitle) twitterTitle.setAttribute("content", originalTwitterTitle);
+      if (twitterDescription) twitterDescription.setAttribute("content", originalTwitterDescription);
     };
   }, [article]);
 
@@ -110,15 +187,13 @@ export default function BlogPost() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-                <Shield className="w-5 h-5 fill-current" />
-              </div>
+              <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-auto" />
               ConsentEase
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/blog">
                 <Button variant="ghost">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <ArrowLeft size={16} className="mr-2" />
                   All Articles
                 </Button>
               </Link>
@@ -131,13 +206,24 @@ export default function BlogPost() {
 
         <main className="pt-32 pb-24">
           <article className="max-w-3xl mx-auto px-6">
+            <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
+              <Link href="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
+                <House size={16} />
+                <span>Home</span>
+              </Link>
+              <CaretRight size={16} />
+              <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
+              <CaretRight size={16} />
+              <span className="text-foreground truncate max-w-[200px]">{article.title}</span>
+            </nav>
+
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <span className="px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
                   {CATEGORY_LABELS[article.category]}
                 </span>
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock size={16} />
                   {article.readingTime}
                 </span>
               </div>
@@ -146,11 +232,11 @@ export default function BlogPost() {
               </h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground pb-6">
                 <span className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
+                  <User size={16} />
                   {article.author}
                 </span>
                 <span className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar size={16} />
                   {new Date(article.publishedAt).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
@@ -184,6 +270,8 @@ export default function BlogPost() {
               </div>
             </div>
 
+            <AuthorBox author={article.author} />
+
             <Card className="bg-primary text-primary-foreground p-8 mt-12 text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="relative z-10">
@@ -195,7 +283,7 @@ export default function BlogPost() {
                 </p>
                 <Link href="/onboarding">
                   <Button size="lg" className="bg-white text-primary hover:bg-white/90" data-testid="button-article-cta">
-                    Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
+                    Start Free Trial <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </Link>
               </div>
@@ -222,9 +310,9 @@ export default function BlogPost() {
                 {" · "}
                 <Link href="/docs" className="text-primary hover:underline">Documentation</Link>
               </p>
-              <a href="https://saerens.agency?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <a href="https://saerensadvertising.com?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <span className="text-xs">A product by</span>
-                <img src="https://saerensadvertising.com/logo.svg" alt="Saerens Agency" className="h-5" />
+                <img src="/saerens-logo.png" alt="Saerens Advertising" className="h-5" />
               </a>
             </div>
           </div>

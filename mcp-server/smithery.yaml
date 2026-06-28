@@ -1,0 +1,31 @@
+# Smithery listing config for the ConsentEase MCP server.
+# https://smithery.ai/docs
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - consentEaseApiKey
+    properties:
+      consentEaseApiKey:
+        type: string
+        title: ConsentEase API Key
+        description: >-
+          Your ce_live_… API key. Create one in the ConsentEase dashboard under
+          Settings → API Keys (shown once).
+      consentEaseApiUrl:
+        type: string
+        title: ConsentEase API URL
+        default: https://consentease.io
+        description: >-
+          ConsentEase origin (no /api/v1 suffix). Defaults to the live production
+          API; only override this to target a local/dev server.
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@consentease/mcp-server'],
+      env: {
+        CONSENTEASE_API_KEY: config.consentEaseApiKey,
+        ...(config.consentEaseApiUrl ? { CONSENTEASE_API_URL: config.consentEaseApiUrl } : {})
+      }
+    })

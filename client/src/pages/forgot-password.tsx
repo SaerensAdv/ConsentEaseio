@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Envelope, CheckCircle } from "@phosphor-icons/react";
+import { Spinner } from "@/components/ui/spinner";
+const logoImage = "/consentease-logo.webp";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -38,7 +40,7 @@ export default function ForgotPassword() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle size={32} className="text-green-600" />
             </div>
             <CardTitle className="text-2xl">Check your email</CardTitle>
             <CardDescription>
@@ -51,7 +53,7 @@ export default function ForgotPassword() {
             </p>
             <Link href="/login">
               <Button className="w-full" variant="outline" data-testid="button-back-to-login">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft size={16} className="mr-2" />
                 Back to Login
               </Button>
             </Link>
@@ -65,7 +67,8 @@ export default function ForgotPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="inline-block mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4 justify-center">
+            <img src={logoImage} alt="ConsentEase" className="h-8 w-8 object-contain" />
             <span className="text-2xl font-display font-bold text-primary">ConsentEase</span>
           </Link>
           <CardTitle className="text-2xl">Forgot your password?</CardTitle>
@@ -78,7 +81,7 @@ export default function ForgotPassword() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Envelope className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   id="email"
                   type="email"
@@ -100,7 +103,7 @@ export default function ForgotPassword() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Spinner size={16} className="mr-2" />
                   Sending...
                 </>
               ) : (
@@ -110,7 +113,7 @@ export default function ForgotPassword() {
 
             <div className="text-center">
               <Link href="/login" className="text-sm text-primary hover:underline" data-testid="link-back-to-login">
-                <ArrowLeft className="w-3 h-3 inline mr-1" />
+                <ArrowLeft size={12} className="inline mr-1" />
                 Back to Login
               </Link>
             </div>

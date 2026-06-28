@@ -1,0 +1,115 @@
+uploads = []
+
+[[generated]]
+id = "ecmE3EyRgeYlFsCn5Uimo"
+uri = "file://attached_assets/iris_avatars/platform_A_warm-professional.png"
+type = "image"
+title = "iris warm professional platform"
+
+[[generated]]
+id = "TSIgW_OK0lR-UhQ1Nl3Pv"
+uri = "file://attached_assets/iris_avatars/platform_B_approachable-techie.png"
+type = "image"
+title = "iris approachable techie platform"
+
+[[generated]]
+id = "NE16R3R-RYTTpigTxciCL"
+uri = "file://attached_assets/iris_avatars/platform_C_trustworthy-advisor.png"
+type = "image"
+title = "iris trustworthy advisor platform"
+
+[[generated]]
+id = "1KcBNidlsitQYe4I0OVeo"
+uri = "file://attached_assets/iris_avatars/platform_D_friendly-modern.png"
+type = "image"
+title = "iris friendly modern platform"
+
+[[outputs]]
+id = "jmU-HRVH16BsMyhA2q341"
+uri = "file://.local/consentease-dossier.md"
+type = "text"
+title = "ConsentEase — Technisch-Strategisch Dossier"
+
+[[outputs]]
+id = "E96TKLu_1tIyuzgRlAgjX"
+uri = "file://docs/clickup-super-agents.md"
+type = "text"
+title = "ClickUp Super Agents — ConsentEase Configuratiegids"
+
+[[outputs]]
+id = "5w69QHIfno-ltGweR0mFW"
+uri = "file://output/consentease_prospects.csv"
+type = "table"
+title = "ConsentEase Prospects — Uitgebreide lijst (122 prospects)"
+
+[[outputs]]
+id = "EnG9wNihBJQpsqq9Pj5ia"
+uri = "file://output/consentease_prospects_samenvatting.md"
+type = "text"
+title = "ConsentEase Prospects — Bijgewerkte Samenvatting"
+
+[[outputs]]
+id = "Sj391-chuqi0U91J1jMIM"
+uri = "file://attached_assets/iris_avatars/platform_A_warm-professional.png"
+type = "image"
+title = "Platform · A — Warm professional"
+
+[[outputs]]
+id = "Kgk0tPPNAitUuQUpf_VzU"
+uri = "file://attached_assets/iris_avatars/platform_B_approachable-techie.png"
+type = "image"
+title = "Platform · B — Approachable techie"
+
+[[outputs]]
+id = "b7kURF4VU_T883NR8SRwW"
+uri = "file://attached_assets/iris_avatars/platform_C_trustworthy-advisor.png"
+type = "image"
+title = "Platform · C — Trustworthy advisor"
+
+[[outputs]]
+id = "9z5is2HqXVOBIuZrjTLIl"
+uri = "file://attached_assets/iris_avatars/platform_D_friendly-modern.png"
+type = "image"
+title = "Platform · D — Friendly modern"
+
+[[outputs]]
+id = "Zj2fUWuHV6KL0LzbSUpJW"
+uri = "file://attached_assets/iris_avatars/gptimage_A_warm-professional.png"
+type = "image"
+title = "gpt-image-1 · A — Warm professional"
+
+[[outputs]]
+id = "k8uEeECQ_Qc2HbfWBCd1H"
+uri = "file://attached_assets/iris_avatars/gptimage_B_approachable-techie.png"
+type = "image"
+title = "gpt-image-1 · B — Approachable techie"
+
+[[outputs]]
+id = "pzymS1_Afz0d0S_LzrTgi"
+uri = "file://attached_assets/iris_avatars/gptimage_C_trustworthy-advisor.png"
+type = "image"
+title = "gpt-image-1 · C — Trustworthy advisor"
+
+[[outputs]]
+id = "TEjM4dytX3BVo5x3_8t2H"
+uri = "file://attached_assets/iris_avatars/gptimage_D_friendly-modern.png"
+type = "image"
+title = "gpt-image-1 · D — Friendly modern"
+
+[[outputs]]
+id = "Nd08B0-BQkla5i8D6y4CV"
+uri = "file://consentease-migration.tar.gz"
+type = "unspecified"
+title = "ConsentEase migration archive (21 MB)"
+
+[[outputs]]
+id = "ICbLC7LPxdAJvg4GDVjG8"
+uri = "file://docs/concept/consentease-connect-concept.md"
+type = "text"
+title = "Project Autopilot — ConsentEase Connect (Concept / PR-FAQ)"
+
+[[outputs]]
+id = "0BFTXOo0o-CApDQhPq7m6"
+uri = "file://docs/plans/connect-phase1-build-sequence.md"
+type = "text"
+title = "ConsentEase Connect — Phase 1 Build Sequence"

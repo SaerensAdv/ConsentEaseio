@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Eye, MousePointer2, Zap, CheckCircle2, Loader2, HelpCircle } from 'lucide-react';
+import { ArrowSquareOut, Eye, Cursor, Lightning, CheckCircle, Question } from "@phosphor-icons/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Spinner } from "@/components/ui/spinner";
 
 interface ClaritySettingsProps {
   websiteId: string;
@@ -52,7 +53,7 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                    <Question size={16} className="text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-sm">
                     <p>Microsoft Clarity provides free heatmaps and session recordings. Connect it to see exactly how visitors interact with your consent banner.</p>
@@ -66,7 +67,7 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
           </div>
           {isConfigured ? (
             <Badge className="bg-green-500/10 text-green-600 border-green-200">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
+              <CheckCircle size={12} className="mr-1" />
               Connected
             </Badge>
           ) : (
@@ -77,21 +78,21 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <Eye className="w-5 h-5 text-primary" />
+            <Eye size={20} className="text-primary" />
             <div>
               <p className="text-sm font-medium">Session Replays</p>
               <p className="text-xs text-muted-foreground">Watch user interactions</p>
             </div>
           </div>
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <MousePointer2 className="w-5 h-5 text-primary" />
+            <Cursor size={20} className="text-primary" />
             <div>
               <p className="text-sm font-medium">Heatmaps</p>
               <p className="text-xs text-muted-foreground">See click patterns</p>
             </div>
           </div>
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <Zap className="w-5 h-5 text-primary" />
+            <Lightning size={20} className="text-primary" />
             <div>
               <p className="text-sm font-medium">Rage Clicks</p>
               <p className="text-xs text-muted-foreground">Detect frustration</p>
@@ -115,7 +116,7 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
               data-testid="button-save-clarity"
             >
               {updateClarity.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Spinner size={16} />
               ) : (
                 'Save'
               )}
@@ -143,7 +144,7 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
               <span className="font-medium">{domain}</span> after they grant analytics consent. View recordings and heatmaps in your Clarity dashboard.
             </p>
             <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" />
+              <CheckCircle size={12} />
               GDPR/CCPA compliant: Only loads after user consents
             </p>
           </div>
@@ -160,7 +161,7 @@ export function ClaritySettings({ websiteId, domain, clarityProjectId }: Clarity
             rel="noopener noreferrer"
           >
             {isConfigured ? 'Open Dashboard' : 'Create Account'}
-            <ExternalLink className="w-3 h-3 ml-1" />
+            <ArrowSquareOut size={12} className="ml-1" />
           </a>
         </Button>
       </CardFooter>

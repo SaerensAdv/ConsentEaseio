@@ -1,0 +1,61 @@
+{
+  "name": "@consentease/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for the ConsentEase Connect API — a thin client over the /api/v1 REST surface that lets coding agents manage consent banners, cookie inventories, and consent records.",
+  "mcpName": "io.consentease/mcp-server",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "consentease-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "consent",
+    "gdpr",
+    "ccpa",
+    "cookie-banner",
+    "cookie-consent",
+    "privacy",
+    "consent-management",
+    "cmp",
+    "consentease",
+    "ai-agents"
+  ],
+  "homepage": "https://consentease.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/consentease/mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/consentease/mcp-server/issues"
+  },
+  "license": "MIT",
+  "author": "ConsentEase",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,26 +1,87 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowRight, Users } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowRight, Users } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { COMPETITORS } from "@/data/competitors";
 
+function CompareIndexSchema() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "name": "Compare Cookie Consent Solutions",
+        "description": "Compare ConsentEase vs OneTrust, Cookiebot, Usercentrics and other cookie consent solutions. See features, pricing, and find the best fit.",
+        "url": "https://consentease.io/compare",
+        "isPartOf": { "@id": "https://consentease.io/#website" }
+      },
+      {
+        "@type": "ItemList",
+        "name": "Cookie Consent Platform Comparisons",
+        "numberOfItems": Object.keys(COMPETITORS).length,
+        "itemListElement": Object.values(COMPETITORS).map((c, i) => ({
+          "@type": "ListItem",
+          "position": i + 1,
+          "url": `https://consentease.io/compare/${c.slug}`,
+          "name": `ConsentEase vs ${c.name}`
+        }))
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://consentease.io" },
+          { "@type": "ListItem", "position": 2, "name": "Compare", "item": "https://consentease.io/compare" }
+        ]
+      }
+    ]
+  };
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
+}
+
 export default function CompareIndex() {
+  useCanonical("/compare");
+  
+  useEffect(() => {
+    const originalTitle = document.title;
+    const metaDescription = document.querySelector('meta[name="description"]');
+    const originalDescription = metaDescription?.getAttribute("content") || "";
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const originalOgTitle = ogTitle?.getAttribute("content") || "";
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const originalOgDescription = ogDescription?.getAttribute("content") || "";
+
+    document.title = "Compare Cookie Consent Solutions - OneTrust, Cookiebot & More | ConsentEase";
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Compare ConsentEase vs OneTrust, Cookiebot, Usercentrics and other cookie consent solutions. See features, pricing, and find the best fit for your business.");
+    }
+    if (ogTitle) ogTitle.setAttribute("content", "Compare Cookie Consent Solutions | ConsentEase");
+    if (ogDescription) ogDescription.setAttribute("content", "Honest comparisons with OneTrust, Cookiebot, and more. Find the right consent solution.");
+
+    return () => {
+      document.title = originalTitle;
+      if (metaDescription) metaDescription.setAttribute("content", originalDescription);
+      if (ogTitle) ogTitle.setAttribute("content", originalOgTitle);
+      if (ogDescription) ogDescription.setAttribute("content", originalOgDescription);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background font-sans">
+      <CompareIndexSchema />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
+            <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
             ConsentEase
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button variant="ghost">Back to Home</Button>
+              <Button variant="ghost" data-testid="button-back-home">Back to Home</Button>
             </Link>
             <Link href="/onboarding">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Start Free Trial</Button>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-start-trial-nav">Start Free Trial</Button>
             </Link>
           </div>
         </div>
@@ -44,7 +105,7 @@ export default function CompareIndex() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {COMPETITORS.map((competitor) => (
               <Link key={competitor.slug} href={`/compare/${competitor.slug}`}>
-                <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group">
+                <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group" data-testid={`card-compare-${competitor.slug}`}>
                   <CardContent className="p-6">
                     {competitor.logo && (
                       <div className="h-8 mb-4 flex items-center">
@@ -53,11 +114,11 @@ export default function CompareIndex() {
                     )}
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-display font-bold text-lg">{competitor.name}</h3>
-                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      <ArrowRight size={20} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">{competitor.tagline}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Users className="w-3 h-3" />
+                      <Users size={12} />
                       <span>{competitor.targetAudience}</span>
                     </div>
                   </CardContent>
@@ -76,8 +137,8 @@ export default function CompareIndex() {
                 Start your 7-day free trial and see why thousands of websites choose us.
               </p>
               <Link href="/onboarding">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90">
-                  Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
+                <Button size="lg" className="bg-white text-primary hover:bg-white/90" data-testid="button-start-trial">
+                  Start Free Trial <ArrowRight size={16} className="ml-2" />
                 </Button>
               </Link>
             </CardContent>
@@ -87,10 +148,10 @@ export default function CompareIndex() {
 
       <footer className="bg-background border-t border-border py-8">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>&copy; 2025 ConsentEase. All rights reserved.</p>
-          <a href="https://saerens.agency?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <p>&copy; {new Date().getFullYear()} ConsentEase. All rights reserved.</p>
+          <a href="https://saerensadvertising.com?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="text-xs">A product by</span>
-            <img src="https://saerensadvertising.com/logo.svg" alt="Saerens Agency" className="h-5" />
+            <img src="/saerens-logo.png" alt="Saerens Advertising" className="h-5" />
           </a>
         </div>
       </footer>

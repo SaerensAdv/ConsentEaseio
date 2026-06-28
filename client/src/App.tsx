@@ -1,127 +1,217 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense, type ComponentType } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { IconContext } from "@phosphor-icons/react";
+import { Spinner } from "@/components/ui/spinner";
+
 
 function ScrollToTop() {
   const [location] = useLocation();
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
-  
+
   return null;
 }
-import NotFound from "@/pages/not-found";
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Spinner variant="brand" size={32} className="text-primary" />
+    </div>
+  );
+}
+
+// Helper that turns a lazy import into a route-ready component, wrapping it
+// in Suspense so the page loader is shown while the chunk is fetched.
+function lazyPage<P extends Record<string, any> = Record<string, any>>(
+  importer: () => Promise<{ default: ComponentType<P> }>,
+): ComponentType<P> {
+  const Lazy = lazy(importer);
+  return (props: P) => (
+    <Suspense fallback={<PageLoader />}>
+      <Lazy {...props} />
+    </Suspense>
+  );
+}
+
+// Eager: the homepage is the dominant entry route — keep it in the main bundle
+// so first paint never shows a loader.
 import Home from "@/pages/home";
-import DashboardWebsites from "@/pages/dashboard/websites";
-import BannerConfigurator from "@/pages/dashboard/banner";
-import Analytics from "@/pages/dashboard/analytics";
-import Settings from "@/pages/dashboard/settings";
-import EmbedCode from "@/pages/dashboard/embed";
-import CookiesManagement from "@/pages/dashboard/cookies";
-import ConsentLogs from "@/pages/dashboard/consent-logs";
-import Diagnostics from "@/pages/dashboard/diagnostics";
-import AgencyDashboard from "@/pages/dashboard/agency";
-import AgencyProfilePage from "@/pages/agency/[slug]";
-import Onboarding from "@/pages/onboarding";
-import PricingPage from "@/pages/pricing";
-import CompareIndex from "@/pages/compare/index";
-import CompareOneTrust from "@/pages/compare/onetrust";
-import CompareCookiebot from "@/pages/compare/cookiebot";
-import CompareUsercentrics from "@/pages/compare/usercentrics";
-import CompareComplianz from "@/pages/compare/complianz";
-import CompareIubenda from "@/pages/compare/iubenda";
-import CompareCookieFirst from "@/pages/compare/cookiefirst";
-import CompareCookieScript from "@/pages/compare/cookie-script";
-import CompareCookieYes from "@/pages/compare/cookieyes";
-import CompareAxeptio from "@/pages/compare/axeptio";
-import LoginPage from "@/pages/login";
-import ForgotPassword from "@/pages/forgot-password";
-import ResetPassword from "@/pages/reset-password";
-import VerifyEmail from "@/pages/verify-email";
-import PrivacyPolicy from "@/pages/legal/privacy";
-import TermsOfService from "@/pages/legal/terms";
-import CookiePolicy from "@/pages/legal/cookies";
-import AboutPage from "@/pages/about";
-import ContactPage from "@/pages/contact";
-import FAQPage from "@/pages/faq";
-import DocsPage from "@/pages/docs";
-import DPAPage from "@/pages/dpa";
-import FeaturesPage from "@/pages/features";
-import DemoPage from "@/pages/demo";
-import ChangelogPage from "@/pages/changelog";
-import RoadmapPage from "@/pages/roadmap";
-import BlogIndex from "@/pages/blog/index";
-import BlogPost from "@/pages/blog/[slug]";
+import NotFound from "@/pages/not-found";
+
+// Lazy: everything else. Each of these becomes its own JS chunk so visitors
+// only download the page they actually navigate to.
+const PricingPage = lazyPage(() => import("@/pages/pricing"));
+const BusinessPricingPage = lazyPage(() => import("@/pages/business"));
+const CompareIndex = lazyPage(() => import("@/pages/compare/index"));
+const CompareOneTrust = lazyPage(() => import("@/pages/compare/onetrust"));
+const CompareCookiebot = lazyPage(() => import("@/pages/compare/cookiebot"));
+const CompareUsercentrics = lazyPage(() => import("@/pages/compare/usercentrics"));
+const CompareComplianz = lazyPage(() => import("@/pages/compare/complianz"));
+const CompareIubenda = lazyPage(() => import("@/pages/compare/iubenda"));
+const CompareCookieFirst = lazyPage(() => import("@/pages/compare/cookiefirst"));
+const CompareCookieScript = lazyPage(() => import("@/pages/compare/cookie-script"));
+const CompareCookieYes = lazyPage(() => import("@/pages/compare/cookieyes"));
+const CompareAxeptio = lazyPage(() => import("@/pages/compare/axeptio"));
+const LoginPage = lazyPage(() => import("@/pages/login"));
+const ForgotPassword = lazyPage(() => import("@/pages/forgot-password"));
+const ResetPassword = lazyPage(() => import("@/pages/reset-password"));
+const VerifyEmail = lazyPage(() => import("@/pages/verify-email"));
+const VerifyEmailChange = lazyPage(() => import("@/pages/verify-email-change"));
+const PrivacyPolicy = lazyPage(() => import("@/pages/legal/privacy"));
+const TermsOfService = lazyPage(() => import("@/pages/legal/terms"));
+const CookiePolicy = lazyPage(() => import("@/pages/legal/cookies"));
+const AboutPage = lazyPage(() => import("@/pages/about"));
+const ContactPage = lazyPage(() => import("@/pages/contact"));
+const FAQPage = lazyPage(() => import("@/pages/faq"));
+const DocsPage = lazyPage(() => import("@/pages/docs"));
+const DPAPage = lazyPage(() => import("@/pages/dpa"));
+const FeaturesPage = lazyPage(() => import("@/pages/features"));
+const DemoPage = lazyPage(() => import("@/pages/demo"));
+const BrandPage = lazyPage(() => import("@/pages/brand"));
+const ScanPage = lazyPage(() => import("@/pages/scan"));
+const PoweredByPage = lazyPage(() => import("@/pages/powered-by"));
+const SolutionsIndex = lazyPage(() => import("@/pages/solutions/index"));
+const PlatformSolutionPage = lazyPage(() => import("@/pages/solutions/platform"));
+const CountrySolutionPage = lazyPage(() => import("@/pages/solutions/country"));
+const AgencyProfilePage = lazyPage(() => import("@/pages/agency/[slug]"));
+const RoadmapPage = lazyPage(() => import("@/pages/roadmap"));
+const BlogIndex = lazyPage(() => import("@/pages/blog/index"));
+const BlogPost = lazyPage(() => import("@/pages/blog/[slug]"));
+
+const DashboardWebsites = lazyPage(() => import("@/pages/dashboard/websites"));
+const BannerConfigurator = lazyPage(() => import("@/pages/dashboard/banner"));
+const Analytics = lazyPage(() => import("@/pages/dashboard/analytics"));
+const Settings = lazyPage(() => import("@/pages/dashboard/settings"));
+const EmbedCode = lazyPage(() => import("@/pages/dashboard/embed"));
+const CookiesManagement = lazyPage(() => import("@/pages/dashboard/cookies"));
+const ConsentLogs = lazyPage(() => import("@/pages/dashboard/consent-logs"));
+const Diagnostics = lazyPage(() => import("@/pages/dashboard/diagnostics"));
+const AgencyDashboard = lazyPage(() => import("@/pages/dashboard/agency"));
+const PolicyGenerator = lazyPage(() => import("@/pages/dashboard/policy"));
+const PolicyView = lazyPage(() => import("@/pages/dashboard/policy-view"));
+const SupportPage = lazyPage(() => import("@/pages/dashboard/support"));
+const Onboarding = lazyPage(() => import("@/pages/onboarding"));
+
 import { DemoProvider } from "@/contexts/DemoContext";
 import { DemoTour } from "@/components/DemoTour";
 import { CursorTrail } from "@/components/CursorTrail";
+const ChatWidget = lazy(() =>
+  import("@/components/ChatWidget").then((m) => ({ default: m.ChatWidget })),
+);
+
+const HIDDEN_CHAT_PREFIXES = [
+  "/dashboard",
+  "/login",
+  "/onboarding",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
+
+function PublicChat() {
+  const [location] = useLocation();
+  const hidden = HIDDEN_CHAT_PREFIXES.some(
+    (prefix) => location === prefix || location.startsWith(prefix + "/"),
+  );
+  if (hidden) return null;
+  return (
+    <Suspense fallback={null}>
+      <ChatWidget />
+    </Suspense>
+  );
+}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home}/>
-      <Route path="/pricing" component={PricingPage}/>
-      <Route path="/compare" component={CompareIndex}/>
-      <Route path="/compare/onetrust" component={CompareOneTrust}/>
-      <Route path="/compare/cookiebot" component={CompareCookiebot}/>
-      <Route path="/compare/usercentrics" component={CompareUsercentrics}/>
-      <Route path="/compare/complianz" component={CompareComplianz}/>
-      <Route path="/compare/iubenda" component={CompareIubenda}/>
-      <Route path="/compare/cookiefirst" component={CompareCookieFirst}/>
-      <Route path="/compare/cookie-script" component={CompareCookieScript}/>
-      <Route path="/compare/cookieyes" component={CompareCookieYes}/>
-      <Route path="/compare/axeptio" component={CompareAxeptio}/>
-      <Route path="/agency/:slug" component={AgencyProfilePage}/>
-      <Route path="/login" component={LoginPage}/>
-      <Route path="/forgot-password" component={ForgotPassword}/>
-      <Route path="/reset-password" component={ResetPassword}/>
-      <Route path="/verify-email" component={VerifyEmail}/>
-      <Route path="/onboarding" component={Onboarding}/>
-      <Route path="/demo" component={DemoPage}/>
-      <Route path="/about" component={AboutPage}/>
-      <Route path="/contact" component={ContactPage}/>
-      <Route path="/faq" component={FAQPage}/>
-      <Route path="/docs" component={DocsPage}/>
-      <Route path="/features" component={FeaturesPage}/>
-      <Route path="/changelog" component={ChangelogPage}/>
-      <Route path="/roadmap" component={RoadmapPage}/>
-      <Route path="/blog" component={BlogIndex}/>
-      <Route path="/blog/:slug" component={BlogPost}/>
-      <Route path="/privacy" component={PrivacyPolicy}/>
-      <Route path="/terms" component={TermsOfService}/>
-      <Route path="/cookies" component={CookiePolicy}/>
-      <Route path="/dpa" component={DPAPage}/>
-      <Route path="/dashboard" component={DashboardWebsites}/>
-      <Route path="/dashboard/websites" component={DashboardWebsites}/>
-      <Route path="/dashboard/banner" component={BannerConfigurator}/>
-      <Route path="/dashboard/cookies" component={CookiesManagement}/>
-      <Route path="/dashboard/embed" component={EmbedCode}/>
-      <Route path="/dashboard/analytics" component={Analytics}/>
-      <Route path="/dashboard/consent-logs" component={ConsentLogs}/>
-      <Route path="/dashboard/diagnostics" component={Diagnostics}/>
-      <Route path="/dashboard/agency" component={AgencyDashboard}/>
-      <Route path="/dashboard/settings" component={Settings}/>
+      <Route path="/" component={Home} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/business" component={BusinessPricingPage} />
+      <Route path="/compare" component={CompareIndex} />
+      <Route path="/compare/onetrust" component={CompareOneTrust} />
+      <Route path="/compare/cookiebot" component={CompareCookiebot} />
+      <Route path="/compare/usercentrics" component={CompareUsercentrics} />
+      <Route path="/compare/complianz" component={CompareComplianz} />
+      <Route path="/compare/iubenda" component={CompareIubenda} />
+      <Route path="/compare/cookiefirst" component={CompareCookieFirst} />
+      <Route path="/compare/cookie-script" component={CompareCookieScript} />
+      <Route path="/compare/cookieyes" component={CompareCookieYes} />
+      <Route path="/compare/axeptio" component={CompareAxeptio} />
+      <Route path="/agency/:slug" component={AgencyProfilePage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/verify-email-change" component={VerifyEmailChange} />
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/demo" component={DemoPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
+      <Route path="/faq" component={FAQPage} />
+      <Route path="/docs" component={DocsPage} />
+      <Route path="/features" component={FeaturesPage} />
+      <Route path="/roadmap" component={RoadmapPage} />
+      <Route path="/blog" component={BlogIndex} />
+      <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
+      <Route path="/cookies" component={CookiePolicy} />
+      <Route path="/dpa" component={DPAPage} />
+      <Route path="/brand" component={BrandPage} />
+      <Route path="/scan" component={ScanPage} />
+      <Route path="/powered-by" component={PoweredByPage} />
+      <Route path="/solutions" component={SolutionsIndex} />
+      <Route path="/solutions/:slug" component={PlatformSolutionPage} />
+      <Route path="/compliance/:slug" component={CountrySolutionPage} />
+      <Route path="/dashboard" component={DashboardWebsites} />
+      <Route path="/dashboard/websites" component={DashboardWebsites} />
+      <Route path="/dashboard/banner" component={BannerConfigurator} />
+      <Route path="/dashboard/cookies" component={CookiesManagement} />
+      <Route path="/dashboard/embed" component={EmbedCode} />
+      <Route path="/dashboard/analytics" component={Analytics} />
+      <Route path="/dashboard/consent-logs" component={ConsentLogs} />
+      <Route path="/dashboard/diagnostics" component={Diagnostics} />
+      <Route path="/dashboard/agency" component={AgencyDashboard} />
+      <Route path="/dashboard/policy" component={PolicyGenerator} />
+      <Route path="/dashboard/policy/:id" component={PolicyView} />
+      <Route path="/dashboard/support" component={SupportPage} />
+      <Route path="/dashboard/settings" component={Settings} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+function SkipLink() {
+  return (
+    <a href="#main-content" className="skip-link">
+      Skip to main content
+    </a>
+  );
+}
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <DemoProvider>
-        <CursorTrail />
-        <ScrollToTop />
-        <Toaster />
-        <Router />
-        <DemoTour />
-      </DemoProvider>
-    </QueryClientProvider>
+    <IconContext.Provider value={{ weight: "duotone" }}>
+      <QueryClientProvider client={queryClient}>
+        <DemoProvider>
+          <SkipLink />
+          <CursorTrail />
+          <ScrollToTop />
+          <Toaster />
+          <SonnerToaster position="top-right" richColors closeButton />
+          <Router />
+          <DemoTour />
+          <PublicChat />
+        </DemoProvider>
+      </QueryClientProvider>
+    </IconContext.Provider>
   );
 }
 

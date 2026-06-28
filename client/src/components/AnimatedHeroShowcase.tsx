@@ -2,16 +2,16 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Globe, 
-  Search, 
+  MagnifyingGlass, 
   Cookie, 
   Palette, 
-  BarChart3, 
-  CheckCircle2, 
-  Shield,
-  Sparkles,
-  MousePointerClick,
+  ChartBar, 
+  CheckCircle, 
+  Sparkle,
+  CursorClick,
   ArrowRight
-} from "lucide-react";
+} from "@phosphor-icons/react";
+import consenteaseLogo from "/consentease-logo.webp";
 
 const STEP_DURATION = 3000;
 
@@ -32,42 +32,42 @@ export function AnimatedHeroShowcase() {
       id: 0,
       title: "Enter your website",
       subtitle: "Just paste your URL",
-      icon: <Globe className="w-5 h-5" />,
+      icon: <Globe size={20} />,
       content: <Step1Content />
     },
     {
       id: 1,
       title: "We scan everything",
       subtitle: "Automatic cookie detection",
-      icon: <Search className="w-5 h-5" />,
+      icon: <MagnifyingGlass size={20} />,
       content: <Step2Content />
     },
     {
       id: 2,
       title: "Cookies categorized",
       subtitle: "GDPR-ready classification",
-      icon: <Cookie className="w-5 h-5" />,
+      icon: <Cookie size={20} />,
       content: <Step3Content />
     },
     {
       id: 3,
       title: "Customize your banner",
       subtitle: "Match your brand perfectly",
-      icon: <Palette className="w-5 h-5" />,
+      icon: <Palette size={20} />,
       content: <Step4Content />
     },
     {
       id: 4,
       title: "Track consent rates",
       subtitle: "Real-time analytics",
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <ChartBar size={20} />,
       content: <Step5Content />
     },
     {
       id: 5,
       title: "You're compliant!",
       subtitle: "GDPR & CCPA ready",
-      icon: <CheckCircle2 className="w-5 h-5" />,
+      icon: <CheckCircle size={20} />,
       content: <Step6Content />
     }
   ];
@@ -149,7 +149,7 @@ export function AnimatedHeroShowcase() {
               ))}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Sparkles className="w-3 h-3 text-primary" />
+              <Sparkle size={12} className="text-primary" />
               <span>{steps[currentStep].subtitle}</span>
             </div>
           </div>
@@ -186,7 +186,7 @@ function Step1Content() {
       >
         <div className="bg-background rounded-xl border border-border p-6 shadow-lg">
           <div className="flex items-center gap-2 mb-4">
-            <Globe className="w-5 h-5 text-primary" />
+            <Globe size={20} className="text-primary" />
             <span className="font-semibold">Add your website</span>
           </div>
           <div className="relative">
@@ -203,7 +203,7 @@ function Step1Content() {
               animate={{ opacity: typing.length > 10 ? 1 : 0, x: typing.length > 10 ? 0 : 10 }}
             >
               <button className="h-full px-4 bg-primary text-primary-foreground rounded-md text-sm font-medium flex items-center gap-2">
-                Scan <ArrowRight className="w-4 h-4" />
+                Scan <ArrowRight size={16} />
               </button>
             </motion.div>
           </div>
@@ -235,7 +235,7 @@ function Step2Content() {
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <Search className="w-5 h-5 text-primary" />
+            <MagnifyingGlass size={20} className="text-primary" />
           </motion.div>
           <span className="font-semibold">Scanning website...</span>
         </div>
@@ -295,7 +295,7 @@ function Step3Content() {
     <div className="h-full flex flex-col items-center justify-center">
       <div className="w-full max-w-sm bg-background rounded-xl border border-border p-6 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
-          <Cookie className="w-5 h-5 text-primary" />
+          <Cookie size={20} className="text-primary" />
           <span className="font-semibold">Cookie Categories</span>
         </div>
         
@@ -354,7 +354,7 @@ function Step4Content() {
           animate={{ borderColor: activeColor + "40" }}
         >
           <div className="h-24 bg-secondary/30 flex items-center justify-center text-muted-foreground text-sm">
-            <Globe className="w-4 h-4 mr-2" /> mybusiness.com
+            <Globe size={16} className="mr-2" /> mybusiness.com
           </div>
           
           <motion.div
@@ -365,7 +365,7 @@ function Step4Content() {
               className="flex items-start gap-3"
               animate={{ backgroundColor: activeColor + "05" }}
             >
-              <Shield className="w-5 h-5 mt-0.5" style={{ color: activeColor }} />
+              <img src={consenteaseLogo} alt="ConsentEase" className="w-5 h-5 mt-0.5 object-contain" />
               <div className="flex-1">
                 <div className="font-semibold text-sm mb-1">We value your privacy</div>
                 <div className="text-xs text-muted-foreground mb-3">
@@ -425,7 +425,7 @@ function Step5Content() {
       <div className="w-full max-w-sm bg-background rounded-xl border border-border p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
+            <ChartBar size={20} className="text-primary" />
             <span className="font-semibold">Analytics</span>
           </div>
           <span className="text-xs text-muted-foreground">Last 7 days</span>
@@ -477,7 +477,7 @@ function Step6Content() {
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
+          <CheckCircle size={40} className="text-green-500" />
         </motion.div>
 
         <h3 className="text-xl font-bold mb-2">You're All Set!</h3>
@@ -505,7 +505,7 @@ function Step6Content() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          <MousePointerClick className="w-4 h-4" />
+          <CursorClick size={16} />
           <span>Takes only 2 minutes to set up</span>
         </motion.div>
       </motion.div>

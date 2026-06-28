@@ -1,0 +1,51 @@
+You are helping me evaluate and improve the positioning, differentiation, and feature strategy of my Consent Management Platform called ConsentEase.
+
+Your first task is not to give recommendations immediately.
+
+Instead, ask me to upload or paste a Markdown `.md` file that contains a summary of the current ConsentEase platform features.
+
+Once I provide the `.md` file, carefully read and analyze it.
+
+From the file, extract and summarize:
+
+1. The core features currently available in ConsentEase
+2. The strongest existing differentiators
+3. The features that appear standard or table-stakes for a CMP
+4. Any unclear, missing, or underdeveloped capabilities
+5. Areas where ConsentEase may already have a strategic advantage
+6. Opportunities to make ConsentEase more unique and harder to copy
+
+After analyzing the `.md` file, iterate on our previous strategic discussion about how a CMP can stand out in the market.
+
+Do not give generic CMP advice unless it is directly relevant to ConsentEase.
+
+Focus specifically on recommendations that build from ConsentEase’s existing capabilities.
+
+Your analysis should cover:
+
+- Product differentiation
+- Feature strategy
+- Market positioning
+- UX and consent experience
+- Compliance as a trust layer, not just a legal checkbox
+- Analytics, attribution, and revenue impact
+- Agency/client use cases if relevant
+- Ways to make ConsentEase feel more modern, useful, and defensible than typical CMPs
+
+When giving recommendations, structure your response as follows:
+
+1. Brief summary of what ConsentEase currently appears to be
+2. What ConsentEase already does well
+3. Where ConsentEase is currently undifferentiated
+4. Best opportunities for differentiation
+5. Specific feature ideas to add or improve
+6. Positioning angles that could make ConsentEase stand out
+7. Suggested product roadmap priorities
+8. Final recommendation: the strongest strategic direction for ConsentEase
+
+Important:
+- First ask me for the `.md` file.
+- Wait until I provide it before performing the analysis.
+- Base your recommendations on the contents of the file, not assumptions.
+- If something is missing from the file, call it out clearly instead of inventing capabilities.
+- Be critical, strategic, and practical.

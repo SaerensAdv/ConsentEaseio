@@ -6,20 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  RefreshCw, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  Search, 
-  Shield, 
-  Code2, 
-  Loader2,
-  AlertCircle,
-  ExternalLink,
-  Lightbulb
-} from "lucide-react";
+import { ArrowsClockwise, CheckCircle, XCircle, Warning, MagnifyingGlass, Shield, CodeBlock, WarningCircle, ArrowSquareOut, Lightbulb } from "@phosphor-icons/react";
 import type { Website, DiagnosticScan } from "@shared/schema";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function DiagnosticsPage() {
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
@@ -55,11 +45,23 @@ export default function DiagnosticsPage() {
         method: "POST",
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to start scan");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const err = new Error(errorData.message || "Failed to start scan") as any;
+        err.status = res.status;
+        throw err;
+      }
       return res.json();
     },
     onSuccess: () => {
       refetchScan();
+    },
+    onError: (error: any) => {
+      if (error.status === 429) {
+        toast.error(error.message || "Daily diagnostic scan limit reached. Please upgrade your plan for more scans.");
+      } else {
+        toast.error(error.message || "Failed to start diagnostic scan. Please try again.");
+      }
     },
   });
 
@@ -81,27 +83,27 @@ export default function DiagnosticsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle size={12} className="mr-1" /> Completed</Badge>;
       case 'running':
-        return <Badge className="bg-blue-100 text-blue-800"><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Running</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800"><Spinner size={12} className="mr-1" /> Running</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" /> Failed</Badge>;
+        return <Badge className="bg-red-100 text-red-800"><XCircle size={12} className="mr-1" /> Failed</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
   const getCheckIcon = (value: boolean | null | undefined) => {
-    if (value === true) return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-    if (value === false) return <XCircle className="w-5 h-5 text-red-500" />;
-    return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+    if (value === true) return <CheckCircle size={20} className="text-green-600" />;
+    if (value === false) return <XCircle size={20} className="text-red-500" />;
+    return <Warning size={20} className="text-yellow-500" />;
   };
 
   if (websitesLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+          <ArrowsClockwise size={24} className="animate-spin text-muted-foreground" />
         </div>
       </DashboardLayout>
     );
@@ -117,7 +119,7 @@ export default function DiagnosticsPage() {
           </div>
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+              <WarningCircle size={48} className="text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No websites found. Add a website first to run diagnostics.</p>
             </CardContent>
           </Card>
@@ -162,12 +164,12 @@ export default function DiagnosticsPage() {
           >
             {runScanMutation.isPending || latestScan?.status === 'running' ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Spinner size={16} className="mr-2" />
                 Scanning...
               </>
             ) : (
               <>
-                <Search className="w-4 h-4 mr-2" />
+                <MagnifyingGlass size={16} className="mr-2" />
                 Run Diagnostic Scan
               </>
             )}
@@ -177,7 +179,7 @@ export default function DiagnosticsPage() {
 
       {latestScan?.status === 'running' && (
         <Alert>
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Spinner size={16} />
           <AlertTitle>Scan in progress</AlertTitle>
           <AlertDescription>
             We're analyzing your website for Consent Mode implementation. This usually takes 30-60 seconds.
@@ -294,7 +296,7 @@ export default function DiagnosticsPage() {
             <Card className="border-red-200 bg-red-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-800">
-                  <XCircle className="w-5 h-5" />
+                  <XCircle size={20} />
                   Issues Found ({issues.length})
                 </CardTitle>
                 <CardDescription className="text-red-700">
@@ -305,7 +307,7 @@ export default function DiagnosticsPage() {
                 <ul className="space-y-2">
                   {issues.map((issue, index) => (
                     <li key={index} className="flex items-start gap-2 text-red-800">
-                      <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <Warning size={16} className="mt-0.5 flex-shrink-0" />
                       <span>{issue}</span>
                     </li>
                   ))}
@@ -318,7 +320,7 @@ export default function DiagnosticsPage() {
             <Card className={issues.length > 0 ? "border-yellow-200 bg-yellow-50" : "border-green-200 bg-green-50"}>
               <CardHeader>
                 <CardTitle className={`flex items-center gap-2 ${issues.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
-                  <Lightbulb className="w-5 h-5" />
+                  <Lightbulb size={20} />
                   Recommendations
                 </CardTitle>
               </CardHeader>
@@ -326,7 +328,7 @@ export default function DiagnosticsPage() {
                 <ul className="space-y-2">
                   {recommendations.map((rec, index) => (
                     <li key={index} className={`flex items-start gap-2 ${issues.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <CheckCircle size={16} className="mt-0.5 flex-shrink-0" />
                       <span>{rec}</span>
                     </li>
                   ))}
@@ -340,13 +342,13 @@ export default function DiagnosticsPage() {
       {!latestScan && !scanLoading && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Shield className="w-16 h-16 text-muted-foreground mb-4" />
+            <Shield size={64} className="text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No diagnostic scans yet</h3>
             <p className="text-muted-foreground text-center max-w-md mb-6">
               Run a diagnostic scan to verify that your Google Consent Mode v2 implementation is working correctly.
             </p>
             <Button onClick={handleRunScan} disabled={runScanMutation.isPending} data-testid="button-first-scan">
-              <Search className="w-4 h-4 mr-2" />
+              <MagnifyingGlass size={16} className="mr-2" />
               Run First Scan
             </Button>
           </CardContent>
@@ -356,7 +358,7 @@ export default function DiagnosticsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Code2 className="w-5 h-5" />
+            <CodeBlock size={20} />
             What We Check
           </CardTitle>
         </CardHeader>
@@ -405,7 +407,7 @@ export default function DiagnosticsPage() {
             href="/docs" 
             className="text-primary hover:underline inline-flex items-center gap-1"
           >
-            Read our documentation <ExternalLink className="w-3 h-3" />
+            Read our documentation <ArrowSquareOut size={12} />
           </a>
         </p>
       </div>

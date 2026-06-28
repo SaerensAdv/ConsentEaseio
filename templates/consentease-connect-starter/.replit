@@ -1,0 +1,13 @@
+modules = ["nodejs-20"]
+run = "node index.js"
+hidden = [".config", "node_modules"]
+
+[nix]
+channel = "stable-24_05"
+
+[env]
+# Set CONSENTEASE_API_KEY in the Secrets pane (Tools → Secrets), not here.
+
+[[hints]]
+regex = "CONSENTEASE_API_KEY"
+message = "Add your ce_live_… key in the Secrets pane (Tools → Secrets) as CONSENTEASE_API_KEY."

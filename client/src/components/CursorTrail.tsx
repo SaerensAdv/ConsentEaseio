@@ -1,9 +1,28 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 
 export function CursorTrail() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [location] = useLocation();
+  
+  // Only show on public pages, not in dashboard or onboarding
+  const isPublicPage = !location.startsWith("/dashboard") && !location.startsWith("/onboarding");
 
   useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024 && !('ontouchstart' in window));
+    };
+    
+    checkIsDesktop();
+    window.addEventListener("resize", checkIsDesktop);
+    
+    return () => window.removeEventListener("resize", checkIsDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop || !isPublicPage) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -41,17 +60,17 @@ export function CursorTrail() {
     };
 
     const handleClick = (e: MouseEvent) => {
-      updateMousePosition(e.pageX, e.pageY);
+      updateMousePosition(e.clientX, e.clientY);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseMoved = true;
-      updateMousePosition(e.pageX, e.pageY);
+      updateMousePosition(e.clientX, e.clientY);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       mouseMoved = true;
-      updateMousePosition(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+      updateMousePosition(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
     };
 
     const setupCanvas = () => {
@@ -122,7 +141,9 @@ export function CursorTrail() {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("resize", setupCanvas);
     };
-  }, []);
+  }, [isDesktop, isPublicPage]);
+
+  if (!isDesktop || !isPublicPage) return null;
 
   return (
     <canvas

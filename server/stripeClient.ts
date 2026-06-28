@@ -1,12 +1,19 @@
 import Stripe from 'stripe';
 
-// Cache credentials to avoid fetching on every request
 let cachedCredentials: { publishableKey: string; secretKey: string } | null = null;
 let cachedStripeClient: Stripe | null = null;
 
 async function getCredentials() {
-  // Return cached credentials if available
   if (cachedCredentials) {
+    return cachedCredentials;
+  }
+
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PUBLISHABLE_KEY) {
+    cachedCredentials = {
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      secretKey: process.env.STRIPE_SECRET_KEY,
+    };
+    console.log('Using Stripe credentials from environment variables');
     return cachedCredentials;
   }
 
@@ -17,8 +24,8 @@ async function getCredentials() {
       ? 'depl ' + process.env.WEB_REPL_RENEWAL
       : null;
 
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  if (!xReplitToken || !hostname) {
+    throw new Error('Stripe credentials not found. Set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY environment variables.');
   }
 
   const connectorName = 'stripe';
@@ -63,7 +70,6 @@ export async function getStripeClient() {
   return cachedStripeClient;
 }
 
-// Alias for backward compatibility
 export async function getUncachableStripeClient() {
   return getStripeClient();
 }

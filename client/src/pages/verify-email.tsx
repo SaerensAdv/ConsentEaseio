@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle } from "@phosphor-icons/react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VerifyEmail() {
   const searchString = useSearch();
@@ -42,7 +43,7 @@ export default function VerifyEmail() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <Spinner variant="brand" size={32} className="text-primary" />
             </div>
             <CardTitle className="text-2xl">Verifying Email</CardTitle>
             <CardDescription>Please wait while we verify your email address...</CardDescription>
@@ -58,7 +59,7 @@ export default function VerifyEmail() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle size={32} className="text-green-600" />
             </div>
             <CardTitle className="text-2xl">Email Verified!</CardTitle>
             <CardDescription>{message}</CardDescription>
@@ -80,7 +81,7 @@ export default function VerifyEmail() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <XCircle className="w-8 h-8 text-red-600" />
+            <XCircle size={32} className="text-red-600" />
           </div>
           <CardTitle className="text-2xl">Verification Failed</CardTitle>
           <CardDescription>{message}</CardDescription>

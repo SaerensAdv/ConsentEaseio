@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowLeft, HelpCircle, CreditCard, Lock, Settings, Cookie, Palette, Zap } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowLeft, Question, CreditCard, Lock, Gear, Cookie, Palette, Lightning } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -12,7 +13,7 @@ import {
 const faqs = [
   {
     category: "Getting Started",
-    icon: Zap,
+    icon: Lightning,
     questions: [
       {
         question: "How long does it take to set up ConsentEase?",
@@ -24,7 +25,7 @@ const faqs = [
       },
       {
         question: "Can I try ConsentEase before committing?",
-        answer: "Yes! Our Solo plan comes with a 7-day free trial. No credit card required to start. You can test all features and cancel anytime during the trial period."
+        answer: "Yes — every plan comes with a 7-day free trial, including Starter (€3/mo) all the way up to Agency Pro (€129/mo). A payment method is required at signup, but you won't be charged until the trial ends, and you can cancel any time from your dashboard."
       },
       {
         question: "What happens after I sign up?",
@@ -98,7 +99,7 @@ const faqs = [
     questions: [
       {
         question: "What's included in each plan?",
-        answer: "Solo (€5/month): 1 website, 10K monthly views, 7-day free trial. Pro (€12/month): 5 websites, 100K monthly views, white-labeling. Agency (€39/month): Unlimited websites, 1M monthly views, API access, white-labeling. All plans include full banner customization and analytics."
+        answer: "Single-site plans: Starter (€3/month, 10K monthly views), Solo (€7/month, 25K monthly views), Premium (€12/month, 100K monthly views, branding removal). Multi-site plans: Pro (€19/month, 5 websites, 250K monthly views, branding removal), Business (€35/month, 10 websites, 1M monthly views), Agency (€59/month, 25 websites, 2.5M monthly views, white-label + client management + 25 policies/month), Agency Pro (€129/month, 100 websites, 10M monthly views, 100 policies/month). Every plan comes with a 7-day free trial, full banner customization, and analytics."
       },
       {
         question: "What happens if I exceed my monthly views?",
@@ -110,15 +111,15 @@ const faqs = [
       },
       {
         question: "How does billing work?",
-        answer: "All plans are billed monthly in Euros. We use Stripe for secure payment processing. You can cancel anytime, and your access continues until the end of your billing period."
+        answer: "All plans are available with monthly or annual billing in Euros. Annual plans include 2 months free (pay for 10 months, get 12). We use Stripe for secure payment processing. You can cancel anytime, and your access continues until the end of your billing period."
       },
       {
         question: "Do you offer discounts for annual billing?",
-        answer: "Not yet, but we're working on it! Sign up for our newsletter to be notified when annual plans become available."
+        answer: "Yes! All plans are available with annual billing at a 17% discount — that's 2 months free. For example, Solo is €7/month or €70/year (saving €14). The annual option is shown by default on our pricing pages."
       },
       {
         question: "Is there a free plan?",
-        answer: "We offer a 7-day free trial on the Solo plan so you can test all features risk-free. After the trial, you'll need to subscribe to continue using ConsentEase."
+        answer: "We don't offer a permanent free plan, but every plan — from Starter (€3/month) up to Agency Pro (€129/month) — comes with a 7-day free trial so you can test all features. A payment method is required at signup, but you won't be charged until the trial ends, and you can cancel any time."
       },
       {
         question: "Can I get a refund?",
@@ -158,7 +159,7 @@ const faqs = [
   },
   {
     category: "Technical",
-    icon: Settings,
+    icon: Gear,
     questions: [
       {
         question: "Will ConsentEase slow down my website?",
@@ -182,7 +183,7 @@ const faqs = [
       },
       {
         question: "Is there an API available?",
-        answer: "Yes! Agency plan subscribers have access to our REST API for advanced integrations, automation, and custom reporting. Full API documentation is available in the dashboard."
+        answer: "We're currently building a public REST API for advanced integrations, automation, and custom reporting. It's planned for our Agency and Agency Pro plans — get in touch via support@consentease.io if you'd like early access or want to discuss your use case."
       },
       {
         question: "What browsers are supported?",
@@ -222,7 +223,7 @@ const faqs = [
   },
   {
     category: "Support",
-    icon: HelpCircle,
+    icon: Question,
     questions: [
       {
         question: "What kind of support do you offer?",
@@ -275,6 +276,8 @@ function FAQJsonLd() {
 }
 
 export default function FAQPage() {
+  useCanonical("/faq");
+  
   useEffect(() => {
     const originalTitle = document.title;
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -285,9 +288,27 @@ export default function FAQPage() {
       metaDescription.setAttribute("content", "Find answers to common questions about ConsentEase, GDPR compliance, cookie consent, pricing, and more. Get the help you need to implement compliant consent management.");
     }
 
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const origOgTitle = ogTitle?.getAttribute("content") || "";
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const origOgDesc = ogDescription?.getAttribute("content") || "";
+    if (ogTitle) ogTitle.setAttribute("content", "FAQ - Frequently Asked Questions | ConsentEase");
+    if (ogDescription) ogDescription.setAttribute("content", "Answers to common questions about GDPR compliance, cookie consent, pricing, and setup.");
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    const origTwTitle = twitterTitle?.getAttribute("content") || "";
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    const origTwDesc = twitterDescription?.getAttribute("content") || "";
+    if (twitterTitle) twitterTitle.setAttribute("content", "FAQ - Cookie Consent Questions | ConsentEase");
+    if (twitterDescription) twitterDescription.setAttribute("content", "Common questions about GDPR compliance, cookie consent, and ConsentEase setup.");
+
     return () => {
       document.title = originalTitle;
       if (metaDescription) metaDescription.setAttribute("content", originalDescription);
+      if (ogTitle) ogTitle.setAttribute("content", origOgTitle);
+      if (ogDescription) ogDescription.setAttribute("content", origOgDesc);
+      if (twitterTitle) twitterTitle.setAttribute("content", origTwTitle);
+      if (twitterDescription) twitterDescription.setAttribute("content", origTwDesc);
     };
   }, []);
 
@@ -298,9 +319,7 @@ export default function FAQPage() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
           <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
-              <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-                <Shield className="w-5 h-5 fill-current" />
-              </div>
+              <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
               ConsentEase
             </Link>
             <div className="flex items-center gap-4">
@@ -312,7 +331,7 @@ export default function FAQPage() {
               </Link>
               <Link href="/">
                 <Button variant="ghost" className="gap-2" data-testid="button-back-home">
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft size={16} />
                   Home
                 </Button>
               </Link>
@@ -324,7 +343,7 @@ export default function FAQPage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
-                <HelpCircle className="w-4 h-4" />
+                <Question size={16} />
                 Help Center
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
@@ -343,7 +362,7 @@ export default function FAQPage() {
                   href={`#${section.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-colors text-sm font-medium"
                 >
-                  <section.icon className="w-4 h-4" />
+                  <section.icon size={16} />
                   {section.category}
                 </a>
               ))}
@@ -354,7 +373,7 @@ export default function FAQPage() {
                 <div key={sectionIndex} id={section.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <section.icon className="w-5 h-5 text-primary" />
+                      <section.icon size={20} className="text-primary" />
                     </div>
                     <h2 className="text-2xl font-display font-bold">{section.category}</h2>
                   </div>

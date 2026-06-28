@@ -1,13 +1,69 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
+import { apiV1Router } from "./api/v1";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth } from "./auth";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
+import { startTrialScheduler } from './trialScheduler';
+import { startPaymentFailureScheduler } from './paymentFailureScheduler';
+
+// Boot-time guardrails. Fail fast in production rather than silently falling
+// back to weak defaults that break analytics continuity (see auth.ts and
+// routes.ts for why SESSION_SECRET is critical beyond just sessions).
+const IS_PRODUCTION_BOOT = process.env.NODE_ENV === "production" || process.env.REPLIT_DEPLOYMENT === "1";
+if (IS_PRODUCTION_BOOT && !process.env.SESSION_SECRET) {
+  console.error("FATAL: SESSION_SECRET must be set in production. Aborting boot.");
+  process.exit(1);
+}
 
 const app = express();
+
+// Trust the platform proxy so req.ip and secure-cookie detection work behind
+// Replit's Google Frontend.
+app.set("trust proxy", 1);
+
+// Security headers. CSP is intentionally disabled here — the embedded banner
+// loader and Stripe both require inline/foreign scripts that don't fit a
+// strict CSP without a nonce pipeline. We keep all the other defaults
+// (X-Content-Type-Options, Referrer-Policy, etc.) which were missing from
+// the live site.
+// X-Frame-Options (frameguard) is disabled in favour of a targeted
+// frame-ancestors CSP directive set below, which supports per-domain allowlists.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    frameguard: false, // replaced by frame-ancestors directive below
+    crossOriginEmbedderPolicy: false, // banner is embedded cross-origin
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // banner script must load on customer sites
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: {
+      maxAge: 63072000, // 2 years (matches what Replit edge already sets)
+      includeSubDomains: true,
+      preload: false,
+    },
+  })
+);
+
+// Allow this app to be embedded as an iframe on authorised domains.
+// Add new origins here when customers need iframe embedding.
+const IFRAME_ALLOWED_ORIGINS = [
+  "'self'",
+  "https://saerensadvertising.com",
+];
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    `frame-ancestors ${IFRAME_ALLOWED_ORIGINS.join(" ")}`
+  );
+  next();
+});
+
+app.use(compression());
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -32,17 +88,39 @@ async function initStripe() {
     const stripeSync = await getStripeSync();
 
     console.log('Setting up managed webhook...');
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+    const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0];
+    if (!replitDomain) {
+      console.warn('REPLIT_DOMAINS not set, skipping managed webhook setup');
+      // Still kick off the data sync below so the dev environment has Stripe data.
+    }
+    const webhookBaseUrl = replitDomain ? `https://${replitDomain}` : null;
+    const webhookUrl = webhookBaseUrl ? `${webhookBaseUrl}/api/stripe/webhook` : null;
     try {
-      const result = await stripeSync.findOrCreateManagedWebhook(
-        `${webhookBaseUrl}/api/stripe/webhook`);
-      if (result?.webhook?.url) {
-        console.log(`Webhook configured: ${result.webhook.url}`);
+      if (!webhookUrl) {
+        throw new Error('webhook URL unavailable (REPLIT_DOMAINS missing)');
+      }
+      const webhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
+      if (webhook?.url) {
+        console.log(`Webhook configured: ${webhook.url} (id: ${webhook.id}, status: ${webhook.status})`);
+      } else if (webhook?.id) {
+        console.log(`Webhook configured with id: ${webhook.id}`);
       } else {
-        console.log('Webhook setup completed (no URL returned)');
+        console.log('Webhook setup completed but no webhook details returned');
       }
     } catch (webhookError: any) {
-      console.warn('Webhook setup skipped:', webhookError.message);
+      console.error('Webhook setup failed:', webhookError.message);
+      if (webhookError.message?.includes('No such webhook endpoint')) {
+        console.log('Stale webhook reference detected. Retrying webhook creation...');
+        try {
+          if (!webhookUrl) throw new Error('webhook URL unavailable');
+          const retryWebhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
+          if (retryWebhook?.url) {
+            console.log(`Webhook configured on retry: ${retryWebhook.url} (id: ${retryWebhook.id})`);
+          }
+        } catch (retryError: any) {
+          console.error('Webhook retry also failed:', retryError.message);
+        }
+      }
     }
 
     console.log('Syncing Stripe data...');
@@ -122,7 +200,11 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
+    // Skip logging for analytics and tracking endpoints to reduce log noise
+    if (path.startsWith("/api") && 
+        !path.includes("/api/analytics") && 
+        !path.includes("/api/track") &&
+        !path.includes("/api/consent/log")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
@@ -139,6 +221,14 @@ app.use((req, res, next) => {
   await initStripe();
   await registerRoutes(httpServer, app);
 
+  // Versioned public REST API (API-key authenticated). Mounted after the dashboard
+  // routes and before the SPA/static fallback so every /api/v1/* request is handled
+  // here. All auth, rate-limiting and scope checks live inside apiV1Router.
+  app.use("/api/v1", apiV1Router);
+  
+  startTrialScheduler();
+  startPaymentFailureScheduler();
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -147,11 +237,22 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  if (process.env.NODE_ENV === "production") {
+  const isProduction = process.env.NODE_ENV === "production" || 
+                       process.env.REPLIT_DEPLOYMENT === "1" ||
+                       !process.env.NODE_ENV;
+  
+  if (isProduction) {
+    log("Running in production mode, serving static files");
     serveStatic(app);
   } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+    try {
+      const devModulePath = [".", "vite"].join("/");
+      const viteModule = await (eval(`import("${devModulePath}")`) as Promise<typeof import("./vite")>);
+      await viteModule.setupVite(httpServer, app);
+    } catch (e) {
+      log("Vite not available, falling back to static serving");
+      serveStatic(app);
+    }
   }
 
   const port = parseInt(process.env.PORT || "5000", 10);

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Activity, Zap, Move, Clock, Timer, Gauge, HelpCircle } from 'lucide-react';
+import { Heartbeat, Lightning, ArrowsOutCardinal, Clock, Timer, Gauge, Question } from '@phosphor-icons/react';
 
 interface WebVitalsCardProps {
   websiteId: string | null;
@@ -71,7 +71,7 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
       fullName: 'Largest Contentful Paint',
       description: 'Time until the largest content element is visible. Measures loading performance.',
       value: vitals?.p75Lcp,
-      icon: Zap,
+      icon: Lightning,
       unit: 's',
       threshold: 'lcp' as const,
     },
@@ -80,7 +80,7 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
       fullName: 'Cumulative Layout Shift',
       description: 'Measures visual stability. Lower is better - your banner should not cause layout shifts.',
       value: vitals?.p75Cls,
-      icon: Move,
+      icon: ArrowsOutCardinal,
       unit: '',
       threshold: 'cls' as const,
     },
@@ -89,7 +89,7 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
       fullName: 'Interaction to Next Paint',
       description: 'Time from user interaction to visual response. Measures responsiveness.',
       value: vitals?.p75Inp,
-      icon: Activity,
+      icon: Heartbeat,
       unit: 'ms',
       threshold: 'inp' as const,
     },
@@ -119,7 +119,7 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-primary" />
+              <Gauge size={20} className="text-primary" />
               Core Web Vitals
             </CardTitle>
             <CardDescription>
@@ -140,7 +140,7 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
           </div>
         ) : !vitals || vitals.totalSamples === 0 ? (
           <div className="text-center py-8">
-            <Gauge className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+            <Gauge size={40} className="text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               No performance data yet
             </p>
@@ -164,9 +164,9 @@ export function WebVitalsCard({ websiteId }: WebVitalsCardProps) {
                           data-testid={`vital-${metric.name.toLowerCase()}`}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                            <Icon size={14} className="text-muted-foreground" />
                             <span className="text-xs font-medium text-muted-foreground">{metric.name}</span>
-                            <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+                            <Question size={12} className="text-muted-foreground/50" />
                           </div>
                           <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.threshold)}`}>
                             {formatValue(metric.value, metric.unit)}

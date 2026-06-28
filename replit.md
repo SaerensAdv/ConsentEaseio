@@ -1,53 +1,88 @@
 # ConsentEase - GDPR/CCPA Consent Banner Management Platform
 
-## Overview
-ConsentEase is an affordable, simplified consent banner management platform designed for small business owners. It provides an alternative to expensive enterprise solutions by offering core GDPR/CCPA compliance features with an emphasis on ease of setup and cost-effectiveness. The platform aims to democratize access to consent management, enabling businesses to achieve compliance without significant investment in time or money.
+## Run & Operate
+- **Run:** `npm start`
+- **Build:** `npm run build`
+- **Typecheck:** `npm run check`
+- **DB Push:** `npm run db:push` (updates DB schema)
+- **Required Env Vars:** `SESSION_SECRET`, `DATABASE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CLICKUP_API_KEY`, `AI_INTEGRATIONS_OPENAI_BASE_URL`, `AI_INTEGRATIONS_OPENAI_API_KEY`, `CHROMIUM_PATH` (optional for cookie scanner).
 
-## User Preferences
+## Stack
+- **Frontend:** React, TypeScript, TailwindCSS v4, Shadcn UI, wouter
+- **Backend:** Express, TypeScript, Node.js
+- **Database:** PostgreSQL
+- **ORM:** Drizzle ORM
+- **Authentication:** Passport.js
+- **Validation:** Zod
+- **Build Tool:** Vite
+
+## Where things live
+- `client/`: Frontend React application.
+  - `client/src/components/`: Reusable UI components.
+  - `client/src/pages/`: Page-level components and routes.
+  - `client/src/index.css`: TailwindCSS main styling.
+  - `client/src/App.tsx`: Main application entry point, global context, and routing.
+- `server/`: Backend Express application.
+  - `server/api/`: API route handlers.
+  - `server/db/`: Database schema and Drizzle ORM setup.
+  - `server/services/`: Business logic and external integrations (Stripe, ClickUp).
+  - `server/middleware/`: Express middleware (auth, rate limiting).
+  - `server/auth.ts`: Authentication strategies and helpers.
+  - `server/routes.ts`: API route definitions.
+  - `server/index.ts`: Main server entry point.
+- `shared/`: Shared types, constants, and utilities between frontend and backend.
+  - `shared/schema.ts`: Database schema definition (source of truth for DB).
+  - `shared/plans.ts`: Plan definitions and feature mappings.
+  - `shared/domain-utils.ts`: Domain authorization logic.
+- `scripts/`: Utility scripts (e.g., `seed-demo-analytics.ts`, `cleanup-old-stripe-products.ts`).
+- `docs/`: Documentation and plans (e.g., `docs/plans/analytics-weekend-plan.md`).
+- `public/`: Static assets.
+- `uploads/logos/`: Uploaded logo storage.
+
+## Architecture decisions
+- **Simplified Consent Management:** Focus on core GDPR/CCPA features for small businesses, avoiding the complexity and cost of enterprise solutions.
+- **Client-Side Embed Script:** The consent banner is delivered via an embeddable JavaScript script, allowing seamless integration and dynamic updates on customer websites. Includes platform-specific integrations (Shopify, Wix, WordPress).
+- **Puppeteer-core for Scanning:** Utilizes `puppeteer-core` with system Chromium for robust cookie and diagnostic scanning, with an HTTP-only fallback for environments without Chromium.
+- **Stripe as Single Source of Truth for Billing:** All subscription and payment logic is managed through Stripe, with webhooks ensuring data consistency and plan limit enforcement.
+- **ClickUp Integration for CRM & Project Management:** Automated syncing of users, leads, support tickets, and bugs to ClickUp for centralized management and workflow automation.
+- **Atomic Monthly View Counters:** Uses a dedicated `monthly_view_counters` table with an `INSERT...ON CONFLICT DO UPDATE` strategy to prevent race conditions and ensure accurate monthly view tracking.
+- **Aggressive Bundle Splitting & Lazy Loading:** Public pages and dashboard routes are lazy-loaded and aggressively split into vendor-specific chunks to optimize initial page load performance and SEO.
+
+## Product
+- **User Authentication & Website Management:** Secure login, registration, and management of multiple websites.
+- **Visual Banner Configurator:** Live preview configurator with extensive customization for banner style, content, layout, and behavior.
+- **Revisit Consent Button:** Configurable floating button for users to re-open consent preferences.
+- **Website Cookie Scanning:** Automated scanning to detect and classify cookies, populating the cookie management system.
+- **Subscription Management:** Stripe integration for recurring payments, trial periods, and plan limit enforcement.
+- **Analytics Tracking:** Records banner impressions, acceptances, and rejections with detailed dashboard insights (device, browser, category breakdown, trends).
+- **Compliance Features:** Default cookie categories, Google Consent Mode v2 integration, white-labeling options, and compliance score indicator.
+- **SEO Optimization:** Server-side meta tag injection, structured data, dynamic sitemap, canonical URLs, and lazy loading for marketing pages.
+- **Agency Client Management:** Agencies can manage client websites, including banner configuration, cookies, and analytics.
+- **Iris AI Assistant:** A public-facing chatbot for user support, powered by OpenAI, with privacy-first design (no server-side conversation persistence).
+
+## User preferences
 I prefer detailed explanations.
 Do not make changes to the `clickup-automation.config.json` file.
 Do not make changes to the `scripts/clickup-cli.ts` file.
 I prefer to be asked before major changes are made to the core architecture or database schema.
 
-## System Architecture
+## Gotchas
+- **Chromium Availability:** Cookie and diagnostic scanners rely on `puppeteer-core` and a system Chromium binary. Ensure `CHROMIUM_PATH` is correctly set in production or use the HTTP-only fallback.
+- **Stripe Webhook Idempotency:** Webhook events are tracked in-memory for 24 hours to prevent duplicate processing. Ensure proper error handling to trigger Stripe retries.
+- **Trial Anchoring:** Trial end dates are anchored at signup. Converting to a paid plan mid-trial no longer extends the trial window.
+- **Performance Monitoring:** Run `git gc` periodically (every few months) to compact Git history and improve Replit workspace performance.
+- **Analytics Data Integrity:** The dashboard includes an "Data anomaly" alert if actions exceed impressions, indicating potential data overcounting.
+- **API Access:** The public REST API is not yet implemented; it has been removed from feature lists. Contact support for early access.
 
-### UI/UX Decisions
-- **Styling:** TailwindCSS v4 with a primary purple color (`#726CEA`) and a clean, modern aesthetic.
-- **Fonts:** Plus Jakarta Sans for headings and Inter for body text.
-- **Banner Configurator:** Features a live preview with desktop/mobile toggles, extensive style and content customization options (colors, borders, shadows, backdrop blur, position, animation, button styles), and an icon toggle.
-- **Onboarding:** Guided onboarding flow for new users.
-- **Interactive Demo Tour:** A step-by-step guided tour for new users, highlighting key features and encouraging trial sign-ups.
-
-### Technical Implementations
-- **Frontend:** Built with React and TypeScript, managing user interfaces, routing, and interactions.
-- **Backend:** Developed using Express and TypeScript, handling API endpoints, authentication, database operations, and Stripe integrations.
-- **Database:** PostgreSQL with Drizzle ORM for managing user data, website configurations, banner settings, cookie information, analytics, consent logs, and diagnostic scans. Key tables include `users`, `websites`, `banner_configs`, `cookie_categories`, `cookies`, `analytics_events`, `consent_logs`, and `diagnostic_scans`.
-- **Consent Banner Script:** An embeddable JavaScript script generated by the platform to be integrated into customer websites. It tracks consent events, stores consent in `localStorage`, and communicates with the ConsentEase API.
-- **Cookie Management:** Default cookie categories (Necessary, Functional, Analytics, Marketing) are created per website, with granular control over individual cookie definitions. Integrates Google Consent Mode v2, mapping categories to consent types (`ad_storage`, `analytics_storage`, `functionality_storage`, `personalization_storage`, `security_storage`).
-- **Subscription Management:** Robust Stripe integration for handling recurring payments, trial periods, subscription status tracking, and plan limit enforcement (e.g., number of websites, monthly views). Includes webhook processing for automated updates.
-- **Website Cookie Scanning:** A Playwright-based scanner utilizing a headless Chromium browser to detect and classify cookies on customer websites, populating the cookie management system automatically.
-- **Authentication:** User login/registration, password reset, and email verification flows secured with rate limiting.
-
-### Feature Specifications
-- **User Authentication:** Secure login and registration.
-- **Website Management:** Allows users to add and manage multiple websites, including cookie scanning simulation.
-- **Visual Banner Configurator:** A comprehensive tool for designing and customizing consent banners with a live preview.
-- **Embeddable JavaScript Banner:** A dynamic script for easy integration into websites.
-- **Analytics Tracking:** Records banner impressions, acceptances, and rejections.
-- **Stripe Payment Integration:** Handles subscriptions, plan management, and billing.
-- **Plan Limit Enforcement:** Restricts features and usage based on the user's subscription plan.
-- **White-labeling:** Pro and Agency plans allow removal of "Powered by ConsentEase" branding.
-- **API Access:** Exclusive feature for Agency plan subscribers.
-- **Trial Expiration Flow:** Automated process for managing 7-day free trials, including status updates and payment processing via Stripe webhooks.
-
-## External Dependencies
-- **Stripe:** Payment gateway for subscription management, billing, and customer portals.
-- **PostgreSQL:** Relational database for persistent data storage.
-- **Playwright:** Used for the website cookie scanning functionality (headless Chromium).
-- **TailwindCSS:** CSS framework for styling the frontend.
-- **React:** JavaScript library for building user interfaces.
-- **Express:** Web application framework for the backend.
-- **TypeScript:** Superset of JavaScript used for both frontend and backend development.
-- **Drizzle ORM:** Object-relational mapper for interacting with PostgreSQL.
-- **Passport.js:** Authentication middleware for Node.js.
-- **ClickUp:** Project management tool (integration scripts are present but primarily for internal project management and not a direct external dependency of the ConsentEase platform's core functionality).
+## Pointers
+- **Drizzle ORM Docs:** `https://orm.drizzle.team/docs/overview`
+- **Stripe API Docs:** `https://stripe.com/docs/api`
+- **TailwindCSS Docs:** `https://tailwindcss.com/docs`
+- **React Docs:** `https://react.dev/`
+- **ClickUp API Docs:** `https://developer.clickup.com/`
+- **GDPR Compliance Guide:** `https://gdpr-info.eu/`
+- **CCPA Compliance Guide:** `https://oag.ca.gov/privacy/ccpa`
+- **Analytics Weekend Plan:** `docs/plans/analytics-weekend-plan.md`
+- **Production Indexing:** `docs/PRODUCTION_INDEXES.sql`
+- **Connect API Reference (v1):** `docs/api/consentease-api-v1.md`
+- **Connect Phase-1 Build Sequence:** `docs/plans/connect-phase1-build-sequence.md`

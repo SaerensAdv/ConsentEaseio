@@ -1,48 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5"
+    />
 
     <title>ConsentEase - Privacy Compliance for Humans</title>
-    <meta name="description" content="The consent banner that installs in 2 minutes, costs less than a coffee, and keeps you compliant forever." />
-    
+    <meta
+      name="description"
+      content="The consent banner that installs in 2 minutes, costs less than a coffee, and keeps you compliant forever."
+    />
+
     <meta property="og:title" content="ConsentEase" />
-    <meta property="og:description" content="Privacy compliance for businesses, not lawyers." />
+    <meta
+      property="og:description"
+      content="Privacy compliance for businesses, not lawyers."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/attached_assets/image_1766697261644.png" />
-    
+    <meta
+      property="og:image"
+      content="https://consentease.io/opengraph.jpg"
+    />
+    <meta property="og:url" content="https://consentease.io/" />
+    <meta property="og:site_name" content="ConsentEase" />
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ConsentEase" />
-    <meta name="twitter:description" content="Privacy compliance for businesses, not lawyers." />
+    <meta
+      name="twitter:description"
+      content="Privacy compliance for businesses, not lawyers."
+    />
+    <meta
+      name="twitter:image"
+      content="https://consentease.io/opengraph.jpg"
+    />
+    <meta
+      name="keywords"
+      content="GDPR, CCPA, cookie consent, privacy compliance, consent banner, cookie banner, consent management"
+    />
 
+    <link rel="canonical" href="https://consentease.io/" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Featured-agency logo origins shown on the homepage; preconnect saves
+         ~330 ms LCP on mobile by parallelising the TLS handshake. -->
+    <link rel="preconnect" href="https://getlead.be" crossorigin />
+    <link rel="preconnect" href="https://cdn.prod.website-files.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
+
     <!-- ConsentEase: Set default consent BEFORE Google Tag Manager -->
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('consent', 'default', {
-      'ad_storage': 'denied',
-      'ad_user_data': 'denied',
-      'ad_personalization': 'denied',
-      'analytics_storage': 'denied',
-      'functionality_storage': 'denied',
-      'personalization_storage': 'denied',
-      'security_storage': 'granted',
-      'wait_for_update': 500
-    });
-    gtag('set', 'ads_data_redaction', true);
-    gtag('set', 'url_passthrough', true);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        functionality_storage: "denied",
+        personalization_storage: "denied",
+        security_storage: "granted",
+        wait_for_update: 500,
+      });
+      gtag("set", "ads_data_redaction", true);
+      gtag("set", "url_passthrough", true);
     </script>
     <!-- ConsentEase: Load consent banner (handles user interaction) -->
-    <script src="https://d78fa0c6-228e-4132-85d8-0130d3fb0506-00-3ibpq4b6a1up1.riker.replit.dev/api/consent/8rvobt86mnl6/script.js?v=1766796693124" async></script>
+    <script>
+      (function () {
+        var publicId = "sa003";
+        var host = window.location.origin;
+        var isProd =
+          window.location.hostname === "consentease.io" ||
+          window.location.hostname.endsWith(".consentease.io");
+        var base = isProd ? "https://consentease.io" : host;
+        var s = document.createElement("script");
+        s.src =
+          base + "/api/consent/" + publicId + "/script.js?v=" + Date.now();
+        s.async = true;
+        document.head.appendChild(s);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="max-width:700px;margin:40px auto;padding:20px;font-family:system-ui,sans-serif;">
+        <h1>ConsentEase - Privacy Compliance for Humans</h1>
+        <p>ConsentEase is an affordable GDPR and CCPA cookie consent management platform for small businesses. Install a consent banner in 2 minutes, track consent analytics, and generate privacy policies.</p>
+        <nav>
+          <ul>
+            <li><a href="/pricing">Pricing</a></li>
+            <li><a href="/features">Features</a></li>
+            <li><a href="/compare">Compare Alternatives</a></li>
+            <li><a href="/docs">Documentation</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/scan">Free Cookie Scanner</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <li><a href="/faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <p>Please enable JavaScript to use ConsentEase.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

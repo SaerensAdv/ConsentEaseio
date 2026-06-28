@@ -1,21 +1,52 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowLeft } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowLeft } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export default function TermsOfService() {
+  useCanonical("/terms");
+  
+  useEffect(() => {
+    document.title = "Terms of Service | ConsentEase";
+    
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) metaDescription.setAttribute('content', 'Read the ConsentEase Terms of Service. Understand the terms and conditions for using our GDPR/CCPA consent management platform including subscriptions, usage policies, and liability.');
+    
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', 'Terms of Service | ConsentEase');
+    
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.setAttribute('content', 'Read the ConsentEase Terms of Service. Understand the terms and conditions for using our GDPR/CCPA consent management platform including subscriptions, usage policies, and liability.');
+    
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', 'https://consentease.io/attached_assets/image_1766697261644.png');
+    
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) twitterCard.setAttribute('content', 'summary_large_image');
+    
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) twitterTitle.setAttribute('content', 'Terms of Service | ConsentEase');
+    
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) twitterDescription.setAttribute('content', 'Read the ConsentEase Terms of Service. Understand the terms and conditions for using our GDPR/CCPA consent management platform including subscriptions, usage policies, and liability.');
+    
+    return () => {
+      document.title = "ConsentEase - Privacy Compliance for Humans";
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background font-sans">
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
+            <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
             ConsentEase
           </Link>
           <Link href="/">
             <Button variant="ghost" className="gap-2" data-testid="button-back-home">
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft size={16} />
               Back to Home
             </Button>
           </Link>
@@ -66,7 +97,7 @@ export default function TermsOfService() {
           <section className="mb-8">
             <h2>4. Subscription Plans and Payment</h2>
             <h3>4.1 Plans</h3>
-            <p>We offer three subscription tiers: Solo (€5/month), Pro (€12/month), and Agency (€39/month). Features and limits vary by plan.</p>
+            <p>We offer seven subscription tiers: Starter (€3/month), Solo (€7/month), Premium (€12/month), Pro (€19/month), Business (€35/month), Agency (€59/month), and Agency Pro (€129/month). Features and limits vary by plan.</p>
             
             <h3>4.2 Billing</h3>
             <ul>
@@ -82,7 +113,7 @@ export default function TermsOfService() {
 
             <h3>4.4 Free Trial</h3>
             <p>
-              The Solo plan includes a 7-day free trial. You will not be charged until the trial period ends. You may cancel before the trial ends to avoid charges.
+              All paid plans include a 7-day free trial. A valid payment method is required at signup to start the trial, but you will not be charged until the trial period ends. You may cancel at any time before the trial ends to avoid charges.
             </p>
           </section>
 

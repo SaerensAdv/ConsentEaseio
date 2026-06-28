@@ -1,21 +1,52 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowLeft } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowLeft } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export default function PrivacyPolicy() {
+  useCanonical("/privacy");
+  
+  useEffect(() => {
+    document.title = "Privacy Policy | ConsentEase";
+    
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) metaDescription.setAttribute('content', 'Read the ConsentEase Privacy Policy. Learn how we collect, use, and protect your data. GDPR-compliant privacy practices for our consent management platform.');
+    
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', 'Privacy Policy | ConsentEase');
+    
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.setAttribute('content', 'Read the ConsentEase Privacy Policy. Learn how we collect, use, and protect your data. GDPR-compliant privacy practices for our consent management platform.');
+    
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', 'https://consentease.io/attached_assets/image_1766697261644.png');
+    
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) twitterCard.setAttribute('content', 'summary_large_image');
+    
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) twitterTitle.setAttribute('content', 'Privacy Policy | ConsentEase');
+    
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) twitterDescription.setAttribute('content', 'Read the ConsentEase Privacy Policy. Learn how we collect, use, and protect your data. GDPR-compliant privacy practices for our consent management platform.');
+    
+    return () => {
+      document.title = "ConsentEase - Privacy Compliance for Humans";
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background font-sans">
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
+            <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
             ConsentEase
           </Link>
           <Link href="/">
             <Button variant="ghost" className="gap-2" data-testid="button-back-home">
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft size={16} />
               Back to Home
             </Button>
           </Link>

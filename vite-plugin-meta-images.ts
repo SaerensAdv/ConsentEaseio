@@ -56,15 +56,32 @@ export function metaImagesPlugin(): Plugin {
 }
 
 function getDeploymentUrl(): string | null {
-  if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
-    const url = `https://${process.env.REPLIT_INTERNAL_APP_DOMAIN}`;
-    log('[meta-images] using internal app domain:', url);
+  // 1. Explicit override always wins.
+  if (process.env.PUBLIC_BASE_URL) {
+    return process.env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  }
+
+  // 2. Production builds (deployed) should use the public canonical domain.
+  //    Replit sets REPLIT_DEPLOYMENT=1 at build time when running a published build.
+  const isProductionBuild =
+    process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1';
+  if (isProductionBuild) {
+    const url = 'https://consentease.io';
+    log('[meta-images] using canonical production domain:', url);
     return url;
   }
 
+  // 3. Dev/preview fallbacks — only used so previews on Replit subdomains have a
+  //    valid absolute URL for the OG image.
   if (process.env.REPLIT_DEV_DOMAIN) {
     const url = `https://${process.env.REPLIT_DEV_DOMAIN}`;
     log('[meta-images] using dev domain:', url);
+    return url;
+  }
+
+  if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
+    const url = `https://${process.env.REPLIT_INTERNAL_APP_DOMAIN}`;
+    log('[meta-images] using internal app domain:', url);
     return url;
   }
 

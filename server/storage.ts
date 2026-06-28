@@ -1,13 +1,17 @@
-import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, webVitalsMetrics, agencies, agencyClients, agencyMembers, agencyInvites, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan, type WebVitalsMetric, type InsertWebVitalsMetric, type Agency, type InsertAgency, type AgencyClient, type InsertAgencyClient, type AgencyMember, type InsertAgencyMember, type AgencyInvite, type InsertAgencyInvite } from "@shared/schema";
+import { users, websites, bannerConfigs, analyticsEvents, passwordResetTokens, emailVerificationTokens, cookieCategories, cookies, consentLogs, diagnosticScans, webVitalsMetrics, agencies, agencyClients, agencyMembers, agencyInvites, policies, policyPurchases, policyGenerationLogs, contactSubmissions, monthlyViewCounters, type User, type InsertUser, type Website, type InsertWebsite, type BannerConfig, type InsertBannerConfig, type AnalyticsEvent, type InsertAnalyticsEvent, type PasswordResetToken, type EmailVerificationToken, type CookieCategory, type InsertCookieCategory, type Cookie, type InsertCookie, type ConsentLog, type InsertConsentLog, type DiagnosticScan, type InsertDiagnosticScan, type WebVitalsMetric, type InsertWebVitalsMetric, type Agency, type InsertAgency, type AgencyClient, type InsertAgencyClient, type AgencyMember, type InsertAgencyMember, type AgencyInvite, type InsertAgencyInvite, type Policy, type InsertPolicy, type PolicyPurchase, type InsertPolicyPurchase, type PolicyGenerationLog, type InsertPolicyGenerationLog, type ContactSubmission, type InsertContactSubmission, apiKeys, apiUsageEvents, type ApiKey, type ApiUsageEvent, type PublicApiKey } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, desc, sql, count } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, count, ilike, like, isNotNull, isNull } from "drizzle-orm";
 
 // Plan limits configuration
 // Using -1 to represent unlimited for JSON serialization
 export const PLAN_LIMITS = {
-  solo: { websites: 1, monthlyViews: 10000 },
-  pro: { websites: 5, monthlyViews: 100000 },
-  agency: { websites: -1, monthlyViews: 1000000 }, // -1 = unlimited
+  starter: { websites: 1, monthlyViews: 10000, policyGenerations: 0, dailyCookieScans: 1, dailyDiagnosticScans: 1 },
+  solo: { websites: 1, monthlyViews: 25000, policyGenerations: 0, dailyCookieScans: 3, dailyDiagnosticScans: 2 },
+  premium: { websites: 1, monthlyViews: 100000, policyGenerations: 0, dailyCookieScans: 5, dailyDiagnosticScans: 3 },
+  pro: { websites: 5, monthlyViews: 250000, policyGenerations: 0, dailyCookieScans: 10, dailyDiagnosticScans: 5 },
+  business: { websites: 10, monthlyViews: 1000000, policyGenerations: 0, dailyCookieScans: 20, dailyDiagnosticScans: 10 },
+  agency: { websites: 25, monthlyViews: 2500000, policyGenerations: 25, dailyCookieScans: 50, dailyDiagnosticScans: 25 },
+  agency_pro: { websites: 100, monthlyViews: 10000000, policyGenerations: 100, dailyCookieScans: 100, dailyDiagnosticScans: 50 },
 } as const;
 
 export function isUnlimited(limit: number): boolean {
@@ -15,6 +19,68 @@ export function isUnlimited(limit: number): boolean {
 }
 
 export type PlanType = keyof typeof PLAN_LIMITS;
+
+export interface ConsentLogFilters {
+  dateFrom?: Date;
+  dateTo?: Date;
+  action?: string;
+  search?: string;
+}
+
+export interface ConsentLogStats {
+  totalRecords: number;
+  acceptCount: number;
+  rejectCount: number;
+  customCount: number;
+  dismissedCount: number;
+  acceptRate: number;
+  rejectRate: number;
+  mostCommonAction: string;
+  previousPeriodAcceptRate: number | null;
+  previousPeriodRejectRate: number | null;
+  trendAcceptRate: number | null;
+  trendRejectRate: number | null;
+}
+
+export interface CreateApiKeyParams {
+  userId: string;
+  name: string;
+  keyId: string;
+  keyPrefix: string;
+  secretHash: string;
+  scopes?: string[];
+  rateTier?: string;
+  expiresAt?: Date | null;
+  rotatedFromKeyId?: string | null;
+}
+
+export interface RotateApiKeyParams {
+  // DB id (not keyId) of the existing key being rotated, scoped to its owner.
+  id: string;
+  userId: string;
+  // Freshly minted material for the replacement key (mintApiKey() is called at the
+  // route layer, which alone ever sees the plaintext). The new key inherits the old
+  // key's name, scopes, and rateTier so rotation is transparent to callers.
+  keyId: string;
+  keyPrefix: string;
+  secretHash: string;
+  // Grace window the OLD key stays valid before it auto-expires. Omit for the default.
+  graceMs?: number;
+  // Hard ceiling on simultaneously-valid (non-revoked, non-expired) keys for this
+  // owner. Enforced INSIDE the rotation transaction so repeated rotations cannot
+  // stack unbounded grace-window keys and bypass the create-path cap.
+  maxValidKeys: number;
+}
+
+export interface RecordApiUsageParams {
+  apiKeyId: string;
+  userId: string;
+  websiteId?: string | null;
+  action: string;
+  billableUnits?: number;
+  idempotencyKey?: string | null;
+  status?: string;
+}
 
 export interface IStorage {
   // User methods
@@ -24,6 +90,21 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   updateSubscriptionStatus(userId: string, status: string, endDate?: Date): Promise<User>;
+  deleteUser(id: string): Promise<void>;
+  getExpiredDemoUsers(limit?: number): Promise<User[]>;
+
+  // API key methods (ConsentEase Connect)
+  createApiKey(params: CreateApiKeyParams): Promise<ApiKey>;
+  getApiKeyByKeyId(keyId: string): Promise<ApiKey | undefined>;
+  getApiKeyById(id: string): Promise<ApiKey | undefined>;
+  listApiKeysByUserId(userId: string): Promise<PublicApiKey[]>;
+  revokeApiKey(id: string, userId: string): Promise<ApiKey | undefined>;
+  rotateApiKey(
+    params: RotateApiKeyParams,
+  ): Promise<{ ok: true; newKey: ApiKey } | { ok: false; reason: "not_found" | "cap_exceeded" }>;
+  touchApiKeyLastUsed(id: string): Promise<void>;
+  recordApiUsageEvent(params: RecordApiUsageParams): Promise<{ event: ApiUsageEvent; deduped: boolean; conflict: boolean }>;
+  getApiUsageEventByIdempotency(apiKeyId: string, idempotencyKey: string): Promise<ApiUsageEvent | undefined>;
   
   // Website methods
   getWebsitesByUserId(userId: string): Promise<Website[]>;
@@ -42,19 +123,35 @@ export interface IStorage {
   // Analytics methods
   createAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent>;
   getAnalyticsByWebsiteId(websiteId: string, daysBack: number): Promise<AnalyticsEvent[]>;
+  // (Note: getAnalyticsSummary and getAdvancedAnalytics return types are intentionally
+  // declared inline below — they include the dataIntegrity overcount field added in
+  // T005 of the analytics weekend plan.)
   getAnalyticsSummary(websiteId: string, daysBack: number): Promise<{
     totalViews: number;
     acceptRate: number;
     rejectRate: number;
+    dismissedRate: number;
+    customRate: number;
+    noActionRate: number;
     dailyStats: Array<{ date: string; views: number; accepts: number; rejects: number }>;
     countryBreakdown: Array<{ country: string; count: number }>;
+    dataIntegrity?: {
+      overcount: boolean;
+      totalActions: number;
+      totalViews: number;
+      ratio: number;
+    };
   }>;
   getMonthlyViewsForUser(userId: string): Promise<number>;
+  incrementMonthlyViewCounter(userId: string): Promise<number>;
+  decrementMonthlyViewCounter(userId: string): Promise<void>;
   getAdvancedAnalytics(websiteId: string, daysBack: number): Promise<{
     trends: {
       currentPeriod: { views: number; accepts: number; rejects: number; rate: number };
       previousPeriod: { views: number; accepts: number; rejects: number; rate: number };
-      change: number;
+      // null when previous period had < MIN_SAMPLE_FOR_TREND impressions; UI
+      // should render "—" rather than a misleading delta.
+      change: number | null;
     };
     funnel: {
       impressions: number;
@@ -76,6 +173,9 @@ export interface IStorage {
     }>;
     hourlyDistribution: Array<{ hour: number; count: number }>;
     weeklyTrend: Array<{ week: string; views: number; acceptRate: number }>;
+    deviceBreakdown: Array<{ deviceType: string; count: number; acceptRate: number }>;
+    browserBreakdown: Array<{ browser: string; count: number; acceptRate: number }>;
+    categoryBreakdown: Array<{ category: string; granted: number; denied: number; total: number; grantRate: number }>;
   }>;
   
   // Password reset token methods
@@ -109,15 +209,20 @@ export interface IStorage {
   
   // Consent log methods
   createConsentLog(log: InsertConsentLog): Promise<ConsentLog>;
-  getConsentLogsByWebsiteId(websiteId: string, limit?: number, offset?: number): Promise<ConsentLog[]>;
-  getConsentLogsCount(websiteId: string): Promise<number>;
+  getConsentLogsByWebsiteId(websiteId: string, limit?: number, offset?: number, filters?: ConsentLogFilters): Promise<ConsentLog[]>;
+  getConsentLogsCount(websiteId: string, filters?: ConsentLogFilters): Promise<number>;
   getConsentLogsByDateRange(websiteId: string, startDate: Date, endDate: Date): Promise<ConsentLog[]>;
+  getConsentLogStats(websiteId: string, filters?: ConsentLogFilters): Promise<ConsentLogStats>;
   
   // Diagnostic scan methods
   createDiagnosticScan(scan: InsertDiagnosticScan): Promise<DiagnosticScan>;
   getDiagnosticScansByWebsiteId(websiteId: string): Promise<DiagnosticScan[]>;
   getLatestDiagnosticScan(websiteId: string): Promise<DiagnosticScan | undefined>;
   updateDiagnosticScan(id: string, updates: Partial<DiagnosticScan>): Promise<DiagnosticScan>;
+  
+  // Daily scan count methods
+  getDailyCookieScanCount(userId: string): Promise<number>;
+  getDailyDiagnosticScanCount(userId: string): Promise<number>;
   
   // Web Vitals methods
   createWebVitalsMetric(metric: InsertWebVitalsMetric): Promise<WebVitalsMetric>;
@@ -160,14 +265,40 @@ export interface IStorage {
   deleteAgencyMember(id: string): Promise<void>;
   
   // Agency invite methods  
+  getAgencyInviteById(id: string): Promise<AgencyInvite | undefined>;
   getAgencyInviteByToken(token: string): Promise<AgencyInvite | undefined>;
   getAgencyInvitesByAgencyId(agencyId: string): Promise<AgencyInvite[]>;
   createAgencyInvite(invite: InsertAgencyInvite): Promise<AgencyInvite>;
+  updateAgencyInvite(id: string, updates: Partial<AgencyInvite>): Promise<AgencyInvite>;
   deleteAgencyInvite(id: string): Promise<void>;
   deleteExpiredAgencyInvites(agencyId: string): Promise<void>;
   
   // Agency stats
   updateAgencyStats(agencyId: string): Promise<void>;
+  
+  // Policy purchase methods
+  getPolicyPurchasesByUserId(userId: string): Promise<PolicyPurchase[]>;
+  getPolicyPurchase(userId: string, type: string): Promise<PolicyPurchase | undefined>;
+  createPolicyPurchase(purchase: InsertPolicyPurchase): Promise<PolicyPurchase>;
+  updatePolicyPurchase(id: string, updates: Partial<PolicyPurchase>): Promise<PolicyPurchase>;
+  hasPolicyAccess(userId: string, type: 'privacy' | 'cookie'): Promise<boolean>;
+  
+  // Policy methods
+  getPoliciesByWebsiteId(websiteId: string): Promise<Policy[]>;
+  getPolicyById(id: string): Promise<Policy | undefined>;
+  getPolicyByWebsiteAndType(websiteId: string, type: string): Promise<Policy | undefined>;
+  createPolicy(policy: InsertPolicy): Promise<Policy>;
+  updatePolicy(id: string, updates: Partial<Policy>): Promise<Policy>;
+  deletePolicy(id: string): Promise<void>;
+  
+  // Policy generation log methods (for agency quota)
+  getMonthlyPolicyGenerations(userId: string, agencyId?: string): Promise<number>;
+  createPolicyGenerationLog(log: InsertPolicyGenerationLog): Promise<PolicyGenerationLog>;
+
+  // Contact submission methods
+  createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission>;
+  getContactSubmissions(limit?: number, offset?: number): Promise<ContactSubmission[]>;
+  getContactSubmissionByEmail(email: string): Promise<ContactSubmission[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -178,7 +309,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await db.select().from(users).where(ilike(users.email, email));
     return user || undefined;
   }
 
@@ -195,6 +326,25 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
     const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return updated;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    // Cascades to websites, banner_configs, cookies, etc. via FK constraints
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getExpiredDemoUsers(limit = 50): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.isDemo, true),
+          isNotNull(users.demoExpiresAt),
+          lte(users.demoExpiresAt, new Date()),
+        ),
+      )
+      .limit(limit);
   }
 
   async updateSubscriptionStatus(userId: string, status: string, endDate?: Date): Promise<User> {
@@ -281,6 +431,9 @@ export class DatabaseStorage implements IStorage {
     totalViews: number;
     acceptRate: number;
     rejectRate: number;
+    dismissedRate: number;
+    customRate: number;
+    noActionRate: number;
     dailyStats: Array<{ date: string; views: number; accepts: number; rejects: number }>;
     countryBreakdown: Array<{ country: string; count: number }>;
   }> {
@@ -292,8 +445,23 @@ export class DatabaseStorage implements IStorage {
     const totalViews = events.filter(e => e.eventType === 'banner_shown').length;
     const accepts = events.filter(e => e.eventType === 'accept').length;
     const rejects = events.filter(e => e.eventType === 'reject').length;
+    const dismissed = events.filter(e => e.eventType === 'banner_dismissed').length;
+    const customSaves = events.filter(e => e.eventType === 'preferences_saved').length;
+    const totalActions = accepts + rejects + dismissed + customSaves;
+    // Clamp noAction to 0. If actions exceed views (duplicate POSTs, missing
+    // banner_shown events, multi-tab interactions), we'd otherwise show
+    // negative noAction or > 100% rates. The dataIntegrity flag below tells
+    // the dashboard to surface a "data may be inaccurate" warning.
+    const noAction = Math.max(0, totalViews - totalActions);
+    const dataIntegrity = totalActions > totalViews && totalViews > 0
+      ? {
+          overcount: true,
+          totalActions,
+          totalViews,
+          ratio: totalActions / totalViews,
+        }
+      : undefined;
 
-    // Daily stats
     const dailyMap = new Map<string, { views: number; accepts: number; rejects: number }>();
     events.forEach(event => {
       const dateKey = event.timestamp.toISOString().split('T')[0];
@@ -310,7 +478,6 @@ export class DatabaseStorage implements IStorage {
       .map(([date, stats]) => ({ date, ...stats }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Country breakdown
     const countryMap = new Map<string, number>();
     events.forEach(event => {
       if (event.country) {
@@ -326,8 +493,12 @@ export class DatabaseStorage implements IStorage {
       totalViews,
       acceptRate: totalViews > 0 ? (accepts / totalViews) * 100 : 0,
       rejectRate: totalViews > 0 ? (rejects / totalViews) * 100 : 0,
+      dismissedRate: totalViews > 0 ? (dismissed / totalViews) * 100 : 0,
+      customRate: totalViews > 0 ? (customSaves / totalViews) * 100 : 0,
+      noActionRate: totalViews > 0 ? (noAction / totalViews) * 100 : 0,
       dailyStats,
       countryBreakdown,
+      ...(dataIntegrity ? { dataIntegrity } : {}),
     };
   }
 
@@ -339,35 +510,70 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  // UTC YYYY-MM key. Stays stable across server timezone changes and matches
+  // billing cycles which are also UTC.
+  private getCurrentMonthKey(): string {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
   async getMonthlyViewsForUser(userId: string): Promise<number> {
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    // Read-only path: just look up the counter row. No row = 0 views this month.
+    const monthKey = this.getCurrentMonthKey();
+    const [row] = await db
+      .select({ count: monthlyViewCounters.count })
+      .from(monthlyViewCounters)
+      .where(and(
+        eq(monthlyViewCounters.userId, userId),
+        eq(monthlyViewCounters.monthKey, monthKey),
+      ));
+    return row?.count || 0;
+  }
 
-    const userWebsites = await this.getWebsitesByUserId(userId);
-    if (userWebsites.length === 0) return 0;
+  async incrementMonthlyViewCounter(userId: string): Promise<number> {
+    // Atomic INSERT…ON CONFLICT DO UPDATE returning the new count. Two concurrent
+    // banner_shown POSTs can no longer both see "below limit" and both pass — the
+    // increment and the read happen in the same statement.
+    const monthKey = this.getCurrentMonthKey();
+    const [row] = await db
+      .insert(monthlyViewCounters)
+      .values({ userId, monthKey, count: 1 })
+      .onConflictDoUpdate({
+        target: [monthlyViewCounters.userId, monthlyViewCounters.monthKey],
+        set: {
+          count: sql`${monthlyViewCounters.count} + 1`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ count: monthlyViewCounters.count });
+    return row?.count || 0;
+  }
 
-    const websiteIds = userWebsites.map(w => w.id);
-    
-    const result = await db
-      .select({ count: count() })
-      .from(analyticsEvents)
-      .where(
-        and(
-          sql`${analyticsEvents.websiteId} = ANY(ARRAY[${sql.raw(websiteIds.map(id => `'${id}'`).join(','))}]::varchar[])`,
-          eq(analyticsEvents.eventType, 'banner_shown'),
-          gte(analyticsEvents.timestamp, startOfMonth)
-        )
-      );
-    
-    return result[0]?.count || 0;
+  async decrementMonthlyViewCounter(userId: string): Promise<void> {
+    // Compensating action used by the route handler when the analytics_events
+    // INSERT fails after the counter has already been incremented. We never
+    // want the billing-driving counter to drift above the actual recorded
+    // event count. greatest(count - 1, 0) avoids ever going negative.
+    const monthKey = this.getCurrentMonthKey();
+    await db
+      .update(monthlyViewCounters)
+      .set({
+        count: sql`GREATEST(${monthlyViewCounters.count} - 1, 0)`,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(monthlyViewCounters.userId, userId),
+        eq(monthlyViewCounters.monthKey, monthKey),
+      ));
   }
 
   async getAdvancedAnalytics(websiteId: string, daysBack: number): Promise<{
     trends: {
       currentPeriod: { views: number; accepts: number; rejects: number; rate: number };
       previousPeriod: { views: number; accepts: number; rejects: number; rate: number };
-      change: number;
+      change: number | null;
     };
     funnel: {
       impressions: number;
@@ -389,32 +595,35 @@ export class DatabaseStorage implements IStorage {
     }>;
     hourlyDistribution: Array<{ hour: number; count: number }>;
     weeklyTrend: Array<{ week: string; views: number; acceptRate: number }>;
+    deviceBreakdown: Array<{ deviceType: string; count: number; acceptRate: number }>;
+    browserBreakdown: Array<{ browser: string; count: number; acceptRate: number }>;
+    categoryBreakdown: Array<{ category: string; granted: number; denied: number; total: number; grantRate: number }>;
   }> {
-    const countryFlags: Record<string, { code: string; flag: string }> = {
-      'United States': { code: 'US', flag: '🇺🇸' },
-      'United Kingdom': { code: 'GB', flag: '🇬🇧' },
-      'Germany': { code: 'DE', flag: '🇩🇪' },
-      'France': { code: 'FR', flag: '🇫🇷' },
-      'Netherlands': { code: 'NL', flag: '🇳🇱' },
-      'Belgium': { code: 'BE', flag: '🇧🇪' },
-      'Spain': { code: 'ES', flag: '🇪🇸' },
-      'Italy': { code: 'IT', flag: '🇮🇹' },
-      'Portugal': { code: 'PT', flag: '🇵🇹' },
-      'Poland': { code: 'PL', flag: '🇵🇱' },
-      'Canada': { code: 'CA', flag: '🇨🇦' },
-      'Australia': { code: 'AU', flag: '🇦🇺' },
-      'Japan': { code: 'JP', flag: '🇯🇵' },
-      'Brazil': { code: 'BR', flag: '🇧🇷' },
-      'India': { code: 'IN', flag: '🇮🇳' },
-      'China': { code: 'CN', flag: '🇨🇳' },
-      'Mexico': { code: 'MX', flag: '🇲🇽' },
-      'Sweden': { code: 'SE', flag: '🇸🇪' },
-      'Norway': { code: 'NO', flag: '🇳🇴' },
-      'Denmark': { code: 'DK', flag: '🇩🇰' },
-      'Finland': { code: 'FI', flag: '🇫🇮' },
-      'Ireland': { code: 'IE', flag: '🇮🇪' },
-      'Austria': { code: 'AT', flag: '🇦🇹' },
-      'Switzerland': { code: 'CH', flag: '🇨🇭' },
+    const countryCodes: Record<string, string> = {
+      'United States': 'US',
+      'United Kingdom': 'GB',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Netherlands': 'NL',
+      'Belgium': 'BE',
+      'Spain': 'ES',
+      'Italy': 'IT',
+      'Portugal': 'PT',
+      'Poland': 'PL',
+      'Canada': 'CA',
+      'Australia': 'AU',
+      'Japan': 'JP',
+      'Brazil': 'BR',
+      'India': 'IN',
+      'China': 'CN',
+      'Mexico': 'MX',
+      'Sweden': 'SE',
+      'Norway': 'NO',
+      'Denmark': 'DK',
+      'Finland': 'FI',
+      'Ireland': 'IE',
+      'Austria': 'AT',
+      'Switzerland': 'CH',
     };
 
     const currentEvents = await this.getAnalyticsByWebsiteId(websiteId, daysBack);
@@ -434,13 +643,25 @@ export class DatabaseStorage implements IStorage {
 
     const currentPeriod = calcStats(currentEvents);
     const previousPeriod = calcStats(previousOnlyEvents);
-    const change = previousPeriod.rate > 0 
-      ? ((currentPeriod.rate - previousPeriod.rate) / previousPeriod.rate) * 100 
-      : 0;
+    // M4: a single banner_shown moving the rate from 0% → 100% used to read as
+    // "+infinity% growth" because the divisor was tiny. Require a minimum
+    // sample (50 impressions) before reporting a percentage delta, and clamp
+    // to a sane range so the dashboard tile doesn't render "+9472.6% vs prev".
+    const MIN_SAMPLE_FOR_TREND = 50;
+    let change: number | null;
+    if (previousPeriod.views < MIN_SAMPLE_FOR_TREND || previousPeriod.rate === 0) {
+      change = null;
+    } else {
+      const raw = ((currentPeriod.rate - previousPeriod.rate) / previousPeriod.rate) * 100;
+      change = Math.max(-100, Math.min(999, raw));
+    }
 
+    // M1: settings_click is never emitted by the live banner (1.4M-event sample
+    // shows zero). Removed from interactions so a future emission won't be
+    // silently dropped; banner_dismissed counts as a real (passive) interaction.
     const funnel = {
       impressions: currentEvents.filter(e => e.eventType === 'banner_shown').length,
-      interactions: currentEvents.filter(e => ['accept', 'reject', 'settings_click', 'preferences_saved', 'banner_dismissed'].includes(e.eventType)).length,
+      interactions: currentEvents.filter(e => ['accept', 'reject', 'preferences_saved', 'banner_dismissed'].includes(e.eventType)).length,
       settingsClicks: currentEvents.filter(e => e.eventType === 'settings_click').length,
       accepts: currentEvents.filter(e => e.eventType === 'accept').length,
       rejects: currentEvents.filter(e => e.eventType === 'reject').length,
@@ -463,8 +684,8 @@ export class DatabaseStorage implements IStorage {
     const geographic = Array.from(geoMap.entries())
       .map(([country, stats]) => ({
         country,
-        countryCode: countryFlags[country]?.code || 'XX',
-        flag: countryFlags[country]?.flag || '🌍',
+        countryCode: countryCodes[country] || 'XX',
+        flag: '',
         views: stats.views,
         accepts: stats.accepts,
         rejects: stats.rejects,
@@ -506,12 +727,77 @@ export class DatabaseStorage implements IStorage {
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
 
+    const deviceMap = new Map<string, { views: number; accepts: number }>();
+    currentEvents.forEach(event => {
+      const dt = event.deviceType || 'unknown';
+      if (!deviceMap.has(dt)) deviceMap.set(dt, { views: 0, accepts: 0 });
+      const stats = deviceMap.get(dt)!;
+      if (event.eventType === 'banner_shown') stats.views++;
+      if (event.eventType === 'accept') stats.accepts++;
+    });
+    const deviceBreakdown = Array.from(deviceMap.entries())
+      .map(([deviceType, stats]) => ({
+        deviceType,
+        count: stats.views,
+        acceptRate: stats.views > 0 ? (stats.accepts / stats.views) * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const browserMap = new Map<string, { views: number; accepts: number }>();
+    currentEvents.forEach(event => {
+      const br = event.browser || 'Unknown';
+      if (!browserMap.has(br)) browserMap.set(br, { views: 0, accepts: 0 });
+      const stats = browserMap.get(br)!;
+      if (event.eventType === 'banner_shown') stats.views++;
+      if (event.eventType === 'accept') stats.accepts++;
+    });
+    const browserBreakdown = Array.from(browserMap.entries())
+      .map(([browser, stats]) => ({
+        browser,
+        count: stats.views,
+        acceptRate: stats.views > 0 ? (stats.accepts / stats.views) * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+    const consentLogEvents = await this.getConsentLogsByDateRange(websiteId, startDate, new Date());
+    const categoryTotals = new Map<string, { granted: number; denied: number }>();
+    consentLogEvents.forEach(log => {
+      try {
+        const choices = JSON.parse(log.consentChoices);
+        Object.entries(choices).forEach(([category, value]) => {
+          if (category === 'necessary') return;
+          if (!categoryTotals.has(category)) categoryTotals.set(category, { granted: 0, denied: 0 });
+          const stats = categoryTotals.get(category)!;
+          if (value) stats.granted++;
+          else stats.denied++;
+        });
+      } catch {}
+    });
+    const categoryBreakdown = Array.from(categoryTotals.entries())
+      .map(([category, stats]) => {
+        const total = stats.granted + stats.denied;
+        return {
+          category,
+          granted: stats.granted,
+          denied: stats.denied,
+          total,
+          grantRate: total > 0 ? (stats.granted / total) * 100 : 0,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+
     return {
       trends: { currentPeriod, previousPeriod, change },
       funnel,
       geographic,
       hourlyDistribution,
       weeklyTrend,
+      deviceBreakdown,
+      browserBreakdown,
+      categoryBreakdown,
     };
   }
 
@@ -691,17 +977,34 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getConsentLogsByWebsiteId(websiteId: string, limit = 100, offset = 0): Promise<ConsentLog[]> {
+  private buildConsentLogConditions(websiteId: string, filters?: ConsentLogFilters) {
+    const conditions = [eq(consentLogs.websiteId, websiteId)];
+    if (filters?.dateFrom) {
+      conditions.push(gte(consentLogs.timestamp, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(consentLogs.timestamp, filters.dateTo));
+    }
+    if (filters?.action) {
+      conditions.push(eq(consentLogs.action, filters.action));
+    }
+    if (filters?.search) {
+      conditions.push(like(consentLogs.visitorId, `%${filters.search}%`));
+    }
+    return and(...conditions);
+  }
+
+  async getConsentLogsByWebsiteId(websiteId: string, limit = 100, offset = 0, filters?: ConsentLogFilters): Promise<ConsentLog[]> {
     return await db.select().from(consentLogs)
-      .where(eq(consentLogs.websiteId, websiteId))
+      .where(this.buildConsentLogConditions(websiteId, filters))
       .orderBy(desc(consentLogs.timestamp))
       .limit(limit)
       .offset(offset);
   }
 
-  async getConsentLogsCount(websiteId: string): Promise<number> {
+  async getConsentLogsCount(websiteId: string, filters?: ConsentLogFilters): Promise<number> {
     const result = await db.select({ count: count() }).from(consentLogs)
-      .where(eq(consentLogs.websiteId, websiteId));
+      .where(this.buildConsentLogConditions(websiteId, filters));
     return result[0]?.count || 0;
   }
 
@@ -710,9 +1013,99 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(consentLogs.websiteId, websiteId),
         gte(consentLogs.timestamp, startDate),
-        sql`${consentLogs.timestamp} <= ${endDate}`
+        lte(consentLogs.timestamp, endDate)
       ))
       .orderBy(desc(consentLogs.timestamp));
+  }
+
+  async getConsentLogStats(websiteId: string, filters?: ConsentLogFilters): Promise<ConsentLogStats> {
+    const condition = this.buildConsentLogConditions(websiteId, filters);
+
+    const actionCounts = await db
+      .select({
+        action: consentLogs.action,
+        count: count(),
+      })
+      .from(consentLogs)
+      .where(condition)
+      .groupBy(consentLogs.action);
+
+    let totalRecords = 0;
+    let acceptCount = 0;
+    let rejectCount = 0;
+    let customCount = 0;
+    let dismissedCount = 0;
+
+    for (const row of actionCounts) {
+      const c = row.count;
+      totalRecords += c;
+      if (row.action === 'accept_all') acceptCount = c;
+      else if (row.action === 'reject_all') rejectCount = c;
+      else if (row.action === 'custom') customCount = c;
+      else if (row.action === 'dismissed') dismissedCount = c;
+    }
+
+    const acceptRate = totalRecords > 0 ? (acceptCount / totalRecords) * 100 : 0;
+    const rejectRate = totalRecords > 0 ? (rejectCount / totalRecords) * 100 : 0;
+
+    const mostCommonAction = actionCounts.length > 0
+      ? actionCounts.reduce((a, b) => (a.count > b.count ? a : b)).action
+      : 'none';
+
+    let previousPeriodAcceptRate: number | null = null;
+    let previousPeriodRejectRate: number | null = null;
+    let trendAcceptRate: number | null = null;
+    let trendRejectRate: number | null = null;
+
+    if (filters?.dateFrom && filters?.dateTo) {
+      const periodMs = filters.dateTo.getTime() - filters.dateFrom.getTime();
+      const prevFrom = new Date(filters.dateFrom.getTime() - periodMs);
+      const prevTo = new Date(filters.dateFrom.getTime());
+
+      const prevCounts = await db
+        .select({
+          action: consentLogs.action,
+          count: count(),
+        })
+        .from(consentLogs)
+        .where(and(
+          eq(consentLogs.websiteId, websiteId),
+          gte(consentLogs.timestamp, prevFrom),
+          lte(consentLogs.timestamp, prevTo),
+        ))
+        .groupBy(consentLogs.action);
+
+      let prevTotal = 0;
+      let prevAccept = 0;
+      let prevReject = 0;
+      for (const row of prevCounts) {
+        prevTotal += row.count;
+        if (row.action === 'accept_all') prevAccept = row.count;
+        else if (row.action === 'reject_all') prevReject = row.count;
+      }
+
+      if (prevTotal > 0) {
+        previousPeriodAcceptRate = (prevAccept / prevTotal) * 100;
+        previousPeriodRejectRate = (prevReject / prevTotal) * 100;
+        trendAcceptRate = acceptRate - previousPeriodAcceptRate;
+        trendRejectRate = rejectRate - previousPeriodRejectRate;
+      }
+    }
+
+    return {
+      totalRecords,
+      acceptCount,
+      rejectCount,
+      customCount,
+      dismissedCount,
+      acceptRate,
+      rejectRate,
+      mostCommonAction,
+      previousPeriodAcceptRate,
+      previousPeriodRejectRate,
+      trendAcceptRate,
+      trendRejectRate,
+    };
   }
 
   // Diagnostic scan methods
@@ -953,6 +1346,11 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Agency invite methods
+  async getAgencyInviteById(id: string): Promise<AgencyInvite | undefined> {
+    const [invite] = await db.select().from(agencyInvites).where(eq(agencyInvites.id, id));
+    return invite || undefined;
+  }
+
   async getAgencyInviteByToken(token: string): Promise<AgencyInvite | undefined> {
     const [invite] = await db.select().from(agencyInvites).where(eq(agencyInvites.token, token));
     return invite || undefined;
@@ -969,6 +1367,11 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
   
+  async updateAgencyInvite(id: string, updates: Partial<AgencyInvite>): Promise<AgencyInvite> {
+    const [updated] = await db.update(agencyInvites).set(updates).where(eq(agencyInvites.id, id)).returning();
+    return updated;
+  }
+
   async deleteAgencyInvite(id: string): Promise<void> {
     await db.delete(agencyInvites).where(eq(agencyInvites.id, id));
   }
@@ -1008,6 +1411,320 @@ export class DatabaseStorage implements IStorage {
       clientCount: clientResult.count,
       totalWebsites: totalWebsites,
     }).where(eq(agencies.id, agencyId));
+  }
+  
+  // Policy purchase methods
+  async getPolicyPurchasesByUserId(userId: string): Promise<PolicyPurchase[]> {
+    return await db.select().from(policyPurchases)
+      .where(eq(policyPurchases.userId, userId))
+      .orderBy(desc(policyPurchases.purchasedAt));
+  }
+  
+  async getPolicyPurchase(userId: string, type: string): Promise<PolicyPurchase | undefined> {
+    const [purchase] = await db.select().from(policyPurchases)
+      .where(and(
+        eq(policyPurchases.userId, userId), 
+        eq(policyPurchases.type, type),
+        eq(policyPurchases.status, 'completed')
+      ));
+    return purchase || undefined;
+  }
+  
+  async createPolicyPurchase(purchase: InsertPolicyPurchase): Promise<PolicyPurchase> {
+    const [created] = await db.insert(policyPurchases).values(purchase).returning();
+    return created;
+  }
+  
+  async updatePolicyPurchase(id: string, updates: Partial<PolicyPurchase>): Promise<PolicyPurchase> {
+    const [updated] = await db.update(policyPurchases).set(updates).where(eq(policyPurchases.id, id)).returning();
+    return updated;
+  }
+  
+  async hasPolicyAccess(userId: string, type: 'privacy' | 'cookie'): Promise<boolean> {
+    const purchase = await this.getPolicyPurchase(userId, type);
+    return purchase !== undefined;
+  }
+  
+  // Policy methods
+  async getPoliciesByWebsiteId(websiteId: string): Promise<Policy[]> {
+    return await db.select().from(policies)
+      .where(eq(policies.websiteId, websiteId))
+      .orderBy(desc(policies.createdAt));
+  }
+  
+  async getPolicyById(id: string): Promise<Policy | undefined> {
+    const [policy] = await db.select().from(policies).where(eq(policies.id, id));
+    return policy || undefined;
+  }
+  
+  async getPolicyByWebsiteAndType(websiteId: string, type: string): Promise<Policy | undefined> {
+    const [policy] = await db.select().from(policies)
+      .where(and(eq(policies.websiteId, websiteId), eq(policies.type, type)));
+    return policy || undefined;
+  }
+  
+  async createPolicy(policy: InsertPolicy): Promise<Policy> {
+    const [created] = await db.insert(policies).values(policy).returning();
+    return created;
+  }
+  
+  async updatePolicy(id: string, updates: Partial<Policy>): Promise<Policy> {
+    const [updated] = await db.update(policies).set(updates).where(eq(policies.id, id)).returning();
+    return updated;
+  }
+  
+  async deletePolicy(id: string): Promise<void> {
+    await db.delete(policies).where(eq(policies.id, id));
+  }
+  
+  // Daily scan count methods
+  async getDailyCookieScanCount(userId: string): Promise<number> {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const result = await db.select({ count: count() }).from(websites)
+      .where(and(eq(websites.userId, userId), gte(websites.lastScan, startOfDay)));
+    return result[0]?.count || 0;
+  }
+
+  async getDailyDiagnosticScanCount(userId: string): Promise<number> {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const result = await db.select({ count: count() }).from(diagnosticScans)
+      .innerJoin(websites, eq(diagnosticScans.websiteId, websites.id))
+      .where(and(eq(websites.userId, userId), gte(diagnosticScans.scannedAt, startOfDay)));
+    return result[0]?.count || 0;
+  }
+
+  // Policy generation log methods
+  async getMonthlyPolicyGenerations(userId: string, agencyId?: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    const conditions = [
+      eq(policyGenerationLogs.userId, userId),
+      gte(policyGenerationLogs.createdAt, startOfMonth)
+    ];
+    
+    if (agencyId) {
+      conditions.push(eq(policyGenerationLogs.agencyId, agencyId));
+    }
+    
+    const result = await db.select({ count: count() })
+      .from(policyGenerationLogs)
+      .where(and(...conditions));
+    
+    return result[0]?.count || 0;
+  }
+  
+  async createPolicyGenerationLog(log: InsertPolicyGenerationLog): Promise<PolicyGenerationLog> {
+    const [created] = await db.insert(policyGenerationLogs).values(log).returning();
+    return created;
+  }
+
+  async createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission> {
+    const [created] = await db.insert(contactSubmissions).values(submission).returning();
+    return created;
+  }
+
+  async getContactSubmissions(limit = 50, offset = 0): Promise<ContactSubmission[]> {
+    return db.select().from(contactSubmissions).orderBy(desc(contactSubmissions.createdAt)).limit(limit).offset(offset);
+  }
+
+  async getContactSubmissionByEmail(email: string): Promise<ContactSubmission[]> {
+    return db.select().from(contactSubmissions).where(eq(contactSubmissions.email, email)).orderBy(desc(contactSubmissions.createdAt));
+  }
+
+  // API key methods (ConsentEase Connect)
+  async createApiKey(params: CreateApiKeyParams): Promise<ApiKey> {
+    const [created] = await db
+      .insert(apiKeys)
+      .values({
+        userId: params.userId,
+        name: params.name,
+        keyId: params.keyId,
+        keyPrefix: params.keyPrefix,
+        secretHash: params.secretHash,
+        scopes: params.scopes ?? [],
+        rateTier: params.rateTier ?? "standard",
+        expiresAt: params.expiresAt ?? null,
+        rotatedFromKeyId: params.rotatedFromKeyId ?? null,
+      })
+      .returning();
+    return created;
+  }
+
+  async getApiKeyByKeyId(keyId: string): Promise<ApiKey | undefined> {
+    const [row] = await db.select().from(apiKeys).where(eq(apiKeys.keyId, keyId));
+    return row || undefined;
+  }
+
+  async getApiKeyById(id: string): Promise<ApiKey | undefined> {
+    const [row] = await db.select().from(apiKeys).where(eq(apiKeys.id, id));
+    return row || undefined;
+  }
+
+  async listApiKeysByUserId(userId: string): Promise<PublicApiKey[]> {
+    // Explicit projection: secretHash is never pulled from the DB for listing, so it
+    // cannot leak through route serialization (threat_model.md, Information Disclosure).
+    return await db
+      .select({
+        id: apiKeys.id,
+        userId: apiKeys.userId,
+        name: apiKeys.name,
+        keyId: apiKeys.keyId,
+        keyPrefix: apiKeys.keyPrefix,
+        scopes: apiKeys.scopes,
+        rateTier: apiKeys.rateTier,
+        lastUsedAt: apiKeys.lastUsedAt,
+        expiresAt: apiKeys.expiresAt,
+        revokedAt: apiKeys.revokedAt,
+        rotatedFromKeyId: apiKeys.rotatedFromKeyId,
+        createdAt: apiKeys.createdAt,
+      })
+      .from(apiKeys)
+      .where(eq(apiKeys.userId, userId))
+      .orderBy(desc(apiKeys.createdAt));
+  }
+
+  async revokeApiKey(id: string, userId: string): Promise<ApiKey | undefined> {
+    // Scoped to the owner (userId) so one user can never revoke another's key.
+    // isNull(revokedAt) makes revocation idempotent — re-revoking returns undefined.
+    const [updated] = await db
+      .update(apiKeys)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Rotate a key: mint a replacement (linked via rotatedFromKeyId) while the old key
+  // keeps working for a bounded grace window, then auto-expires. We set the old key's
+  // expiresAt = now + grace rather than revokedAt = now so in-flight clients are not
+  // broken mid-request; auth rejects it once the window passes (see apiKeyAuth). Both
+  // writes run in one transaction so a partial rotation can never leave an orphaned or
+  // un-expired old key. Returns undefined if the key is missing, not owned, or already
+  // revoked (a revoked key cannot be rotated — create a fresh one instead).
+  async rotateApiKey(
+    params: RotateApiKeyParams,
+  ): Promise<{ ok: true; newKey: ApiKey } | { ok: false; reason: "not_found" | "cap_exceeded" }> {
+    const DEFAULT_ROTATION_GRACE_MS = 24 * 60 * 60 * 1000; // 24h
+    const graceMs = params.graceMs ?? DEFAULT_ROTATION_GRACE_MS;
+
+    return await db.transaction(async (tx) => {
+      // Lock the predecessor row FOR UPDATE so two concurrent rotations (or a
+      // double-clicked button) serialize here instead of each minting a replacement
+      // key. The second caller blocks until the first commits, then re-reads the
+      // now-rotated predecessor and is stopped by the successor check below.
+      const [old] = await tx
+        .select()
+        .from(apiKeys)
+        .where(and(eq(apiKeys.id, params.id), eq(apiKeys.userId, params.userId), isNull(apiKeys.revokedAt)))
+        .for("update");
+      if (!old) return { ok: false, reason: "not_found" };
+
+      // An already-expired key is dead — the caller should mint a fresh one, not rotate.
+      if (old.expiresAt && old.expiresAt.getTime() <= Date.now()) return { ok: false, reason: "not_found" };
+
+      // One successor per predecessor: if a non-revoked replacement already exists this
+      // key was already rotated, so do not mint another. Combined with the row lock
+      // above, this makes rotation idempotent under concurrency.
+      const [existingSuccessor] = await tx
+        .select({ id: apiKeys.id })
+        .from(apiKeys)
+        .where(and(eq(apiKeys.rotatedFromKeyId, old.id), isNull(apiKeys.revokedAt)));
+      if (existingSuccessor) return { ok: false, reason: "not_found" };
+
+      // Cap enforcement: rotation mints a successor while the predecessor stays valid
+      // through its grace window, so it transiently ADDS one valid key. Without this
+      // check a user could rotate the newest active key over and over, stacking
+      // unbounded still-valid grace keys and bypassing the create-path ceiling. We
+      // count currently-valid (non-revoked, non-expired) keys — which includes the
+      // predecessor — and reject when adding the successor would exceed the limit,
+      // keeping total valid keys <= maxValidKeys even during a grace window.
+      const now = Date.now();
+      const ownerKeys = await tx
+        .select({ expiresAt: apiKeys.expiresAt })
+        .from(apiKeys)
+        .where(and(eq(apiKeys.userId, params.userId), isNull(apiKeys.revokedAt)));
+      const validCount = ownerKeys.filter(
+        (k) => !k.expiresAt || k.expiresAt.getTime() > now,
+      ).length;
+      if (validCount >= params.maxValidKeys) return { ok: false, reason: "cap_exceeded" };
+
+      // Bring the old key's expiry forward to the grace deadline, but never EXTEND an
+      // existing sooner expiry (a key already expiring before the window stays as-is).
+      const graceExpiry = new Date(Date.now() + graceMs);
+      const oldExpiry =
+        old.expiresAt && old.expiresAt.getTime() < graceExpiry.getTime() ? old.expiresAt : graceExpiry;
+      await tx.update(apiKeys).set({ expiresAt: oldExpiry }).where(eq(apiKeys.id, old.id));
+
+      const [newKey] = await tx
+        .insert(apiKeys)
+        .values({
+          userId: old.userId,
+          name: old.name,
+          keyId: params.keyId,
+          keyPrefix: params.keyPrefix,
+          secretHash: params.secretHash,
+          scopes: old.scopes ?? [],
+          rateTier: old.rateTier,
+          expiresAt: null,
+          rotatedFromKeyId: old.id,
+        })
+        .returning();
+
+      return { ok: true, newKey };
+    });
+  }
+
+  async touchApiKeyLastUsed(id: string): Promise<void> {
+    await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, id));
+  }
+
+  async recordApiUsageEvent(params: RecordApiUsageParams): Promise<{ event: ApiUsageEvent; deduped: boolean; conflict: boolean }> {
+    const values = {
+      apiKeyId: params.apiKeyId,
+      userId: params.userId,
+      websiteId: params.websiteId ?? null,
+      action: params.action,
+      billableUnits: params.billableUnits ?? 0,
+      idempotencyKey: params.idempotencyKey ?? null,
+      status: params.status ?? "ok",
+    };
+    if (values.idempotencyKey) {
+      // De-dupe billable retries on (apiKeyId, idempotencyKey). NULL keys are
+      // treated as distinct by Postgres, so this path is only taken when a key
+      // is supplied (see threat_model.md, Repudiation).
+      const [inserted] = await db
+        .insert(apiUsageEvents)
+        .values(values)
+        .onConflictDoNothing({ target: [apiUsageEvents.apiKeyId, apiUsageEvents.idempotencyKey] })
+        .returning();
+      if (inserted) return { event: inserted, deduped: false, conflict: false };
+      // Key already used. conflict=true means it was reused for a DIFFERENT action;
+      // a route should reject that (409) rather than silently treat it as a replay.
+      const [existing] = await db
+        .select()
+        .from(apiUsageEvents)
+        .where(and(eq(apiUsageEvents.apiKeyId, values.apiKeyId), eq(apiUsageEvents.idempotencyKey, values.idempotencyKey)));
+      return { event: existing, deduped: true, conflict: existing ? existing.action !== values.action : false };
+    }
+    const [created] = await db.insert(apiUsageEvents).values(values).returning();
+    return { event: created, deduped: false, conflict: false };
+  }
+
+  // Read-only lookup of a prior usage event by its idempotency key. Used by the
+  // /api/v1 consent route to detect a replay BEFORE writing the consent record, so
+  // a retried request is neither duplicated nor lost (the insert in
+  // recordApiUsageEvent only runs on the first, non-replayed call).
+  async getApiUsageEventByIdempotency(apiKeyId: string, idempotencyKey: string): Promise<ApiUsageEvent | undefined> {
+    const [row] = await db
+      .select()
+      .from(apiUsageEvents)
+      .where(and(eq(apiUsageEvents.apiKeyId, apiKeyId), eq(apiUsageEvents.idempotencyKey, idempotencyKey)))
+      .limit(1);
+    return row;
   }
 }
 

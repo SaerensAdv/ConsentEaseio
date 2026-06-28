@@ -1,0 +1,17 @@
+{
+  "name": "consentease-connect-starter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A ready-to-run starter that connects to the ConsentEase Connect MCP server and calls its tools.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1"
+  }
+}

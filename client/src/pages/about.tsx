@@ -1,28 +1,100 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowLeft, Users, Target, Heart, Globe } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowLeft, Users, Target, Heart, Globe } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
-export default function AboutPage() {
-  return (
-    <div className="min-h-screen bg-background font-sans">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
-            ConsentEase
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" className="gap-2" data-testid="button-back-home">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </nav>
+function AboutPageSchema() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About ConsentEase",
+    "description": "Learn about ConsentEase - a Belgium-based company making GDPR compliance accessible for small businesses. Founded by privacy experts at Saerens Advertising.",
+    "url": "https://consentease.io/about",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "ConsentEase",
+      "url": "https://consentease.io",
+      "logo": "https://consentease.io/consentease-logo.webp",
+      "description": "Affordable GDPR/CCPA cookie consent management for small businesses. 2-minute setup, full compliance.",
+      "foundingDate": "2024",
+      "foundingLocation": {
+        "@type": "Place",
+        "name": "Belgium"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "BE"
+      },
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "Saerens Advertising",
+        "url": "https://saerensadvertising.com"
+      },
+      "numberOfEmployees": {
+        "@type": "QuantitativeValue",
+        "value": "10"
+      },
+      "areaServed": "Worldwide",
+      "knowsAbout": ["GDPR", "Cookie Consent", "Privacy Compliance", "ePrivacy Directive", "CCPA"]
+    }
+  };
 
-      <main className="pt-32 pb-20 px-6">
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+export default function AboutPage() {
+  useCanonical("/about");
+  
+  useEffect(() => {
+    const originalTitle = document.title;
+    const metaDescription = document.querySelector('meta[name="description"]');
+    const originalDescription = metaDescription?.getAttribute("content") || "";
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const originalOgTitle = ogTitle?.getAttribute("content") || "";
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const originalOgDescription = ogDescription?.getAttribute("content") || "";
+
+    document.title = "About Us - The Story Behind ConsentEase | Belgium-Based Privacy Company";
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Learn about ConsentEase - a Belgium-based company making GDPR compliance accessible for small businesses. Founded by privacy experts at Saerens Advertising.");
+    }
+    if (ogTitle) ogTitle.setAttribute("content", "About ConsentEase - Privacy Compliance for Everyone");
+    if (ogDescription) ogDescription.setAttribute("content", "Belgium-based privacy company making GDPR accessible for all businesses.");
+
+    return () => {
+      document.title = originalTitle;
+      if (metaDescription) metaDescription.setAttribute("content", originalDescription);
+      if (ogTitle) ogTitle.setAttribute("content", originalOgTitle);
+      if (ogDescription) ogDescription.setAttribute("content", originalOgDescription);
+    };
+  }, []);
+
+  return (
+    <>
+      <AboutPageSchema />
+      <div className="min-h-screen bg-background font-sans">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+          <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2" data-testid="link-logo-home">
+              <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
+              ConsentEase
+            </Link>
+            <Link href="/">
+              <Button variant="ghost" className="gap-2" data-testid="button-back-home">
+                <ArrowLeft size={16} />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
+        </nav>
+
+        <main className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
@@ -84,7 +156,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-primary" />
+                  <Users size={32} className="text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">Accessibility</h3>
                 <p className="text-sm text-muted-foreground">
@@ -93,7 +165,7 @@ export default function AboutPage() {
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-8 h-8 text-primary" />
+                  <Target size={32} className="text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">Simplicity</h3>
                 <p className="text-sm text-muted-foreground">
@@ -102,7 +174,7 @@ export default function AboutPage() {
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-primary" />
+                  <Heart size={32} className="text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">Trust</h3>
                 <p className="text-sm text-muted-foreground">
@@ -111,7 +183,7 @@ export default function AboutPage() {
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Globe className="w-8 h-8 text-primary" />
+                  <Globe size={32} className="text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">European</h3>
                 <p className="text-sm text-muted-foreground">
@@ -152,6 +224,7 @@ export default function AboutPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

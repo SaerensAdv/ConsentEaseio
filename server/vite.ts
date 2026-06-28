@@ -5,6 +5,7 @@ import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import { injectMetaTags } from "./seo-meta";
 
 const viteLogger = createLogger();
 
@@ -48,7 +49,10 @@ export async function setupVite(server: Server, app: Express) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      // Run vite plugins first (HMR, react refresh, build-time meta plugin),
+      // then apply our per-page SEO meta on top so it always wins.
+      const transformed = await vite.transformIndexHtml(url, template);
+      const page = injectMetaTags(transformed, url.split("?")[0]);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

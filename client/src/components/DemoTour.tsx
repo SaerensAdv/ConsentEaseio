@@ -2,10 +2,11 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useDemo } from "@/contexts/DemoContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { X, ChevronLeft, ChevronRight, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { X, CaretLeft, CaretRight, Sparkle, ArrowRight } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Spinner } from "@/components/ui/spinner";
 
 export function DemoTour() {
   const { 
@@ -16,6 +17,7 @@ export function DemoTour() {
     nextStep, 
     prevStep, 
     endDemo,
+    skipTour,
     showFloatingCTA 
   } = useDemo();
   const [, setLocation] = useLocation();
@@ -26,6 +28,14 @@ export function DemoTour() {
   const isMobile = useIsMobile();
 
   const [targetFound, setTargetFound] = useState(false);
+
+  // Reset showEndModal when demo mode ends
+  useEffect(() => {
+    if (!isDemoMode) {
+      setShowEndModal(false);
+      setTargetFound(false);
+    }
+  }, [isDemoMode]);
   
   const measureTooltip = useCallback(() => {
     if (tooltipRef.current) {
@@ -157,7 +167,7 @@ export function DemoTour() {
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50"
           >
             <Card className="p-6 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-2" />
+              <Spinner size={32} className="mx-auto text-primary mb-2" />
               <p className="text-sm text-muted-foreground">Loading...</p>
             </Card>
           </motion.div>
@@ -175,7 +185,7 @@ export function DemoTour() {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <Sparkle size={16} className="text-primary" />
                   </div>
                   <span className="text-xs text-muted-foreground font-medium">
                     Step {currentStep + 1} of {totalSteps}
@@ -188,7 +198,7 @@ export function DemoTour() {
                   onClick={endDemo}
                   data-testid="button-end-tour"
                 >
-                  <X className="w-4 h-4" />
+                  <X size={16} />
                 </Button>
               </div>
 
@@ -196,23 +206,33 @@ export function DemoTour() {
               <p className="text-sm text-muted-foreground mb-4">{currentTourStep.content}</p>
 
               <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prevStep}
-                  disabled={currentStep === 0}
-                  data-testid="button-prev-step"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
+                {currentStep === 0 ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={skipTour}
+                    data-testid="button-skip-tour"
+                  >
+                    Skip tour
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={prevStep}
+                    data-testid="button-prev-step"
+                  >
+                    <CaretLeft size={16} className="mr-1" />
+                    Back
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   onClick={handleNext}
                   data-testid="button-next-step"
                 >
                   {currentStep === totalSteps - 1 ? "Finish" : "Next"}
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  <CaretRight size={16} className="ml-1" />
                 </Button>
               </div>
             </Card>
@@ -232,9 +252,9 @@ export function DemoTour() {
             onClick={handleStartTrial}
             data-testid="button-start-trial-cta"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Sparkle size={16} className="mr-2" />
             Start Your Free Trial
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight size={16} className="ml-2" />
           </Button>
         </motion.div>
       )}
@@ -256,11 +276,11 @@ export function DemoTour() {
             >
               <Card className="w-full max-w-md p-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-primary" />
+                  <Sparkle size={32} className="text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold mb-2">You've seen it all!</h2>
                 <p className="text-muted-foreground mb-6">
-                  Ready to make your own website GDPR compliant? Start your 7-day free trial - no credit card required to explore.
+                  Ready to make your own website GDPR compliant? Start your 7-day free trial on any plan, or keep exploring the demo right here.
                 </p>
                 <div className="space-y-3">
                   <Button 
@@ -269,14 +289,13 @@ export function DemoTour() {
                     onClick={handleStartTrial}
                     data-testid="button-start-trial-final"
                   >
-                    <Sparkles className="w-4 h-4 mr-2" />
+                    <Sparkle size={16} className="mr-2" />
                     Start Free Trial
                   </Button>
                   <Button 
                     variant="ghost" 
                     className="w-full"
                     onClick={() => {
-                      setShowEndModal(false);
                       endDemo();
                     }}
                     data-testid="button-continue-exploring"

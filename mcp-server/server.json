@@ -1,0 +1,35 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.consentease/mcp-server",
+  "description": "Manage ConsentEase consent banners, cookies, and consent records from your coding agent.",
+  "repository": {
+    "url": "https://github.com/consentease/mcp-server",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@consentease/mcp-server",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CONSENTEASE_API_KEY",
+          "description": "ConsentEase API key (ce_live_…). Create one in the dashboard under Settings → API Keys.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "CONSENTEASE_API_URL",
+          "description": "ConsentEase origin (no /api/v1 suffix). Defaults to the live production API; only set this to target a local/dev server.",
+          "isRequired": false,
+          "default": "https://consentease.io"
+        }
+      ]
+    }
+  ]
+}

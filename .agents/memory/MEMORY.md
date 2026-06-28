@@ -1,0 +1,1 @@
+- [Git recovery in Replit main-agent env](git-recovery-replit.md) — after a checkpoint rollback, restore lost work from a dangling commit via `git show <rev>:<path> > file`; index-touching git ops are guarded; stale `.git/index.lock` is harmless (platform clears it).

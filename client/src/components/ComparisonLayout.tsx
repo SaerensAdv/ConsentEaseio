@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, Check, ArrowRight, ArrowLeft, Clock, CreditCard } from "lucide-react";
+import { Shield, Check, ArrowRight, ArrowLeft, Clock, CreditCard, TrendDown, Lightning } from "@phosphor-icons/react";
+const logoImage = "/consentease-logo.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useCanonical } from "@/hooks/use-canonical";
 import { COMPETITORS, type CompetitorData } from "@/data/competitors";
 
 interface ComparisonLayoutProps {
@@ -12,49 +14,42 @@ interface ComparisonLayoutProps {
 function ComparisonJsonLd({ competitor }: { competitor: CompetitorData }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: competitor.seo.title,
-    description: competitor.seo.description,
-    url: `https://consentease.io/compare/${competitor.slug}`,
-    mainEntity: {
-      "@type": "Product",
-      name: "ConsentEase",
-      description: "GDPR/CCPA consent banner management platform",
-      brand: {
-        "@type": "Brand",
-        name: "ConsentEase",
-      },
-      offers: {
-        "@type": "AggregateOffer",
-        priceCurrency: "EUR",
-        lowPrice: "5",
-        highPrice: "39",
-        offerCount: "3",
-      },
-      review: {
-        "@type": "Review",
-        reviewRating: {
-          "@type": "Rating",
-          ratingValue: "5",
-          bestRating: "5",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "name": competitor.seo.title,
+        "description": competitor.seo.description,
+        "url": `https://consentease.io/compare/${competitor.slug}`,
+        "isPartOf": { "@id": "https://consentease.io/#website" },
+        "mainEntity": {
+          "@type": "Product",
+          "name": "ConsentEase",
+          "description": "GDPR/CCPA consent banner management platform",
+          "brand": { "@type": "Brand", "name": "ConsentEase" },
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "EUR",
+            "lowPrice": "3",
+            "highPrice": "129",
+            "offerCount": "7"
+          }
         },
-        author: {
-          "@type": "Organization",
-          name: "ConsentEase",
-        },
+        "about": {
+          "@type": "SoftwareApplication",
+          "name": competitor.name,
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web"
+        }
       },
-    },
-    about: {
-      "@type": "SoftwareApplication",
-      name: competitor.name,
-      applicationCategory: "BusinessApplication",
-      operatingSystem: "Web",
-    },
-    isPartOf: {
-      "@type": "WebSite",
-      name: "ConsentEase",
-      url: "https://consentease.io",
-    },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://consentease.io" },
+          { "@type": "ListItem", "position": 2, "name": "Compare", "item": "https://consentease.io/compare" },
+          { "@type": "ListItem", "position": 3, "name": `vs ${competitor.name}`, "item": `https://consentease.io/compare/${competitor.slug}` }
+        ]
+      }
+    ]
   };
 
   return (
@@ -105,7 +100,16 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
     };
   }, [competitor]);
 
+  useCanonical(`/compare/${competitor.slug}`);
+
   const otherCompetitors = COMPETITORS.filter(c => c.slug !== competitor.slug).slice(0, 4);
+
+  const theirLowestPrice = competitor.pricingTiers.find(t => {
+    const match = t.price.match(/[\d.]+/);
+    return match && parseFloat(match[0]) > 0;
+  });
+  const theirPriceValue = theirLowestPrice ? parseFloat(theirLowestPrice.price.match(/[\d.]+/)![0]) : null;
+  const savingsPercent = theirPriceValue ? Math.round((1 - 3 / theirPriceValue) * 100) : null;
 
   return (
     <>
@@ -114,20 +118,18 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-                <Shield className="w-5 h-5 fill-current" />
-              </div>
+              <img src={logoImage} alt="ConsentEase" className="h-8 w-8 object-contain" />
               ConsentEase
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/compare">
-                <Button variant="ghost">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+                <Button variant="ghost" data-testid="button-all-comparisons">
+                  <ArrowLeft size={16} className="mr-2" />
                   All Comparisons
                 </Button>
               </Link>
               <Link href="/onboarding">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Compliant</Button>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-get-compliant">Get Compliant</Button>
               </Link>
             </div>
           </div>
@@ -152,19 +154,53 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
             </p>
           </div>
 
+          <div className="max-w-3xl mx-auto px-6 mb-16">
+            <Card className="p-6 bg-primary/5 border-primary/20">
+              <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">TL;DR</h2>
+              <p className="text-foreground leading-relaxed">{competitor.tldr}</p>
+            </Card>
+          </div>
+
+          {savingsPercent && savingsPercent > 0 && (
+            <div className="max-w-3xl mx-auto px-6 mb-16">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 border border-green-500/20 p-6 md:p-8">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                  <div className="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-green-500/15">
+                    <TrendDown size={32} className="text-green-600 dark:text-green-400" weight="bold" />
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                    <p className="text-lg font-bold text-green-700 dark:text-green-300 mb-1">
+                      Save up to {savingsPercent}% vs {competitor.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      ConsentEase starts at <span className="font-semibold text-foreground">€3/month</span> {theirLowestPrice && <>compared to {competitor.name}'s <span className="font-semibold text-foreground">{theirLowestPrice.price}</span> entry price</>}. Same core features — GDPR, CCPA, Google Consent Mode v2 — at a fraction of the cost.
+                    </p>
+                  </div>
+                  <Link href="/onboarding" className="flex-shrink-0">
+                    <Button className="bg-green-600 hover:bg-green-700 text-white" data-testid="button-savings-cta">
+                      <Lightning size={16} className="mr-2" />
+                      Start Saving
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="max-w-5xl mx-auto px-6 mb-16">
             <h2 className="text-2xl font-bold mb-6 text-center">{competitor.name} Pricing</h2>
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <Card className="p-6 bg-secondary/30">
                 <div className="flex items-center gap-3 mb-4">
-                  <Clock className="w-5 h-5 text-primary" />
+                  <Clock size={20} className="text-primary" />
                   <span className="font-semibold">Free Trial</span>
                 </div>
                 <p className="text-2xl font-bold">{competitor.trialLength}</p>
               </Card>
               <Card className="p-6 bg-primary/5 border-primary/20">
                 <div className="flex items-center gap-3 mb-4">
-                  <CreditCard className="w-5 h-5 text-primary" />
+                  <CreditCard size={20} className="text-primary" />
                   <span className="font-semibold">ConsentEase Trial</span>
                 </div>
                 <p className="text-2xl font-bold text-primary">7 days free</p>
@@ -222,7 +258,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
                     </div>
                     <div className="p-6 font-bold text-foreground flex items-center justify-center bg-primary/5">
                       {row.us.includes("Included") || row.us.includes("2 minutes") || row.us.includes("Automatic") || row.us.includes("cheaper") ? (
-                        <span className="flex items-center gap-2 text-primary"><Check className="w-5 h-5" /> {row.us}</span>
+                        <span className="flex items-center gap-2 text-primary"><Check size={20} /> {row.us}</span>
                       ) : row.us}
                     </div>
                     <div className="p-6 text-muted-foreground flex items-center justify-center">
@@ -237,13 +273,13 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 mb-24">
             <div className="bg-secondary/30 rounded-3xl p-10 border border-border">
               <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
-                <Shield className="w-6 h-6 text-muted-foreground" />
+                <Shield size={24} className="text-muted-foreground" />
                 Choose {competitor.name} if...
               </h3>
               <ul className="space-y-4">
                 {competitor.chooseThemIf.map((item, i) => (
                   <li key={i} className="flex gap-3 text-muted-foreground">
-                    <Check className="w-5 h-5 shrink-0" />
+                    <Check size={20} className="shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -253,23 +289,21 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
             <div className="bg-primary text-primary-foreground rounded-3xl p-10 shadow-xl shadow-primary/20 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
               <h3 className="text-2xl font-bold mb-4 flex items-center gap-3 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Shield className="w-5 h-5 fill-current" />
-                </div>
+                <img src={logoImage} alt="ConsentEase" className="h-8 w-8 object-contain" />
                 Choose ConsentEase if...
               </h3>
               <ul className="space-y-4 relative z-10">
                 {competitor.chooseUsIf.map((item, i) => (
                   <li key={i} className="flex gap-3">
-                    <Check className="w-5 h-5 shrink-0 text-accent" />
+                    <Check size={20} className="shrink-0 text-accent" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-8 relative z-10">
                 <Link href="/onboarding">
-                  <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 border-none">
-                    Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 border-none" data-testid="button-start-trial">
+                    Start Free Trial <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </Link>
               </div>
@@ -289,7 +323,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
                     )}
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{comp.name}</span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{comp.tagline}</p>
                   </Card>
@@ -298,7 +332,7 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
             </div>
             <div className="text-center mt-6">
               <Link href="/compare">
-                <Button variant="outline">View All Comparisons</Button>
+                <Button variant="outline" data-testid="button-view-all-comparisons">View All Comparisons</Button>
               </Link>
             </div>
           </div>
@@ -311,9 +345,9 @@ export default function ComparisonLayout({ competitor }: ComparisonLayoutProps) 
                 See more comparisons:{" "}
                 <Link href="/compare" className="text-primary hover:underline">View all competitors</Link>
               </p>
-              <a href="https://saerens.agency?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <a href="https://saerensadvertising.com?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <span className="text-xs">A product by</span>
-                <img src="https://saerensadvertising.com/logo.svg" alt="Saerens Agency" className="h-5" />
+                <img src="/saerens-logo.png" alt="Saerens Advertising" className="h-5" />
               </a>
             </div>
           </div>

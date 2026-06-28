@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "consentease": {
+      "command": "npx",
+      "args": ["-y", "@consentease/mcp-server"],
+      "env": {
+        "CONSENTEASE_API_KEY": "${CONSENTEASE_API_KEY}"
+      }
+    }
+  }
+}

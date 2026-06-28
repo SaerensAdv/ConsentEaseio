@@ -8,10 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Building2, Users, Globe, Plus, Settings, ExternalLink, Mail, UserPlus, Trash2, Edit, MoreHorizontal, Send, BarChart3, TrendingUp, Eye, Check, X, Layers } from "lucide-react";
+import { Buildings, Users, Globe, Plus, Gear, ArrowSquareOut, Envelope, UserPlus, Trash, PencilSimple, DotsThree, PaperPlaneTilt, ChartBar, TrendUp, Eye, Check, X, Stack, Trophy, Copy, SlidersHorizontal } from "@phosphor-icons/react"
+import { useLocation } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import DashboardLayout from "./layout";
 
@@ -87,14 +89,222 @@ interface AgencyInvite {
   createdAt: string;
 }
 
+function PartnerBadgeSection({ agencySlug, agencyName }: { agencySlug: string; agencyName: string }) {
+  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark'>('light');
+  const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [selectedAspect, setSelectedAspect] = useState<'wide' | 'square'>('wide');
+  const [embedType, setEmbedType] = useState<'script' | 'image'>('script');
+  
+  const baseUrl = window.location.origin;
+  
+  const getEmbedCode = () => {
+    if (embedType === 'script') {
+      return `<!-- ConsentEase Partner Badge -->
+<div id="consentease-partner-badge">
+  <script src="${baseUrl}/api/partner-badge/${agencySlug}/script.js" data-theme="${selectedTheme}" data-size="${selectedSize}" data-aspect="${selectedAspect}"></script>
+</div>`;
+    } else {
+      return `<!-- ConsentEase Partner Badge -->
+<a href="${baseUrl}/partner/${agencySlug}" target="_blank" rel="noopener noreferrer" title="ConsentEase Verified Partner">
+  <img src="${baseUrl}/api/partner-badge/${agencySlug}/badge.svg?theme=${selectedTheme}&size=${selectedSize}&aspect=${selectedAspect}" alt="ConsentEase Partner Badge" />
+</a>`;
+    }
+  };
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(getEmbedCode());
+    toast.success("Embed code copied to clipboard!");
+  };
+  
+  const badgePreviewUrl = `${baseUrl}/api/partner-badge/${agencySlug}/badge.svg?theme=${selectedTheme}&size=${selectedSize}&aspect=${selectedAspect}`;
+  
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy size={20} className="text-primary" />
+            Partner Badge
+          </CardTitle>
+          <CardDescription>
+            Display your ConsentEase Partner status on your website. This badge verifies your partnership and links to your partner profile.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Theme</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedTheme === 'light' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedTheme('light')}
+                  data-testid="button-theme-light"
+                >
+                  Light
+                </Button>
+                <Button
+                  variant={selectedTheme === 'dark' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedTheme('dark')}
+                  data-testid="button-theme-dark"
+                >
+                  Dark
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Aspect Ratio</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedAspect === 'wide' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedAspect('wide')}
+                  data-testid="button-aspect-wide"
+                >
+                  16:9 Wide
+                </Button>
+                <Button
+                  variant={selectedAspect === 'square' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedAspect('square')}
+                  data-testid="button-aspect-square"
+                >
+                  1:1 Square
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedAspect === 'wide' 
+                  ? "Horizontal badge, ideal for footers and headers."
+                  : "Compact square badge, ideal for sidebars."}
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Size</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedSize === 'small' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedSize('small')}
+                  data-testid="button-size-small"
+                >
+                  Small
+                </Button>
+                <Button
+                  variant={selectedSize === 'medium' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedSize('medium')}
+                  data-testid="button-size-medium"
+                >
+                  Medium
+                </Button>
+                <Button
+                  variant={selectedSize === 'large' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedSize('large')}
+                  data-testid="button-size-large"
+                >
+                  Large
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Embed Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={embedType === 'script' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setEmbedType('script')}
+                  data-testid="button-embed-script"
+                >
+                  Script (Recommended)
+                </Button>
+                <Button
+                  variant={embedType === 'image' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setEmbedType('image')}
+                  data-testid="button-embed-image"
+                >
+                  Image Only
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {embedType === 'script' 
+                  ? "Script embed auto-verifies your partner status and stays up to date."
+                  : "Image embed is simpler but won't auto-update if your status changes."}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview & Embed Code</CardTitle>
+          <CardDescription>
+            Copy the code below and paste it into your website.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>Badge Preview</Label>
+            <div className={`p-6 rounded-lg border flex items-center justify-center ${selectedTheme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
+              <img 
+                src={badgePreviewUrl} 
+                alt="Partner Badge Preview" 
+                data-testid="img-badge-preview"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Embed Code</Label>
+            <div className="relative">
+              <Textarea
+                value={getEmbedCode()}
+                readOnly
+                className="font-mono text-xs h-32 resize-none"
+                data-testid="textarea-embed-code"
+              />
+              <Button
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={copyToClipboard}
+                data-testid="button-copy-embed"
+              >
+                <Copy size={16} className="mr-1" />
+                Copy
+              </Button>
+            </div>
+          </div>
+          
+          <div className="pt-4 border-t">
+            <h4 className="font-medium mb-2">Installation Instructions</h4>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+              <li>Copy the embed code above</li>
+              <li>Paste it in your website's footer or sidebar</li>
+              <li>The badge will automatically link to your partner profile</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AgencyDashboard() {
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isBulkActionDialogOpen, setIsBulkActionDialogOpen] = useState(false);
   const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
+  const [removingClient, setRemovingClient] = useState<{ id: string; name: string } | null>(null);
   
   const [agencyForm, setAgencyForm] = useState({
     name: "",
@@ -415,7 +625,7 @@ export default function AgencyDashboard() {
     return (
       <DashboardLayout>
         <div className="max-w-2xl mx-auto text-center py-12">
-          <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <Buildings size={64} className="text-muted-foreground mx-auto mb-4" />
           <h1 className="text-2xl font-display font-bold mb-2">Set Up Your Agency</h1>
           <p className="text-muted-foreground mb-6">
             Create your agency profile to start managing client accounts and their consent banners from one central dashboard.
@@ -424,7 +634,7 @@ export default function AgencyDashboard() {
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button size="lg" data-testid="button-create-agency">
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus size={16} className="mr-2" />
                 Create Agency
               </Button>
             </DialogTrigger>
@@ -523,13 +733,13 @@ export default function AgencyDashboard() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={openEditDialog} data-testid="button-edit-agency">
-              <Settings className="w-4 h-4 mr-2" />
+              <Gear size={16} className="mr-2" />
               Settings
             </Button>
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" data-testid="button-invite-client">
-                  <Send className="w-4 h-4 mr-2" />
+                  <PaperPlaneTilt size={16} className="mr-2" />
                   Invite
                 </Button>
               </DialogTrigger>
@@ -571,7 +781,7 @@ export default function AgencyDashboard() {
                       Cancel
                     </Button>
                     <Button type="submit" disabled={sendInviteMutation.isPending} data-testid="button-send-invite">
-                      <Send className="w-4 h-4 mr-2" />
+                      <PaperPlaneTilt size={16} className="mr-2" />
                       {sendInviteMutation.isPending ? "Sending..." : "Send Invitation"}
                     </Button>
                   </DialogFooter>
@@ -581,7 +791,7 @@ export default function AgencyDashboard() {
             <Dialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="button-add-client">
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <UserPlus size={16} className="mr-2" />
                   Add Client
                 </Button>
               </DialogTrigger>
@@ -662,7 +872,7 @@ export default function AgencyDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-client-count">{clients.length}</div>
@@ -672,7 +882,7 @@ export default function AgencyDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Websites</CardTitle>
-              <Globe className="h-4 w-4 text-muted-foreground" />
+              <Globe size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-website-count">{websites.length}</div>
@@ -682,7 +892,7 @@ export default function AgencyDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Agency Status</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <Buildings size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -695,7 +905,7 @@ export default function AgencyDashboard() {
                 {agency.websiteUrl && (
                   <a href={agency.websiteUrl} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1">
                     {agency.websiteUrl.replace(/^https?:\/\//, '')}
-                    <ExternalLink className="w-3 h-3" />
+                    <ArrowSquareOut size={12} />
                   </a>
                 )}
               </p>
@@ -709,21 +919,22 @@ export default function AgencyDashboard() {
             <TabsTrigger value="websites" data-testid="tab-websites">All Websites</TabsTrigger>
             <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
             <TabsTrigger value="invites" data-testid="tab-invites">Invites</TabsTrigger>
+            <TabsTrigger value="badge" data-testid="tab-badge">Partner Badge</TabsTrigger>
           </TabsList>
 
           <TabsContent value="clients" className="space-y-4">
             {clientsLoading ? (
               <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <div className="w-6 h-6 animate-spin rounded-full border-b-2 border-primary"></div>
               </div>
             ) : clients.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <Users size={48} className="text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-lg font-medium mb-1">No clients yet</h3>
                   <p className="text-muted-foreground mb-4">Add your first client to start managing their consent banners.</p>
                   <Button onClick={() => setIsAddClientDialogOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
+                    <UserPlus size={16} className="mr-2" />
                     Add Your First Client
                   </Button>
                 </CardContent>
@@ -743,7 +954,7 @@ export default function AgencyDashboard() {
                           <div>
                             <h3 className="font-medium">{client.clientName}</h3>
                             <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
+                              <Envelope size={12} />
                               {client.user.email}
                             </p>
                           </div>
@@ -751,29 +962,25 @@ export default function AgencyDashboard() {
                         <div className="flex items-center gap-3">
                           {getRelationshipBadge(client.relationshipType)}
                           <Badge variant="outline">
-                            <Globe className="w-3 h-3 mr-1" />
+                            <Globe size={12} className="mr-1" />
                             {client.websiteCount || 0} websites
                           </Badge>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" data-testid={`button-client-menu-${client.id}`}>
-                                <MoreHorizontal className="w-4 h-4" />
+                                <DotsThree size={16} />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => toast.info("Client editing coming soon")}>
-                                <Edit className="w-4 h-4 mr-2" />
+                                <PencilSimple size={16} className="mr-2" />
                                 Edit Client
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-destructive"
-                                onClick={() => {
-                                  if (confirm(`Remove ${client.clientName} from your agency?`)) {
-                                    removeClientMutation.mutate(client.id);
-                                  }
-                                }}
+                                onClick={() => setRemovingClient({ id: client.id, name: client.clientName })}
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash size={16} className="mr-2" />
                                 Remove Client
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -794,7 +1001,7 @@ export default function AgencyDashboard() {
             {websites.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <Globe size={48} className="text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-lg font-medium mb-1">No websites yet</h3>
                   <p className="text-muted-foreground">Your clients haven't added any websites yet.</p>
                 </CardContent>
@@ -811,7 +1018,7 @@ export default function AgencyDashboard() {
                       <Dialog open={isBulkActionDialogOpen} onOpenChange={setIsBulkActionDialogOpen}>
                         <DialogTrigger asChild>
                           <Button size="sm" data-testid="button-bulk-actions">
-                            <Layers className="w-4 h-4 mr-2" />
+                            <Stack size={16} className="mr-2" />
                             Bulk Update
                           </Button>
                         </DialogTrigger>
@@ -888,6 +1095,7 @@ export default function AgencyDashboard() {
                         <th className="text-left py-3 px-4 font-medium">Domain</th>
                         <th className="text-left py-3 px-4 font-medium">Client</th>
                         <th className="text-left py-3 px-4 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -902,7 +1110,7 @@ export default function AgencyDashboard() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
-                              <Globe className="w-4 h-4 text-muted-foreground" />
+                              <Globe size={16} className="text-muted-foreground" />
                               <span className="font-medium">{website.domain}</span>
                             </div>
                           </td>
@@ -914,6 +1122,17 @@ export default function AgencyDashboard() {
                           </td>
                           <td className="py-3 px-4">
                             <Badge variant="default">Active</Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/dashboard/banner?websiteId=${website.id}`)}
+                              data-testid={`button-manage-banner-${website.id}`}
+                            >
+                              <SlidersHorizontal size={14} className="mr-1.5" />
+                              Manage Banner
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -931,7 +1150,7 @@ export default function AgencyDashboard() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Total Impressions</CardTitle>
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye size={16} className="text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{analytics.totalImpressions.toLocaleString()}</div>
@@ -941,7 +1160,7 @@ export default function AgencyDashboard() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check size={16} className="text-green-500" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">{analytics.totalAccepts.toLocaleString()}</div>
@@ -951,7 +1170,7 @@ export default function AgencyDashboard() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-                      <X className="h-4 w-4 text-red-500" />
+                      <X size={16} className="text-red-500" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-red-600">{analytics.totalRejects.toLocaleString()}</div>
@@ -961,7 +1180,7 @@ export default function AgencyDashboard() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Acceptance Rate</CardTitle>
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <TrendUp size={16} className="text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-primary">{analytics.acceptanceRate}%</div>
@@ -1015,7 +1234,7 @@ export default function AgencyDashboard() {
               </div>
             ) : (
               <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <div className="w-6 h-6 animate-spin rounded-full border-b-2 border-primary"></div>
               </div>
             )}
           </TabsContent>
@@ -1029,11 +1248,11 @@ export default function AgencyDashboard() {
               <CardContent>
                 {invites.length === 0 ? (
                   <div className="text-center py-8">
-                    <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <Envelope size={48} className="text-muted-foreground mx-auto mb-3" />
                     <h3 className="text-lg font-medium mb-1">No invitations sent</h3>
                     <p className="text-muted-foreground mb-4">Send invitations to potential clients to help them get started with ConsentEase.</p>
                     <Button onClick={() => setIsInviteDialogOpen(true)}>
-                      <Send className="w-4 h-4 mr-2" />
+                      <PaperPlaneTilt size={16} className="mr-2" />
                       Send First Invitation
                     </Button>
                   </div>
@@ -1067,6 +1286,10 @@ export default function AgencyDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="badge" className="space-y-4">
+            <PartnerBadgeSection agencySlug={agency.slug} agencyName={agency.name} />
           </TabsContent>
         </Tabs>
 
@@ -1143,6 +1366,32 @@ export default function AgencyDashboard() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <AlertDialog open={!!removingClient} onOpenChange={(open) => { if (!open) setRemovingClient(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{removingClient?.name}</strong> from your agency? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-remove-client">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (removingClient) {
+                  removeClientMutation.mutate(removingClient.id);
+                  setRemovingClient(null);
+                }
+              }}
+              data-testid="button-confirm-remove-client"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

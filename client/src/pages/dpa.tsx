@@ -1,13 +1,39 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, ArrowLeft, FileText, Download } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
+import { Shield, ArrowLeft, FileText, DownloadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export default function DPAPage() {
+  useCanonical("/dpa");
+  
   useEffect(() => {
-    const originalTitle = document.title;
     document.title = "Data Processing Agreement (DPA) | ConsentEase";
-    return () => { document.title = originalTitle; };
+    
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) metaDescription.setAttribute('content', 'Read the ConsentEase Data Processing Agreement (DPA). GDPR-compliant data processing terms for our consent management platform covering security, sub-processors, and data subject rights.');
+    
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', 'Data Processing Agreement (DPA) | ConsentEase');
+    
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.setAttribute('content', 'Read the ConsentEase Data Processing Agreement (DPA). GDPR-compliant data processing terms for our consent management platform covering security, sub-processors, and data subject rights.');
+    
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', 'https://consentease.io/attached_assets/image_1766697261644.png');
+    
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) twitterCard.setAttribute('content', 'summary_large_image');
+    
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) twitterTitle.setAttribute('content', 'Data Processing Agreement (DPA) | ConsentEase');
+    
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) twitterDescription.setAttribute('content', 'Read the ConsentEase Data Processing Agreement (DPA). GDPR-compliant data processing terms for our consent management platform covering security, sub-processors, and data subject rights.');
+    
+    return () => {
+      document.title = "ConsentEase - Privacy Compliance for Humans";
+    };
   }, []);
 
   return (
@@ -15,14 +41,12 @@ export default function DPAPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
+            <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-8 object-contain" />
             ConsentEase
           </Link>
           <Link href="/">
             <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft size={16} />
               Back to Home
             </Button>
           </Link>
@@ -33,7 +57,7 @@ export default function DPAPage() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-primary" />
+              <FileText size={32} className="text-primary" />
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-display font-bold">
@@ -51,7 +75,7 @@ export default function DPAPage() {
             </p>
             <Link href="/contact">
               <Button className="gap-2">
-                <Download className="w-4 h-4" />
+                <DownloadSimple size={16} />
                 Request Signed DPA
               </Button>
             </Link>

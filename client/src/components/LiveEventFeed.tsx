@@ -3,19 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radio, CheckCircle2, XCircle, Eye, Settings, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { Broadcast, CheckCircle, XCircle, Eye, Gear, Trash, WifiHigh, WifiSlash } from '@phosphor-icons/react';
 import { useAnalyticsWebSocket } from '@/hooks/useAnalyticsWebSocket';
 
 interface LiveEventFeedProps {
   websiteId: string | null;
 }
 
-const eventConfig: Record<string, { icon: typeof CheckCircle2; label: string; color: string }> = {
+const eventConfig: Record<string, { icon: React.ComponentType<{size?: number; className?: string}>; label: string; color: string }> = {
   banner_shown: { icon: Eye, label: 'Banner Shown', color: 'bg-blue-500' },
-  accept: { icon: CheckCircle2, label: 'Accepted', color: 'bg-green-500' },
+  accept: { icon: CheckCircle, label: 'Accepted', color: 'bg-green-500' },
   reject: { icon: XCircle, label: 'Rejected', color: 'bg-red-500' },
-  preferences_saved: { icon: Settings, label: 'Preferences Saved', color: 'bg-purple-500' },
-  consent_updated: { icon: Settings, label: 'Consent Updated', color: 'bg-amber-500' },
+  preferences_saved: { icon: Gear, label: 'Preferences Saved', color: 'bg-purple-500' },
+  consent_updated: { icon: Gear, label: 'Consent Updated', color: 'bg-amber-500' },
 };
 
 function formatTime(timestamp: string) {
@@ -46,7 +46,7 @@ export function LiveEventFeed({ websiteId }: LiveEventFeedProps) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Radio className="w-4 h-4 text-primary animate-pulse" />
+              <Broadcast size={16} className="text-primary animate-pulse" />
               Live Activity
             </CardTitle>
             <CardDescription>Real-time consent events from your website.</CardDescription>
@@ -58,12 +58,12 @@ export function LiveEventFeed({ websiteId }: LiveEventFeedProps) {
             >
               {isConnected ? (
                 <>
-                  <Wifi className="w-3 h-3" />
+                  <WifiHigh size={12} />
                   Live
                 </>
               ) : (
                 <>
-                  <WifiOff className="w-3 h-3" />
+                  <WifiSlash size={12} />
                   {connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}
                 </>
               )}
@@ -75,7 +75,7 @@ export function LiveEventFeed({ websiteId }: LiveEventFeedProps) {
                 onClick={clearEvents}
                 className="h-7 px-2"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash size={12} />
               </Button>
             )}
           </div>
@@ -85,7 +85,7 @@ export function LiveEventFeed({ websiteId }: LiveEventFeedProps) {
         <ScrollArea className="h-[300px] pr-4">
           {events.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-8">
-              <Radio className="w-8 h-8 text-muted-foreground/50 mb-3" />
+              <Broadcast size={32} className="text-muted-foreground/50 mb-3" />
               <p className="text-sm text-muted-foreground">
                 {isConnected 
                   ? "Waiting for consent events..." 
@@ -117,7 +117,7 @@ export function LiveEventFeed({ websiteId }: LiveEventFeedProps) {
                       data-testid={`live-event-${event.id}`}
                     >
                       <div className={`w-8 h-8 rounded-full ${config.color}/10 flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-4 h-4 ${config.color.replace('bg-', 'text-')}`} />
+                        <Icon size={16} className={config.color.replace('bg-', 'text-')} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

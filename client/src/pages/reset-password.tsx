@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Lock, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { Spinner } from "@/components/ui/spinner";
+const logoImage = "/consentease-logo.webp";
 import { toast } from "sonner";
 
 export default function ResetPassword() {
@@ -70,7 +72,7 @@ export default function ResetPassword() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle size={32} className="text-green-600" />
             </div>
             <CardTitle className="text-2xl">Password Reset Complete</CardTitle>
             <CardDescription>
@@ -95,7 +97,7 @@ export default function ResetPassword() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <XCircle className="w-8 h-8 text-red-600" />
+              <XCircle size={32} className="text-red-600" />
             </div>
             <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
             <CardDescription>{error}</CardDescription>
@@ -116,7 +118,8 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="inline-block mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4 justify-center">
+            <img src={logoImage} alt="ConsentEase" className="h-8 w-8 object-contain" />
             <span className="text-2xl font-display font-bold text-primary">ConsentEase</span>
           </Link>
           <CardTitle className="text-2xl">Create new password</CardTitle>
@@ -135,7 +138,7 @@ export default function ResetPassword() {
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   id="password"
                   type="password"
@@ -153,7 +156,7 @@ export default function ResetPassword() {
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -175,7 +178,7 @@ export default function ResetPassword() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Spinner size={16} className="mr-2" />
                   Resetting...
                 </>
               ) : (
@@ -185,7 +188,7 @@ export default function ResetPassword() {
 
             <div className="text-center">
               <Link href="/login" className="text-sm text-primary hover:underline" data-testid="link-back-to-login">
-                <ArrowLeft className="w-3 h-3 inline mr-1" />
+                <ArrowLeft size={12} className="inline mr-1" />
                 Back to Login
               </Link>
             </div>

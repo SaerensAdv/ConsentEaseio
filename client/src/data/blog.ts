@@ -77,13 +77,15 @@ Fines can reach up to **€20 million** or **4% of annual revenue**—whichever 
 
 ## How to Get Compliant (The Easy Way)
 
-1. **Add a cookie consent banner** - This is the most visible requirement
-2. **Update your privacy policy** - Explain what data you collect
-3. **Only collect what you need** - Less data = less risk
+1. **Add a cookie consent banner** — This is the most visible requirement. Not sure what cookies your site uses? Try our [free cookie scanner](/scan) to find out in seconds.
+2. **Update your privacy policy** — Explain what data you collect
+3. **Only collect what you need** — Less data = less risk
+
+Running a WordPress site? Check out our [GDPR consent banner guide for WordPress](/solutions/wordpress). We also have guides for [Shopify](/solutions/shopify), [Wix](/solutions/wix), and [other platforms](/solutions).
 
 ## Get Compliant in 2 Minutes
 
-ConsentEase makes GDPR compliance simple. Add a professional cookie consent banner to your website in minutes—no coding required.
+ConsentEase makes GDPR compliance simple. Add a professional cookie consent banner to your website in minutes — no coding required. Plans start at just [€3/month](/pricing).
 
 [Start Your Free Trial →](/onboarding)
 `,
@@ -170,7 +172,9 @@ Use Google Tag Assistant to verify:
 
 ## Get Started with Consent Mode v2
 
-ConsentEase includes full Google Consent Mode v2 support out of the box. No configuration needed—it just works.
+ConsentEase includes full Google Consent Mode v2 support out of the box. No configuration needed — it just works. All [pricing plans](/pricing) include Consent Mode v2 at no extra cost.
+
+Not sure if your current setup is compliant? Run a [free cookie scan](/scan) to check your website's consent status. Also read our guide on [cookie consent best practices](/blog/cookie-consent-best-practices) and check our [WordPress integration guide](/solutions/wordpress) if you're on WordPress. For country-specific rules, see our [Belgium compliance guide](/compliance/belgium) or browse [all compliance guides](/solutions).
 
 [Start Your Free Trial →](/onboarding)
 `,
@@ -255,7 +259,9 @@ Design your banner to work on all screen sizes. What looks fine on desktop might
 
 ConsentEase helps you build beautiful, compliant cookie banners in minutes. Our visual editor lets you customize everything while we handle the legal requirements.
 
-[Start Your Free Trial →](/onboarding)
+Want to see how your current banner measures up? Use our [free cookie scanner](/scan) to check your compliance status. Or learn more about [GDPR requirements](/blog/what-is-gdpr-simple-guide) and [CCPA differences](/blog/ccpa-vs-gdpr-differences) in our other guides.
+
+[See our affordable plans →](/pricing) | [Start Your Free Trial →](/onboarding)
 `,
   },
   {
@@ -329,7 +335,11 @@ Yes! Many businesses create a unified approach:
 
 ConsentEase automatically detects visitor locations and shows the appropriate consent experience. EU visitors get GDPR-compliant opt-in banners; California visitors get CCPA options.
 
-[Start Your Free Trial →](/onboarding)
+Need help with country-specific compliance? Check our guides for [Belgium](/compliance/belgium), [Germany](/compliance/germany), [France](/compliance/france), [Netherlands](/compliance/netherlands), and [more countries](/solutions).
+
+Want to check your current compliance status? Use our [free cookie scanner](/scan) to see what cookies your site uses. You might also find our [SEO impact guide](/blog/why-cookie-consent-matters-seo) useful, or our [WordPress setup guide](/solutions/wordpress) if you're running WordPress.
+
+[Compare our plans →](/pricing) | [Start Your Free Trial →](/onboarding)
 `,
   },
   {
@@ -397,12 +407,16 @@ GDPR fines create bad PR. Bad PR leads to fewer backlinks and brand searches. Co
 ## ConsentEase SEO Features
 
 Our banner is designed with SEO in mind:
-- ⚡ Lightweight script (< 20KB)
-- 📱 Mobile-optimized design
-- 🎯 Fixed positioning options
-- 🔄 Smart caching
+- Lightweight script (< 20KB)
+- Mobile-optimized design
+- Fixed positioning options
+- Smart caching
 
-[Start Your Free Trial →](/onboarding)
+Curious about your site's cookie setup? Run a [free cookie scan](/scan) — it takes 30 seconds and shows exactly what cookies your site loads. Then read our guide on [how to audit your website cookies](/blog/how-to-audit-website-cookies) for a deep dive.
+
+For platform-specific guides, check our [WordPress](/solutions/wordpress), [Shopify](/solutions/shopify), or [Webflow](/solutions/webflow) integration pages. And for EU country requirements, see our [Germany compliance guide](/compliance/germany) or [browse all countries](/solutions).
+
+[See pricing from €3/month →](/pricing) | [Start Your Free Trial →](/onboarding)
 `,
   },
   {
@@ -513,7 +527,13 @@ Cookies change when you:
 
 ConsentEase automatically scans your website and categorizes cookies. We detect new cookies and alert you to changes.
 
-[Start Your Free Trial →](/onboarding)
+Want a quick check right now? Use our [free cookie scanner](/scan) — it shows all cookies on your site in seconds. No signup required.
+
+Using WordPress? Our [WordPress integration guide](/solutions/wordpress) walks you through the complete setup. We also support [Shopify](/solutions/shopify), [Webflow](/solutions/webflow), and [more platforms](/solutions).
+
+For region-specific compliance requirements, check our [Belgium](/compliance/belgium), [Germany](/compliance/germany), or [Netherlands](/compliance/netherlands) compliance guides. And don't miss our article on [CCPA vs GDPR differences](/blog/ccpa-vs-gdpr-differences) if you serve US customers too.
+
+[See plans from €3/month →](/pricing) | [Start Your Free Trial →](/onboarding)
 `,
   },
 ];

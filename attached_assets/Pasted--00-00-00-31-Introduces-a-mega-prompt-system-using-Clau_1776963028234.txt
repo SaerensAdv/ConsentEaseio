@@ -1,0 +1,33 @@
+(00:00–00:31) Introduces a “mega prompt” system using Claude/LLMs that analyzes your business (URL, ICP, features) to generate high-intent search prompts potential buyers would use.
+(00:31–01:14) The AI deeply understands your brand to ensure backlinks are relevant + powerful—key SEO factors (relevance = niche alignment, power = authority metrics like DR).
+(01:14–02:43) Output = buyer-intent prompts, not random keywords. These simulate how users ask questions in LLMs, helping target conversion-ready traffic rather than traditional keywords.
+(03:06–05:18) Key shift:
+Traditional SEO = short keywords (Google)
+New SEO = long conversational prompts (LLMs like ChatGPT/Claude)
+Search behavior is evolving toward detailed, intent-rich queries.
+(05:18–07:19) Google is adapting with AI Overviews, meaning LLM-style prompts will increasingly influence search, blending classic SEO with AI-driven discovery.
+(07:19–08:00) Strategy:
+Take generated prompts
+Run them in LLMs
+Identify which brands and sources are cited
+(08:00–11:19) Insight: LLMs often cite third-party websites mentioning brands, not just official sites → backlinks now influence LLM visibility, not just Google rankings.
+(11:19–12:40) Core tactic:
+Find cited articles/pages
+Get your brand added to those pages
+This earns:
+A backlink
+Visibility in LLM answers (dual benefit)
+(12:40–14:08) Execution is simple:
+Contact site owners (email/LinkedIn)
+Pay for placement or do link exchanges
+Focus on niche-relevant, decent-authority sites
+(14:08–16:25) Scale with tools (e.g., tracking LLM mentions):
+Monitor which prompts mention competitors
+Reverse-engineer why they’re cited
+Insert your brand into those same sources
+Key Supporting Insight from Glasp
+Backlinks remain fundamental to SEO authority and rankings, especially when they are relevant and high-quality, reinforcing why this LLM-based strategy works
+Bottom Line
+SEO is shifting from keywords → prompts
+Backlinks now influence LLM answers + search engines
+Winning strategy = get cited in sources LLMs already trust

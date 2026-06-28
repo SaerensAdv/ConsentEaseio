@@ -1,0 +1,126 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "sans-serif",
+      "count": 79
+    },
+    {
+      "family": "Inter",
+      "count": 68
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "count": 11
+    },
+    {
+      "family": "-apple-system",
+      "count": 5
+    },
+    {
+      "family": "BlinkMacSystemFont",
+      "count": 5
+    },
+    {
+      "family": "ui-monospace",
+      "count": 1
+    },
+    {
+      "family": "SFMono-Regular",
+      "count": 1
+    },
+    {
+      "family": "Menlo",
+      "count": 1
+    },
+    {
+      "family": "Monaco",
+      "count": 1
+    },
+    {
+      "family": "Consolas",
+      "count": 1
+    }
+  ],
+  "colors": {
+    "primary": "#241F2E",
+    "accent": "#966CE0",
+    "background": "#FFFFFF",
+    "textPrimary": "#966CE0",
+    "link": "#966CE0"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Inter",
+      "heading": "Plus Jakarta Sans"
+    },
+    "fontStacks": {
+      "body": [
+        "Inter",
+        "sans-serif"
+      ],
+      "heading": [
+        "Plus Jakarta Sans",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Inter",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "60px",
+      "h2": "48px",
+      "body": "24px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "4px"
+  },
+  "components": {
+    "input": {
+      "background": "#F9F8FD",
+      "textColor": "#241F2E",
+      "borderColor": "#E4E4E7",
+      "borderRadius": "12px",
+      "borderRadiusCorners": {
+        "topLeft": "12px",
+        "topRight": "12px",
+        "bottomRight": "12px",
+        "bottomLeft": "12px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "https://consentease.io/assets/Untitled_design_1766940077992-7VwygWMW.png",
+    "favicon": "https://consentease.io/favicon.png",
+    "ogImage": "https://Consentease-saerens.replit.app/opengraph.jpg"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 1,
+    "reasoning": "Logo rejected: Red flags detected (small square icon). Strong indicators: header logo linking to homepage, header location, visible, highest logo on page, alt exactly matches brand name \"ConsentEase\", src contains brand name \"ConsentEase\", reasonable size, small square icon (likely UI icon, heavy penalty). Score: 116 (clear winner by 69 points)",
+    "confidence": 0.9,
+    "rejected": true
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "confidence": 0
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}

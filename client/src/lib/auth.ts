@@ -6,6 +6,11 @@ export interface AuthUser {
   firstName: string | null;
   lastName: string | null;
   plan: string;
+  subscriptionStatus: string | null;
+  billingInterval: string | null;
+  companyName: string | null;
+  vatNumber: string | null;
+  billingCountry: string | null;
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {

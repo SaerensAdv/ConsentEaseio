@@ -22,6 +22,7 @@ export interface BannerTranslations {
   required: string;
   cookies: string;
   session: string;
+  direction: 'ltr' | 'rtl';
 }
 
 export const translations: Record<string, BannerTranslations> = {
@@ -49,6 +50,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Required",
     cookies: "Cookies",
     session: "Session",
+    direction: "ltr",
   },
   nl: {
     heading: "Wij waarderen uw privacy",
@@ -74,6 +76,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Vereist",
     cookies: "Cookies",
     session: "Sessie",
+    direction: "ltr",
   },
   de: {
     heading: "Wir respektieren Ihre Privatsphäre",
@@ -99,6 +102,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Erforderlich",
     cookies: "Cookies",
     session: "Sitzung",
+    direction: "ltr",
   },
   fr: {
     heading: "Nous respectons votre vie privée",
@@ -124,6 +128,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Requis",
     cookies: "Cookies",
     session: "Session",
+    direction: "ltr",
   },
   es: {
     heading: "Valoramos su privacidad",
@@ -149,6 +154,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Requerido",
     cookies: "Cookies",
     session: "Sesión",
+    direction: "ltr",
   },
   it: {
     heading: "Rispettiamo la tua privacy",
@@ -174,6 +180,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Obbligatorio",
     cookies: "Cookie",
     session: "Sessione",
+    direction: "ltr",
   },
   pt: {
     heading: "Valorizamos a sua privacidade",
@@ -199,6 +206,7 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Obrigatório",
     cookies: "Cookies",
     session: "Sessão",
+    direction: "ltr",
   },
   pl: {
     heading: "Szanujemy Twoją prywatność",
@@ -224,6 +232,59 @@ export const translations: Record<string, BannerTranslations> = {
     required: "Wymagane",
     cookies: "Pliki cookie",
     session: "Sesja",
+    direction: "ltr",
+  },
+  ar: {
+    heading: "نحن نقدر خصوصيتك",
+    description: "نستخدم ملفات تعريف الارتباط لتحسين تجربة التصفح الخاصة بك، وعرض محتوى مخصص، وتحليل حركة مرورنا. بالنقر على \"قبول الكل\"، فإنك توافق على استخدامنا لملفات تعريف الارتباط.",
+    acceptText: "قبول الكل",
+    rejectText: "رفض الكل",
+    settingsText: "التفضيلات",
+    privacyPolicyText: "سياسة الخصوصية",
+    cookiePolicyText: "سياسة ملفات تعريف الارتباط",
+    preferencesTitle: "تفضيلات ملفات تعريف الارتباط",
+    preferencesDescription: "خصص تفضيلات ملفات تعريف الارتباط أدناه. ملفات تعريف الارتباط الضرورية ضرورية لعمل الموقع بشكل صحيح.",
+    necessaryCategory: "ملفات تعريف الارتباط الضرورية",
+    necessaryDescription: "هذه ملفات تعريف الارتباط ضرورية لعمل الموقع بشكل صحيح. تمكن الميزات الأساسية مثل التنقل والوصول إلى المناطق الآمنة.",
+    functionalCategory: "ملفات تعريف الارتباط الوظيفية",
+    functionalDescription: "تمكن هذه ملفات تعريف الارتباط الميزات المخصصة. قد يتم تعيينها من قبلنا أو من قبل موفري الطرف الثالث.",
+    analyticsCategory: "ملفات تعريف الارتباط التحليلية",
+    analyticsDescription: "تساعدنا ملفات تعريف الارتباط هذه على فهم كيفية تفاعل الزائرين مع الموقع من خلال جمع المعلومات والإبلاغ عنها بشكل مجهول.",
+    marketingCategory: "ملفات تعريف الارتباط التسويقية",
+    marketingDescription: "يتم استخدام ملفات تعريف الارتباط هذه لتتبع الزائرين عبر المواقع لعرض إعلانات ذات صلة.",
+    savePreferences: "حفظ التفضيلات",
+    acceptAll: "قبول الكل",
+    rejectAll: "رفض الكل",
+    required: "مطلوب",
+    cookies: "ملفات تعريف الارتباط",
+    session: "جلسة",
+    direction: "rtl",
+  },
+  he: {
+    heading: "אנחנו מעריכים את הפרטיות שלך",
+    description: "אנו משתמשים בעוגיות כדי לשפר את חוויית הגלישה שלך, להציג תוכן מותאם ולנתח את התנועה שלנו. על ידי לחיצה על \"אישור הכל\", אתה מסכים לשימוש בעוגיות.",
+    acceptText: "אישור הכל",
+    rejectText: "דחיית הכל",
+    settingsText: "העדפות",
+    privacyPolicyText: "מדיניות הפרטיות",
+    cookiePolicyText: "מדיניות העוגיות",
+    preferencesTitle: "העדפות עוגיות",
+    preferencesDescription: "התאם את העדפות העוגיות שלך להלן. עוגיות הכרחיות הן חיוניות לתפקוד האתר כראוי.",
+    necessaryCategory: "עוגיות הכרחיות",
+    necessaryDescription: "עוגיות אלה הן חיוניות לתפקוד האתר כראוי. הן מאפשרות תכונות בסיסיות כמו ניווט וגישה לאזורים מאובטחים.",
+    functionalCategory: "עוגיות פונקציונליות",
+    functionalDescription: "עוגיות אלה מאפשרות תכונות מותאמות. הן עשויות להיות מוגדרות על ידינו או על ידי ספקי צד שלישי.",
+    analyticsCategory: "עוגיות אנליטיות",
+    analyticsDescription: "עוגיות אלה עוזרות לנו להבין כיצד מבקרים מקיימים אינטראקציה עם האתר על ידי איסוף מידע באופן אנונימי.",
+    marketingCategory: "עוגיות שיווק",
+    marketingDescription: "עוגיות אלה משמשות לעקיבה אחר מבקרים באתרים כדי להציג מודעות רלוונטיות.",
+    savePreferences: "שמור העדפות",
+    acceptAll: "אישור הכל",
+    rejectAll: "דחיית הכל",
+    required: "נדרש",
+    cookies: "עוגיות",
+    session: "חיבור",
+    direction: "rtl",
   },
 };
 
@@ -236,6 +297,8 @@ export const supportedLanguages = [
   { code: "it", name: "Italiano", flag: "🇮🇹" },
   { code: "pt", name: "Português", flag: "🇵🇹" },
   { code: "pl", name: "Polski", flag: "🇵🇱" },
+  { code: "ar", name: "العربية", flag: "🇸🇦" },
+  { code: "he", name: "עברית", flag: "🇮🇱" },
 ];
 
 export function getTranslation(language: string): BannerTranslations {

@@ -1,9 +1,51 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Shield, Calendar, Clock, ArrowRight, House, CaretRight } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useCanonical } from "@/hooks/use-canonical";
 import { BLOG_ARTICLES, CATEGORY_LABELS, type BlogArticle } from "@/data/blog";
+
+function BlogSchemas() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "name": "Blog - GDPR & Cookie Consent Guides",
+        "description": "Expert articles on GDPR compliance, cookie consent, Google Consent Mode, and privacy regulations for small businesses.",
+        "url": "https://consentease.io/blog",
+        "isPartOf": { "@id": "https://consentease.io/#website" },
+        "publisher": { "@id": "https://consentease.io/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://consentease.io" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://consentease.io/blog" }
+        ]
+      },
+      {
+        "@type": "ItemList",
+        "name": "ConsentEase Blog Articles",
+        "numberOfItems": BLOG_ARTICLES.length,
+        "itemListElement": BLOG_ARTICLES.map((article, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "url": `https://consentease.io/blog/${article.slug}`,
+          "name": article.title
+        }))
+      }
+    ]
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
 
 function ArticleCard({ article }: { article: BlogArticle }) {
   return (
@@ -24,7 +66,7 @@ function ArticleCard({ article }: { article: BlogArticle }) {
               {CATEGORY_LABELS[article.category]}
             </span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
+              <Clock size={12} />
               {article.readingTime}
             </span>
           </div>
@@ -36,7 +78,7 @@ function ArticleCard({ article }: { article: BlogArticle }) {
           </p>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
+              <Calendar size={12} />
               {new Date(article.publishedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -44,7 +86,7 @@ function ArticleCard({ article }: { article: BlogArticle }) {
               })}
             </span>
             <span className="text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-              Read <ArrowRight className="w-4 h-4" />
+              Read <ArrowRight size={16} />
             </span>
           </div>
         </div>
@@ -54,19 +96,29 @@ function ArticleCard({ article }: { article: BlogArticle }) {
 }
 
 export default function BlogIndex() {
+  useCanonical("/blog");
+
   useEffect(() => {
     const originalTitle = document.title;
+    const title = "Blog - GDPR & Cookie Consent Guides | ConsentEase";
+    const desc = "Learn about GDPR compliance, cookie consent best practices, and privacy regulations. Expert guides for small business owners.";
     const metaDescription = document.querySelector('meta[name="description"]');
     const originalDescription = metaDescription?.getAttribute("content") || "";
 
-    document.title = "Blog - GDPR & Cookie Consent Guides | ConsentEase";
-    if (metaDescription) {
-      metaDescription.setAttribute("content", "Learn about GDPR compliance, cookie consent best practices, and privacy regulations. Expert guides for small business owners.");
-    }
+    document.title = title;
+    if (metaDescription) metaDescription.setAttribute("content", desc);
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const origOgTitle = ogTitle?.getAttribute("content") || "";
+    if (ogTitle) ogTitle.setAttribute("content", title);
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const origOgDesc = ogDescription?.getAttribute("content") || "";
+    if (ogDescription) ogDescription.setAttribute("content", desc);
 
     return () => {
       document.title = originalTitle;
       if (metaDescription) metaDescription.setAttribute("content", originalDescription);
+      if (ogTitle) ogTitle.setAttribute("content", origOgTitle);
+      if (ogDescription) ogDescription.setAttribute("content", origOgDesc);
     };
   }, []);
 
@@ -74,13 +126,13 @@ export default function BlogIndex() {
   const otherArticles = BLOG_ARTICLES.slice(1);
 
   return (
-    <div className="min-h-screen bg-background font-sans">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+    <>
+      <BlogSchemas />
+      <div className="min-h-screen bg-background font-sans">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="text-2xl font-display font-bold flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient flex items-center justify-center text-white">
-              <Shield className="w-5 h-5 fill-current" />
-            </div>
+            <img src="/consentease-logo.webp" alt="ConsentEase" className="h-8 w-auto" />
             ConsentEase
           </Link>
           <div className="flex items-center gap-4">
@@ -100,6 +152,15 @@ export default function BlogIndex() {
       </nav>
 
       <main className="pt-32 pb-24">
+        <nav className="max-w-6xl mx-auto px-6 mb-8 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+          <Link href="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <House size={16} />
+            <span>Home</span>
+          </Link>
+          <CaretRight size={16} />
+          <span className="text-foreground">Blog</span>
+        </nav>
+
         <div className="max-w-4xl mx-auto px-6 text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary text-sm font-medium mb-6">
             <span className="flex h-2 w-2 rounded-full bg-primary"></span>
@@ -127,11 +188,11 @@ export default function BlogIndex() {
                   </p>
                   <div className="flex items-center gap-4 text-white/60 text-sm">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
+                      <Clock size={16} />
                       {featuredArticle.readingTime}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
+                      <Calendar size={16} />
                       {new Date(featuredArticle.publishedAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -149,9 +210,9 @@ export default function BlogIndex() {
                     />
                   ) : (
                     <div className="p-8 md:p-12 text-center">
-                      <Shield className="w-24 h-24 text-primary/20 mx-auto mb-4" />
+                      <Shield size={96} className="text-primary/20 mx-auto mb-4" />
                       <span className="text-primary font-medium flex items-center justify-center gap-2 group-hover:gap-3 transition-all">
-                        Read Article <ArrowRight className="w-5 h-5" />
+                        Read Article <ArrowRight size={20} />
                       </span>
                     </div>
                   )}
@@ -182,7 +243,7 @@ export default function BlogIndex() {
               </p>
               <Link href="/onboarding">
                 <Button size="lg" className="bg-white text-primary hover:bg-white/90" data-testid="button-start-trial">
-                  Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
+                  Start Free Trial <ArrowRight size={16} className="ml-2" />
                 </Button>
               </Link>
             </div>
@@ -199,13 +260,14 @@ export default function BlogIndex() {
               {" · "}
               <Link href="/faq" className="text-primary hover:underline">FAQ</Link>
             </p>
-            <a href="https://saerens.agency?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <a href="https://saerensadvertising.com?utm_source=consentease&utm_medium=footer&utm_campaign=branding" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <span className="text-xs">A product by</span>
-              <img src="https://saerensadvertising.com/logo.svg" alt="Saerens Agency" className="h-5" />
+              <img src="/saerens-logo.png" alt="Saerens Advertising" className="h-5" />
             </a>
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
