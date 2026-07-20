@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import TrialBanner from "@/components/TrialBanner";
 import DemoModeBanner from "@/components/DemoModeBanner";
-import { GlobalWebsiteSelector, WebsiteProvider, useWebsite } from "@/contexts/WebsiteContext";
+import { GlobalWebsiteSelector, useWebsite } from "@/contexts/WebsiteContext";
 
 interface AuthUser {
   id: string;
@@ -85,9 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <SidebarProvider style={sidebarStyle}>
       <div className="flex min-h-screen w-full">
         <AppSidebar user={user} onLogout={handleLogout} />
-        <WebsiteProvider>
-          <DashboardContent user={user}>{children}</DashboardContent>
-        </WebsiteProvider>
+        <DashboardContent user={user}>{children}</DashboardContent>
       </div>
     </SidebarProvider>
   );

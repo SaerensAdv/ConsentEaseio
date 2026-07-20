@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Code, Cookie, Pulse, WarningCircle, type Icon } from "@phosphor-icons/react";
+import { useWebsite } from "@/contexts/WebsiteContext";
 import { getWebsiteStatusPresentation } from "@/lib/website-status";
-import type { Website } from "@shared/schema";
 
 export interface AnalyticsSummary {
   totalViews: number;
@@ -43,10 +43,7 @@ async function getJson<T>(url: string, errorMessage: string): Promise<T> {
 }
 
 export function useOverviewData() {
-  const { data: websites = [], isLoading: websitesLoading } = useQuery<Website[]>({
-    queryKey: ["/api/websites"],
-  });
-  const website = websites[0] || null;
+  const { selectedWebsite: website, isLoading: websitesLoading } = useWebsite();
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/websites", website?.id, "analytics", "30"],
