@@ -52,11 +52,15 @@ function PageLoader() {
   return <div className="flex items-center justify-center min-h-screen"><Spinner variant="brand" size={32} className="text-primary" /></div>;
 }
 
-function lazyPage<P extends Record<string, any> = Record<string, any>>(
-  importer: () => Promise<{ default: ComponentType<P> }>,
-): ComponentType<P> {
+// Route components receive path-specific params from Wouter. Keeping this
+// wrapper generic over `any` preserves those inferred props instead of forcing
+// every lazy page into Record<string, any>, which is incompatible with routes
+// whose `params` prop is required.
+function lazyPage(
+  importer: () => Promise<{ default: ComponentType<any> }>,
+): ComponentType<any> {
   const Lazy = lazy(importer);
-  return (props: P) => <Suspense fallback={<PageLoader />}><Lazy {...props} /></Suspense>;
+  return (props: any) => <Suspense fallback={<PageLoader />}><Lazy {...props} /></Suspense>;
 }
 
 import Home from "@/pages/home";
