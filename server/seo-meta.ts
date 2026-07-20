@@ -1,3 +1,5 @@
+import { getBlogPostMeta, buildArticleStructuredData } from "../shared/blog-meta";
+
 const BASE_URL = "https://consentease.io";
 
 interface PageMeta {
@@ -10,6 +12,7 @@ interface PageMeta {
   canonical?: string;
   keywords?: string;
   structuredData?: object;
+  structuredDataList?: object[];
 }
 
 const DEFAULT_OG_IMAGE = `${BASE_URL}/opengraph.jpg`;
@@ -278,6 +281,20 @@ export function getMetaForPath(path: string): PageMeta | null {
   }
 
   if (path.startsWith("/blog/") && path !== "/blog") {
+    const slug = path.replace("/blog/", "");
+    const post = getBlogPostMeta(slug);
+    if (post) {
+      return {
+        title: post.seoTitle,
+        description: post.seoDescription,
+        ogTitle: post.seoTitle,
+        ogDescription: post.seoDescription,
+        ogType: "article",
+        ogImage: post.image,
+        keywords: post.keywords,
+        structuredDataList: buildArticleStructuredData(post),
+      };
+    }
     return null;
   }
 
@@ -353,9 +370,21 @@ export function injectMetaTags(html: string, path: string): string {
     `<link rel="canonical" href="${escapeAttr(canonical)}" />`
   );
 
-  if (meta.structuredData) {
-    const structuredDataScript = `<script type="application/ld+json">${JSON.stringify(meta.structuredData)}</script>`;
-    html = html.replace("</head>", `${structuredDataScript}\n</head>`);
+  if (meta.ogType) {
+    html = html.replace(
+      /<meta\s+property="og:type"\s+content="[^"]*"\s*\/?>/,
+      `<meta property="og:type" content="${escapeAttr(meta.ogType)}" />`
+    );
+  }
+
+  const structuredItems: object[] = [];
+  if (meta.structuredData) structuredItems.push(meta.structuredData);
+  if (meta.structuredDataList) structuredItems.push(...meta.structuredDataList);
+  if (structuredItems.length > 0) {
+    const scripts = structuredItems
+      .map((item) => `<script type="application/ld+json">${JSON.stringify(item)}</script>`)
+      .join("\n");
+    html = html.replace("</head>", `${scripts}\n</head>`);
   }
 
   return html;
