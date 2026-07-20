@@ -37,7 +37,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Typecheck maintained core
-        run: npx tsc --project tsconfig.verify.json
+        run: npm run check:core
 
       - name: Build complete production bundle
         run: npm run build
