@@ -11,6 +11,7 @@ interface WebsiteContextValue {
   selectedWebsite: Website | null;
   selectedWebsiteId: string | null;
   isLoading: boolean;
+  selectionReady: boolean;
   selectWebsite: (websiteId: string) => void;
 }
 
@@ -32,6 +33,7 @@ function storedWebsiteId(): string | null {
 
 export function WebsiteProvider({ children }: { children: ReactNode }) {
   const [selection, setSelection] = useState<string | null>(() => requestedWebsiteId() || storedWebsiteId());
+  const [selectionReady, setSelectionReady] = useState(false);
 
   const { data: websites = [], isLoading } = useQuery<Website[]>({
     queryKey: ["/api/websites"],
@@ -49,7 +51,12 @@ export function WebsiteProvider({ children }: { children: ReactNode }) {
   const selectedWebsiteId = selectedWebsite?.id || null;
 
   useEffect(() => {
-    if (!selectedWebsiteId || typeof window === "undefined") return;
+    if (isLoading || typeof window === "undefined") return;
+
+    if (!selectedWebsiteId) {
+      setSelectionReady(true);
+      return;
+    }
 
     try {
       window.localStorage.setItem(STORAGE_KEY, selectedWebsiteId);
@@ -62,16 +69,18 @@ export function WebsiteProvider({ children }: { children: ReactNode }) {
       url.searchParams.set("websiteId", selectedWebsiteId);
       window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     }
-  }, [selectedWebsiteId]);
+    setSelectionReady(true);
+  }, [isLoading, selectedWebsiteId]);
 
   const selectWebsite = (websiteId: string) => {
     const websiteExists = websites.some((website) => website.id === websiteId);
-    if (!websiteExists) return;
+    if (!websiteExists || websiteId === selectedWebsiteId) return;
+    setSelectionReady(false);
     setSelection(websiteId);
   };
 
   return (
-    <WebsiteContext.Provider value={{ websites, selectedWebsite, selectedWebsiteId, isLoading, selectWebsite }}>
+    <WebsiteContext.Provider value={{ websites, selectedWebsite, selectedWebsiteId, isLoading, selectionReady, selectWebsite }}>
       {children}
     </WebsiteContext.Provider>
   );

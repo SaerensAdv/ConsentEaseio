@@ -26,7 +26,7 @@ const sidebarStyle = {
 } as React.CSSProperties;
 
 function DashboardContent({ children, user }: { children: React.ReactNode; user?: AuthUser }) {
-  const { selectedWebsiteId } = useWebsite();
+  const { selectedWebsiteId, selectionReady } = useWebsite();
 
   return (
     <main id="main-content" role="main" className="flex-1 min-w-0">
@@ -46,9 +46,14 @@ function DashboardContent({ children, user }: { children: React.ReactNode; user?
             plan={user?.plan || "solo"}
           />
         )}
-        <div key={selectedWebsiteId || "no-website"}>
-          {children}
-        </div>
+        {selectionReady ? (
+          <div key={selectedWebsiteId || "no-website"}>{children}</div>
+        ) : (
+          <div className="space-y-4 py-8" aria-label="Switching website">
+            <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+            <div className="h-40 animate-pulse rounded-xl bg-muted/70" />
+          </div>
+        )}
       </div>
     </main>
   );
