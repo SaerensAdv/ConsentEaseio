@@ -45,6 +45,9 @@ jobs:
       - name: Test website-status contract
         run: npx tsx --test client/src/lib/website-status.test.ts
 
+      - name: Test global website-context contract
+        run: npx tsx --test client/src/contexts/website-context-contract.test.ts
+
       - name: Build complete production bundle
         run: npm run build
         env:
