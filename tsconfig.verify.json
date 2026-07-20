@@ -15,6 +15,9 @@
     "client/src/pages/dashboard/overview/use-overview-data.ts",
     "client/src/pages/dashboard/diagnostics.tsx",
     "client/src/pages/dashboard/consent-logs.tsx",
+    "server/replit_integrations/batch/utils.ts",
+    "server/replit_integrations/image/client.ts",
+    "server/replit_integrations/image/routes.ts",
     "shared/schema.ts"
   ],
   "include": [],
