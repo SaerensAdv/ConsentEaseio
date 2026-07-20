@@ -12,6 +12,8 @@ const APP_BASE_URL = "https://app.consentease.io";
 const PUBLIC_HOST = "consentease.io";
 const APP_HOST = "app.consentease.io";
 
+// Demo must start on the app host so its host-only session cookie remains
+// available when the flow enters the dashboard.
 const APP_AUTH_PATHS = new Set([
   "/login",
   "/onboarding",
@@ -19,6 +21,7 @@ const APP_AUTH_PATHS = new Set([
   "/reset-password",
   "/verify-email",
   "/verify-email-change",
+  "/demo",
 ]);
 
 function isAppRoute(pathname: string): boolean {
@@ -167,6 +170,7 @@ const HIDDEN_CHAT_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/verify-email",
+  "/demo",
 ];
 
 function PublicChat() {
