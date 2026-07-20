@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe, WarningCircle } from "@phosphor-icons/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getWebsiteStatusPresentation } from "@/lib/website-status";
 import type { Website } from "@shared/schema";
 
 const STORAGE_KEY = "consentease:selected-website";
@@ -71,8 +72,6 @@ export function WebsiteProvider({ children }: { children: ReactNode }) {
       window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     }
 
-    // Older dashboard pages default to websites[0]. Keep the selected website
-    // first in the shared cache until those pages migrate to this context.
     queryClient.setQueryData<Website[]>(["/api/websites"], (current = []) => {
       const index = current.findIndex((website) => website.id === selectedWebsiteId);
       if (index <= 0) return current;
@@ -113,7 +112,7 @@ export function GlobalWebsiteSelector() {
     return (
       <div className="flex h-10 items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
         <WarningCircle size={16} />
-        No website selected
+        Add a website to get started
       </div>
     );
   }
@@ -122,19 +121,23 @@ export function GlobalWebsiteSelector() {
     <div className="flex items-center gap-2">
       <span className="hidden text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground lg:inline">Website</span>
       <Select value={selectedWebsiteId || undefined} onValueChange={selectWebsite}>
-        <SelectTrigger className="h-10 w-full min-w-0 bg-background sm:w-72" data-testid="global-website-selector" aria-label="Select active website">
+        <SelectTrigger className="h-10 w-full min-w-0 bg-background sm:w-80" data-testid="global-website-selector" aria-label="Select active website">
           <Globe size={16} className="mr-2 shrink-0 text-primary" />
           <SelectValue placeholder="Select website" />
         </SelectTrigger>
-        <SelectContent>
-          {websites.map((website) => (
-            <SelectItem key={website.id} value={website.id}>
-              <span className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${website.status === "compliant" ? "bg-emerald-500" : website.status === "scanning" ? "bg-blue-500" : "bg-amber-500"}`} />
-                {website.domain}
-              </span>
-            </SelectItem>
-          ))}
+        <SelectContent className="min-w-80">
+          {websites.map((website) => {
+            const status = getWebsiteStatusPresentation(website.status);
+            return (
+              <SelectItem key={website.id} value={website.id}>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${status.dotClass}`} />
+                  <span className="truncate">{website.domain}</span>
+                  <span className="ml-auto pl-3 text-xs text-muted-foreground">{status.label}</span>
+                </span>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
     </div>
