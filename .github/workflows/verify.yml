@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Core typecheck, contracts, and full build
+    name: Core typecheck, contracts, security, and full build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -32,6 +32,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Scan tracked files for secrets
+        run: node script/check-secrets.mjs
 
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
