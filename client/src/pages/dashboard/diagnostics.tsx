@@ -1,128 +1,81 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DashboardLayout from "./layout";
+import { useWebsite } from "@/contexts/WebsiteContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowsClockwise, CheckCircle, XCircle, Warning, MagnifyingGlass, Shield, CodeBlock, WarningCircle, ArrowSquareOut, Lightbulb } from "@phosphor-icons/react";
-import type { Website, DiagnosticScan } from "@shared/schema";
+import type { DiagnosticScan } from "@shared/schema";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 
+interface DiagnosticCheck {
+  title: string;
+  value: boolean | null | undefined;
+  success: string;
+  failure: string;
+}
+
 export default function DiagnosticsPage() {
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  const { selectedWebsite, websites, isLoading: websitesLoading } = useWebsite();
 
-  const { data: websites, isLoading: websitesLoading } = useQuery<Website[]>({
-    queryKey: ["/api/websites"],
-  });
-
-  const selectedWebsite = websites?.find((w) => w.id === selectedWebsiteId) || websites?.[0];
-
-  const { data: latestScan, isLoading: scanLoading, refetch: refetchScan } = useQuery<DiagnosticScan | null>({
+  const { data: latestScan, isLoading: scanLoading, error: scanError, refetch: refetchScan } = useQuery<DiagnosticScan | null>({
     queryKey: ["/api/websites", selectedWebsite?.id, "diagnostic-scan", "latest"],
     queryFn: async () => {
       if (!selectedWebsite?.id) return null;
-      const res = await fetch(`/api/websites/${selectedWebsite.id}/diagnostic-scan/latest`, {
-        credentials: "include",
-      });
+      const res = await fetch(`/api/websites/${selectedWebsite.id}/diagnostic-scan/latest`, { credentials: "include" });
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch scan");
       return res.json();
     },
     enabled: !!selectedWebsite?.id,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (data && data.status === 'running') return 2000;
-      return false;
-    },
+    refetchInterval: (query) => query.state.data?.status === "running" ? 2000 : false,
   });
 
   const runScanMutation = useMutation({
     mutationFn: async (websiteId: string) => {
-      const res = await fetch(`/api/websites/${websiteId}/diagnostic-scan`, {
-        method: "POST",
-        credentials: "include",
-      });
+      const res = await fetch(`/api/websites/${websiteId}/diagnostic-scan`, { method: "POST", credentials: "include" });
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const err = new Error(errorData.message || "Failed to start scan") as any;
-        err.status = res.status;
-        throw err;
+        const data = await res.json().catch(() => ({}));
+        const error = new Error(data.message || "Failed to start scan") as Error & { status?: number };
+        error.status = res.status;
+        throw error;
       }
       return res.json();
     },
-    onSuccess: () => {
-      refetchScan();
-    },
-    onError: (error: any) => {
-      if (error.status === 429) {
-        toast.error(error.message || "Daily diagnostic scan limit reached. Please upgrade your plan for more scans.");
-      } else {
-        toast.error(error.message || "Failed to start diagnostic scan. Please try again.");
-      }
+    onSuccess: () => refetchScan(),
+    onError: (error: Error & { status?: number }) => {
+      toast.error(error.status === 429
+        ? error.message || "Daily diagnostic scan limit reached."
+        : error.message || "Failed to start diagnostic scan.");
     },
   });
 
   const handleRunScan = () => {
-    if (selectedWebsite?.id) {
-      runScanMutation.mutate(selectedWebsite.id);
-    }
+    if (selectedWebsite?.id) runScanMutation.mutate(selectedWebsite.id);
   };
 
-  const parseJsonArray = (jsonString: string | null | undefined): string[] => {
-    if (!jsonString) return [];
+  const parseJsonArray = (value: string | null | undefined): string[] => {
+    if (!value) return [];
     try {
-      return JSON.parse(jsonString);
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle size={12} className="mr-1" /> Completed</Badge>;
-      case 'running':
-        return <Badge className="bg-blue-100 text-blue-800"><Spinner size={12} className="mr-1" /> Running</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-100 text-red-800"><XCircle size={12} className="mr-1" /> Failed</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  const getCheckIcon = (value: boolean | null | undefined) => {
-    if (value === true) return <CheckCircle size={20} className="text-green-600" />;
-    if (value === false) return <XCircle size={20} className="text-red-500" />;
-    return <Warning size={20} className="text-yellow-500" />;
-  };
-
   if (websitesLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <ArrowsClockwise size={24} className="animate-spin text-muted-foreground" />
-        </div>
-      </DashboardLayout>
-    );
+    return <DashboardLayout><div className="flex h-64 items-center justify-center"><ArrowsClockwise size={24} className="animate-spin text-muted-foreground" /></div></DashboardLayout>;
   }
 
-  if (!websites || websites.length === 0) {
+  if (websites.length === 0 || !selectedWebsite) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Consent Mode Diagnostics</h1>
-            <p className="text-muted-foreground">Verify your Google Consent Mode v2 implementation.</p>
-          </div>
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <WarningCircle size={48} className="text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No websites found. Add a website first to run diagnostics.</p>
-            </CardContent>
-          </Card>
+          <PageHeading domain={null} />
+          <Card><CardContent className="flex flex-col items-center justify-center py-12 text-center"><WarningCircle size={48} className="mb-4 text-muted-foreground" /><p className="font-medium">Add a website before running diagnostics</p><p className="mt-1 text-sm text-muted-foreground">The diagnostic checks need a live domain to inspect.</p></CardContent></Card>
         </div>
       </DashboardLayout>
     );
@@ -130,288 +83,97 @@ export default function DiagnosticsPage() {
 
   const issues = parseJsonArray(latestScan?.issues);
   const recommendations = parseJsonArray(latestScan?.recommendations);
+  const isRunning = latestScan?.status === "running" || runScanMutation.isPending;
+
+  const checks: DiagnosticCheck[] = latestScan ? [
+    { title: "ConsentEase Banner", value: latestScan.bannerScriptDetected, success: "Banner script is installed correctly", failure: "Banner script was not detected" },
+    { title: "Google Consent Mode", value: latestScan.consentModeDetected, success: `Consent Mode ${latestScan.consentModeVersion || "v2"} detected`, failure: "Consent Mode was not detected" },
+    { title: "Default Consent", value: latestScan.defaultConsentSet, success: "Default consent is initialized before tags", failure: "Default consent is not set before GTM" },
+    { title: "Consent Updates", value: latestScan.updateConsentCalled, success: "Consent updates are being sent", failure: "No consent update was detected yet" },
+    { title: "Google Tag Manager", value: latestScan.gtmDetected, success: "Google Tag Manager is installed", failure: "GTM was not detected (it may not be needed)" },
+    { title: "Google Analytics", value: latestScan.gtagDetected, success: "gtag.js is installed", failure: "gtag.js was not detected" },
+  ] : [];
 
   return (
     <DashboardLayout>
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Consent Mode Diagnostics</h1>
-          <p className="text-muted-foreground">Verify your Google Consent Mode v2 implementation.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Select
-            value={selectedWebsite?.id || ""}
-            onValueChange={(value) => {
-              setSelectedWebsiteId(value);
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-website">
-              <SelectValue placeholder="Select website" />
-            </SelectTrigger>
-            <SelectContent>
-              {websites.map((website) => (
-                <SelectItem key={website.id} value={website.id} data-testid={`option-website-${website.id}`}>
-                  {website.domain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={handleRunScan} 
-            disabled={runScanMutation.isPending || latestScan?.status === 'running'}
-            data-testid="button-run-scan"
-          >
-            {runScanMutation.isPending || latestScan?.status === 'running' ? (
-              <>
-                <Spinner size={16} className="mr-2" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <MagnifyingGlass size={16} className="mr-2" />
-                Run Diagnostic Scan
-              </>
-            )}
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <PageHeading domain={selectedWebsite.domain} />
+          <Button onClick={handleRunScan} disabled={isRunning} data-testid="button-run-scan">
+            {isRunning ? <><Spinner size={16} className="mr-2" />Scanning...</> : <><MagnifyingGlass size={16} className="mr-2" />Run diagnostic scan</>}
           </Button>
         </div>
-      </div>
 
-      {latestScan?.status === 'running' && (
-        <Alert>
-          <Spinner size={16} />
-          <AlertTitle>Scan in progress</AlertTitle>
-          <AlertDescription>
-            We're analyzing your website for Consent Mode implementation. This usually takes 30-60 seconds.
-          </AlertDescription>
-        </Alert>
-      )}
+        {scanError && (
+          <Alert variant="destructive"><WarningCircle size={16} /><AlertTitle>Diagnostics unavailable</AlertTitle><AlertDescription className="flex items-center justify-between gap-3">We could not load the latest scan.<Button variant="outline" size="sm" onClick={() => refetchScan()}>Retry</Button></AlertDescription></Alert>
+        )}
 
-      {latestScan && latestScan.status !== 'running' && (
-        <>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>Last scan: {new Date(latestScan.scannedAt).toLocaleString()}</span>
-            {getStatusBadge(latestScan.status)}
-          </div>
+        {latestScan?.status === "running" && (
+          <Alert><Spinner size={16} /><AlertTitle>Scan in progress</AlertTitle><AlertDescription>We are checking {selectedWebsite.domain}. This usually takes 30 to 60 seconds.</AlertDescription></Alert>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">ConsentEase Banner</CardTitle>
-                  {getCheckIcon(latestScan.bannerScriptDetected)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.bannerScriptDetected 
-                    ? "Banner script is installed correctly" 
-                    : "Banner script not detected on your website"}
-                </p>
-              </CardContent>
-            </Card>
+        {latestScan && latestScan.status !== "running" && (
+          <>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span>Last scan: {new Date(latestScan.scannedAt).toLocaleString()}</span>
+              <ScanStatusBadge status={latestScan.status} />
+            </div>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Google Consent Mode</CardTitle>
-                  {getCheckIcon(latestScan.consentModeDetected)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.consentModeDetected 
-                    ? `Consent Mode ${latestScan.consentModeVersion || ''} detected` 
-                    : "Consent Mode not detected"}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {checks.map((check) => <CheckCard key={check.title} check={check} />)}
+            </div>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Default Consent Set</CardTitle>
-                  {getCheckIcon(latestScan.defaultConsentSet)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.defaultConsentSet 
-                    ? "Default consent values are properly initialized" 
-                    : "Default consent not set before GTM loads"}
-                </p>
-              </CardContent>
-            </Card>
+            {issues.length > 0 && (
+              <Card className="border-red-200 bg-red-50/70 dark:border-red-900/60 dark:bg-red-950/20">
+                <CardHeader><CardTitle className="flex items-center gap-2 text-red-800 dark:text-red-300"><XCircle size={20} />Fix these issues ({issues.length})</CardTitle><CardDescription className="text-red-700 dark:text-red-400">These items can prevent reliable Consent Mode behavior.</CardDescription></CardHeader>
+                <CardContent><ul className="space-y-2">{issues.map((issue, index) => <li key={`${issue}-${index}`} className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300"><Warning size={16} className="mt-0.5 shrink-0" /><span>{issue}</span></li>)}</ul></CardContent>
+              </Card>
+            )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Consent Update</CardTitle>
-                  {getCheckIcon(latestScan.updateConsentCalled)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.updateConsentCalled 
-                    ? "Consent updates are being sent correctly" 
-                    : "No consent update detected (normal if no interaction yet)"}
-                </p>
-              </CardContent>
-            </Card>
+            {recommendations.length > 0 && (
+              <Card className={issues.length > 0 ? "border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20" : "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/20"}>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Lightbulb size={20} />Recommended next steps</CardTitle></CardHeader>
+                <CardContent><ul className="space-y-2">{recommendations.map((recommendation, index) => <li key={`${recommendation}-${index}`} className="flex items-start gap-2 text-sm"><CheckCircle size={16} className="mt-0.5 shrink-0 text-emerald-600" /><span>{recommendation}</span></li>)}</ul></CardContent>
+              </Card>
+            )}
+          </>
+        )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Google Tag Manager</CardTitle>
-                  {getCheckIcon(latestScan.gtmDetected)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.gtmDetected 
-                    ? "GTM is installed on your website" 
-                    : "GTM not detected (may not be needed)"}
-                </p>
-              </CardContent>
-            </Card>
+        {!latestScan && !scanLoading && !scanError && (
+          <Card><CardContent className="flex flex-col items-center justify-center py-12 text-center"><Shield size={56} className="mb-4 text-muted-foreground" /><h3 className="text-lg font-semibold">No diagnostic scan yet</h3><p className="mt-2 max-w-md text-sm text-muted-foreground">Run the first scan to verify banner installation, tag order, and Google Consent Mode v2.</p><Button className="mt-6" onClick={handleRunScan} disabled={isRunning}><MagnifyingGlass size={16} className="mr-2" />Run first scan</Button></CardContent></Card>
+        )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Google Analytics (gtag.js)</CardTitle>
-                  {getCheckIcon(latestScan.gtagDetected)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {latestScan.gtagDetected 
-                    ? "gtag.js is installed" 
-                    : "gtag.js not detected"}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {issues.length > 0 && (
-            <Card className="border-red-200 bg-red-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-800">
-                  <XCircle size={20} />
-                  Issues Found ({issues.length})
-                </CardTitle>
-                <CardDescription className="text-red-700">
-                  These issues should be addressed for proper Consent Mode compliance.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {issues.map((issue, index) => (
-                    <li key={index} className="flex items-start gap-2 text-red-800">
-                      <Warning size={16} className="mt-0.5 flex-shrink-0" />
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-
-          {recommendations.length > 0 && (
-            <Card className={issues.length > 0 ? "border-yellow-200 bg-yellow-50" : "border-green-200 bg-green-50"}>
-              <CardHeader>
-                <CardTitle className={`flex items-center gap-2 ${issues.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
-                  <Lightbulb size={20} />
-                  Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {recommendations.map((rec, index) => (
-                    <li key={index} className={`flex items-start gap-2 ${issues.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
-                      <CheckCircle size={16} className="mt-0.5 flex-shrink-0" />
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-
-      {!latestScan && !scanLoading && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Shield size={64} className="text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No diagnostic scans yet</h3>
-            <p className="text-muted-foreground text-center max-w-md mb-6">
-              Run a diagnostic scan to verify that your Google Consent Mode v2 implementation is working correctly.
-            </p>
-            <Button onClick={handleRunScan} disabled={runScanMutation.isPending} data-testid="button-first-scan">
-              <MagnifyingGlass size={16} className="mr-2" />
-              Run First Scan
-            </Button>
+          <CardHeader><CardTitle className="flex items-center gap-2"><CodeBlock size={20} />What we check</CardTitle><CardDescription>Implementation signals, not legal guarantees.</CardDescription></CardHeader>
+          <CardContent className="grid gap-5 text-sm md:grid-cols-2">
+            <CheckList title="ConsentEase integration" items={["Banner script loads", "Banner can render", "Current script version responds"]} />
+            <CheckList title="Google Consent Mode v2" items={["Defaults run before Google tags", "Required consent types exist", "Updates fire after a visitor choice"]} />
+            <CheckList title="Script order" items={["ConsentEase precedes tracking", "dataLayer is initialized", "No obvious timing conflict appears"]} />
+            <CheckList title="Compliance signals" items={["ad_storage", "analytics_storage", "ad_user_data and ad_personalization"]} />
           </CardContent>
         </Card>
-      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CodeBlock size={20} />
-            What We Check
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">ConsentEase Integration</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Banner script is properly loaded</li>
-                <li>• Consent banner appears on page</li>
-                <li>• Script version is up to date</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">Google Consent Mode v2</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Default consent is set before GTM</li>
-                <li>• Consent updates are properly sent</li>
-                <li>• All required consent types configured</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">Script Loading Order</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• ConsentEase loads before Google tags</li>
-                <li>• dataLayer is properly initialized</li>
-                <li>• No timing conflicts detected</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">Compliance Signals</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• ad_storage consent type</li>
-                <li>• analytics_storage consent type</li>
-                <li>• ad_user_data and ad_personalization</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="text-sm text-muted-foreground">
-        <p>
-          Need help implementing Consent Mode?{" "}
-          <a 
-            href="/docs" 
-            className="text-primary hover:underline inline-flex items-center gap-1"
-          >
-            Read our documentation <ArrowSquareOut size={12} />
-          </a>
-        </p>
+        <p className="text-sm text-muted-foreground">Need implementation help? <a href="/docs" className="inline-flex items-center gap-1 text-primary hover:underline">Read the documentation <ArrowSquareOut size={12} /></a></p>
       </div>
-    </div>
     </DashboardLayout>
   );
+}
+
+function PageHeading({ domain }: { domain: string | null }) {
+  return <div><h1 className="text-2xl font-bold tracking-tight">Consent Mode Diagnostics</h1><p className="text-muted-foreground">{domain ? `Verify the live implementation on ${domain}.` : "Verify your Google Consent Mode v2 implementation."}</p></div>;
+}
+
+function ScanStatusBadge({ status }: { status: string }) {
+  if (status === "completed") return <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"><CheckCircle size={12} className="mr-1" />Scan complete</Badge>;
+  if (status === "failed") return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"><XCircle size={12} className="mr-1" />Scan failed</Badge>;
+  return <Badge variant="outline">{status}</Badge>;
+}
+
+function CheckCard({ check }: { check: DiagnosticCheck }) {
+  const icon = check.value === true ? <CheckCircle size={20} className="text-emerald-600" /> : check.value === false ? <XCircle size={20} className="text-red-500" /> : <Warning size={20} className="text-amber-500" />;
+  return <Card><CardHeader className="pb-2"><div className="flex items-center justify-between gap-3"><CardTitle className="text-sm font-medium">{check.title}</CardTitle>{icon}</div></CardHeader><CardContent><p className="text-sm text-muted-foreground">{check.value ? check.success : check.failure}</p></CardContent></Card>;
+}
+
+function CheckList({ title, items }: { title: string; items: string[] }) {
+  return <div><h4 className="font-medium">{title}</h4><ul className="mt-2 space-y-1 text-muted-foreground">{items.map((item) => <li key={item} className="flex gap-2"><span aria-hidden="true">•</span><span>{item}</span></li>)}</ul></div>;
 }
