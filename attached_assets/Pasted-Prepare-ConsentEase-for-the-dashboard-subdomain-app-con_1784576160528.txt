@@ -1,0 +1,42 @@
+Prepare ConsentEase for the dashboard subdomain app.consentease.io.
+
+Goal:
+- consentease.io remains the public marketing website.
+- app.consentease.io hosts login, registration, onboarding, email verification, password reset, demo dashboard, and all /dashboard/* routes.
+- Both domains use the same existing Replit deployment and database.
+- Do not migrate data, change the database schema, deploy, or activate production redirects yet.
+
+Before changing code:
+1. Create a Replit checkpoint.
+2. Inspect the current routing, authentication, Stripe URL generation, email links, Origin/Referer validation, SEO metadata, and static serving.
+3. Report the exact files you intend to change.
+4. Preserve all existing embed scripts, analytics ingest, consent logging, /api/v1 routes, and the Stripe webhook URL.
+
+Implement:
+- Add explicit config helpers for:
+  - PUBLIC_BASE_URL=https://consentease.io
+  - APP_BASE_URL=https://app.consentease.io
+  - WEBHOOK_BASE_URL=https://consentease.io
+- Do not rely on the first value in REPLIT_DOMAINS for email, app, Stripe return, or webhook URLs.
+- Update password reset, email verification, email-change verification, agency invite, trial, payment, checkout, and billing portal links to use the correct base URL.
+- Add host-aware routing:
+  - On app.consentease.io, allow private/auth routes and redirect public marketing routes to the same path on consentease.io.
+  - On consentease.io, prepare redirects for /login, /onboarding, /forgot-password, /reset-password, /verify-email, /verify-email-change, and /dashboard/* to app.consentease.io.
+  - Preserve paths, querystrings, and tokens.
+  - Put production redirects behind a disabled feature flag so nothing changes live yet.
+  - Redirect www.consentease.io permanently to consentease.io, also behind the disabled flag until tested.
+  - Do not create or support www.app.consentease.io.
+- Keep sessions host-only. Do not set cookie domain to .consentease.io and do not weaken Secure, HttpOnly, or SameSite settings.
+- Keep frontend API calls relative and same-origin. Do not add wildcard CORS.
+- Mark app/auth/dashboard HTML as noindex and no-store.
+- Keep canonical URLs for public pages on consentease.io.
+- Add clear logging for host routing decisions without logging tokens, cookies, or secrets.
+
+Validation:
+- Run npm run check and npm run build.
+- Test both hosts without enabling redirects.
+- Verify login, logout, session refresh, registration, onboarding, password reset, email verification, dashboard routes, demo flow, Stripe checkout/portal return URLs, embed script, analytics ingest, consent logging, and /api/v1.
+- Confirm no database/schema changes and no customer snippet changes.
+- Create a final checkpoint and summarize changed files, test results, remaining risks, required Replit Secrets, and the exact flag needed later to activate redirects.
+
+Stop and ask me before deploying, enabling redirects, changing DNS, modifying Stripe webhooks, or making any database change.
