@@ -18,6 +18,10 @@ jobs:
     name: Typecheck and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      CI: "true"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      SKIP_RUNTIME_INSTALL: "1"
 
     steps:
       - name: Check out repository
@@ -30,12 +34,12 @@ jobs:
           cache: npm
 
       - name: Install locked dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck
         run: npm run check
 
-      - name: Production build
+      - name: Production bundle
         run: npm run build
         env:
           NODE_ENV: production
