@@ -17,6 +17,7 @@
     "client/src/pages/dashboard/consent-logs.tsx",
     "shared/schema.ts"
   ],
+  "include": [],
   "exclude": [
     "node_modules",
     "dist"
