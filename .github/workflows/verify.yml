@@ -1,0 +1,45 @@
+name: Verify
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Core typecheck and full build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      SKIP_RUNTIME_INSTALL: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck maintained core
+        run: npx tsc --project tsconfig.verify.json
+
+      - name: Build complete production bundle
+        run: npm run build
+        env:
+          NODE_ENV: production

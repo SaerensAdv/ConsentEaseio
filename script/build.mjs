@@ -3,6 +3,7 @@ import { writeFileSync, mkdirSync, existsSync, readdirSync } from "fs";
 import { resolve } from "path";
 
 const ROOT = process.cwd();
+const SKIP_RUNTIME_INSTALL = process.env.SKIP_RUNTIME_INSTALL === "1";
 
 console.log("=== ConsentEase Production Build ===");
 console.log("Node version:", process.version);
@@ -14,8 +15,7 @@ try {
     mkdirSync("dist", { recursive: true });
   }
 
-  // Step 1: Build client
-  console.log("\n[1/3] Building client with Vite...");
+  console.log("\n[1/4] Building client with Vite...");
   try {
     execSync("node node_modules/vite/bin/vite.js build", {
       stdio: "inherit",
@@ -31,10 +31,9 @@ try {
     console.error("FATAL: dist/public/ not created by vite!");
     process.exit(1);
   }
-  console.log("[1/3] Client build OK.");
+  console.log("[1/4] Client build OK.");
 
-  // Step 2: Build server using esbuild JS API
-  console.log("\n[2/3] Building server with esbuild...");
+  console.log("\n[2/4] Building server with esbuild...");
   let esbuild;
   try {
     esbuild = await import("esbuild");
@@ -81,25 +80,11 @@ try {
           ].join("\n"),
         },
         external: [
-          "pg-native",
-          "better-sqlite3",
-          "playwright",
-          "playwright-core",
-          "lightningcss",
-          "@tailwindcss/oxide",
-          "@babel/preset-typescript",
-          "esbuild",
-          "vite",
-          "tailwindcss",
-          "@tailwindcss/*",
-          "postcss",
-          "autoprefixer",
-          "@replit/*",
-          "./vite",
-          "./vite.js",
-          "../vite.config",
-          "../vite.config.ts",
-          "sharp",
+          "pg-native", "better-sqlite3", "playwright", "playwright-core",
+          "lightningcss", "@tailwindcss/oxide", "@babel/preset-typescript",
+          "esbuild", "vite", "tailwindcss", "@tailwindcss/*", "postcss",
+          "autoprefixer", "@replit/*", "./vite", "./vite.js",
+          "../vite.config", "../vite.config.ts", "sharp",
         ],
       });
     } catch (err) {
@@ -112,29 +97,30 @@ try {
     console.error("FATAL: dist/index.mjs not created!");
     process.exit(1);
   }
-  console.log("[2/3] Server build OK.");
+  console.log("[2/4] Server build OK.");
 
-  // Step 3: Install sharp natively in dist for production runtime
-  console.log("\n[3/4] Installing sharp for production runtime...");
-  try {
-    if (!existsSync("dist/node_modules")) {
-      mkdirSync("dist/node_modules", { recursive: true });
+  console.log("\n[3/4] Preparing sharp for production runtime...");
+  if (SKIP_RUNTIME_INSTALL) {
+    // CI validates the locked dependency tree from npm ci. A second mutable npm
+    // install adds no build confidence and can fail for registry/network reasons.
+    console.log("[3/4] Runtime install skipped in verification environment.");
+  } else {
+    try {
+      if (!existsSync("dist/node_modules")) {
+        mkdirSync("dist/node_modules", { recursive: true });
+      }
+      execSync("npm install --prefix dist sharp --no-save", {
+        stdio: "inherit",
+        cwd: ROOT,
+      });
+      console.log("[3/4] Sharp installation OK.");
+    } catch (err) {
+      console.warn("[3/4] Warning: Sharp installation failed, logo upload will be unavailable:", err.message);
     }
-    execSync("npm install --prefix dist sharp --no-save", {
-      stdio: "inherit",
-      cwd: ROOT,
-    });
-    console.log("[3/4] Sharp installation OK.");
-  } catch (err) {
-    console.warn("[3/4] Warning: Sharp installation failed, logo upload will be unavailable:", err.message);
   }
 
-  // Step 4: CJS wrapper (simple launcher, no rebuild logic)
   console.log("\n[4/4] Creating CJS entry point...");
-  writeFileSync(
-    resolve(ROOT, "dist/index.cjs"),
-    '(async () => { await import("./index.mjs"); })();\n'
-  );
+  writeFileSync(resolve(ROOT, "dist/index.cjs"), '(async () => { await import("./index.mjs"); })();\n');
 
   if (!existsSync("dist/index.cjs")) {
     console.error("FATAL: dist/index.cjs not created!");
@@ -143,9 +129,7 @@ try {
   console.log("[4/4] CJS wrapper OK.");
 
   console.log("\n=== Build complete! ===");
-  const files = readdirSync("dist");
-  files.forEach((f) => console.log("  dist/" + f));
-
+  readdirSync("dist").forEach((file) => console.log("  dist/" + file));
 } catch (err) {
   console.error("\n=== BUILD FAILED (uncaught) ===");
   console.error(err);
