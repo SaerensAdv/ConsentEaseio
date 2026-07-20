@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Core typecheck and full build
+    name: Core typecheck, contracts, and full build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -38,6 +38,9 @@ jobs:
 
       - name: Typecheck maintained core
         run: npm run check:core
+
+      - name: Test host-routing contract
+        run: npx tsx --test server/middleware/hostRedirects.test.ts
 
       - name: Build complete production bundle
         run: npm run build
