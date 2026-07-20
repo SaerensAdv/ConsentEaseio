@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import TrialBanner from "@/components/TrialBanner";
 import DemoModeBanner from "@/components/DemoModeBanner";
+import { GlobalWebsiteSelector, WebsiteProvider, useWebsite } from "@/contexts/WebsiteContext";
 
 interface AuthUser {
   id: string;
@@ -23,6 +24,40 @@ const sidebarStyle = {
   "--sidebar-width": "16rem",
   "--sidebar-width-icon": "3rem",
 } as React.CSSProperties;
+
+function DashboardContent({ children, user }: { children: React.ReactNode; user?: AuthUser }) {
+  const { selectedWebsiteId, selectionReady } = useWebsite();
+
+  return (
+    <main id="main-content" role="main" className="flex-1 min-w-0">
+      <div className="sticky top-0 z-30 flex items-center gap-3 border-b bg-background/95 p-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-6 md:py-3">
+        <SidebarTrigger className="md:hidden" data-testid="button-sidebar-toggle" aria-label="Toggle sidebar navigation" />
+        <div className="ml-auto w-full sm:w-auto">
+          <GlobalWebsiteSelector />
+        </div>
+      </div>
+      <div className="p-6 md:p-10 max-w-6xl mx-auto">
+        {user?.isDemo ? (
+          <DemoModeBanner demoExpiresAt={user?.demoExpiresAt || null} />
+        ) : (
+          <TrialBanner
+            trialEndsAt={user?.trialEndsAt || null}
+            subscriptionStatus={user?.subscriptionStatus || null}
+            plan={user?.plan || "solo"}
+          />
+        )}
+        {selectionReady ? (
+          <div key={selectedWebsiteId || "no-website"}>{children}</div>
+        ) : (
+          <div className="space-y-4 py-8" aria-label="Switching website">
+            <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+            <div className="h-40 animate-pulse rounded-xl bg-muted/70" />
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
@@ -50,23 +85,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <SidebarProvider style={sidebarStyle}>
       <div className="flex min-h-screen w-full">
         <AppSidebar user={user} onLogout={handleLogout} />
-        <main id="main-content" role="main" className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 p-2 border-b md:hidden sticky top-0 z-30 bg-background">
-            <SidebarTrigger data-testid="button-sidebar-toggle" aria-label="Toggle sidebar navigation" />
-          </div>
-          <div className="p-6 md:p-10 max-w-6xl mx-auto">
-            {user?.isDemo ? (
-              <DemoModeBanner demoExpiresAt={user?.demoExpiresAt || null} />
-            ) : (
-              <TrialBanner
-                trialEndsAt={user?.trialEndsAt || null}
-                subscriptionStatus={user?.subscriptionStatus || null}
-                plan={user?.plan || "solo"}
-              />
-            )}
-            {children}
-          </div>
-        </main>
+        <WebsiteProvider>
+          <DashboardContent user={user}>{children}</DashboardContent>
+        </WebsiteProvider>
       </div>
     </SidebarProvider>
   );
