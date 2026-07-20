@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { IconContext } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
+import { WebsiteProvider } from "@/contexts/WebsiteContext";
 
 const PUBLIC_BASE_URL = "https://consentease.io";
 const APP_BASE_URL = "https://app.consentease.io";
@@ -190,6 +191,14 @@ function Router() {
   );
 }
 
+function RoutedContent() {
+  const [location] = useLocation();
+  const router = <Router />;
+  return location === "/dashboard" || location.startsWith("/dashboard/")
+    ? <WebsiteProvider>{router}</WebsiteProvider>
+    : router;
+}
+
 function SkipLink() {
   return <a href="#main-content" className="skip-link">Skip to main content</a>;
 }
@@ -205,7 +214,7 @@ function App() {
             <ScrollToTop />
             <Toaster />
             <SonnerToaster position="top-right" richColors closeButton />
-            <Router />
+            <RoutedContent />
             <DemoTour />
             <PublicChat />
           </HostNavigationBoundary>
