@@ -7,8 +7,11 @@
     "noEmit": true
   },
   "files": [
+    "client/src/typechecks/lazy-route-contract.tsx",
     "client/src/contexts/WebsiteContext.tsx",
     "client/src/lib/website-status.ts",
+    "client/src/pages/solutions/index.tsx",
+    "client/src/pages/solutions/platform.tsx",
     "client/src/pages/dashboard/layout.tsx",
     "client/src/pages/dashboard/overview.tsx",
     "client/src/pages/dashboard/overview/overview-widgets.tsx",
