@@ -7,7 +7,8 @@ import {
   HOST_REDIRECTS_ENABLED,
 } from "../base-urls";
 
-// Auth/account pages that live on the app subdomain (exact matches).
+// Exact entry pages that must run on the app host. Demo belongs here because
+// its login POST creates a host-only session before entering the dashboard.
 const APP_AUTH_PATHS = new Set([
   "/login",
   "/onboarding",
@@ -15,6 +16,7 @@ const APP_AUTH_PATHS = new Set([
   "/reset-password",
   "/verify-email",
   "/verify-email-change",
+  "/demo",
 ]);
 
 /** True when a page path belongs on the app/dashboard subdomain. */
