@@ -23,6 +23,14 @@ if (IS_PRODUCTION_BOOT && !process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
+// Explicit opt-in for PROVISIONING/managing the Stripe webhook endpoint at boot.
+// Default OFF: startup must never silently create, replace, duplicate, or modify a
+// Stripe webhook just because WEBHOOK_BASE_URL changed. This is independent of
+// PROCESSING incoming webhook requests (POST /api/stripe/webhook), which always runs.
+const MANAGE_STRIPE_WEBHOOK = /^(true|1|yes|on)$/i.test(
+  (process.env.MANAGE_STRIPE_WEBHOOK ?? "").trim(),
+);
+
 const app = express();
 
 // Trust the platform proxy so req.ip and secure-cookie detection work behind
@@ -89,41 +97,55 @@ async function initStripe() {
 
     const stripeSync = await getStripeSync();
 
-    console.log('Setting up managed webhook...');
-    // Webhook host is an explicit config (WEBHOOK_BASE_URL), not REPLIT_DOMAINS[0],
-    // so the endpoint is intentional and stable across the two-hostname setup.
-    // In dev this resolves to the Replit dev domain (unchanged from before); in
-    // production it defaults to https://consentease.io.
-    const webhookUrl = `${WEBHOOK_BASE_URL}/api/stripe/webhook`;
-    const hasPublicWebhookHost = !/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(WEBHOOK_BASE_URL);
-    if (!hasPublicWebhookHost) {
-      console.warn('WEBHOOK_BASE_URL has no public host, skipping managed webhook setup');
-      // Still kick off the data sync below so the dev environment has Stripe data.
-    }
-    try {
+    // Provisioning/managing the Stripe webhook ENDPOINT is deliberately separate
+    // from PROCESSING incoming webhook requests. The incoming handler is registered
+    // unconditionally at POST /api/stripe/webhook (below) and always works. Endpoint
+    // provisioning is gated behind MANAGE_STRIPE_WEBHOOK (default OFF) so that a
+    // WEBHOOK_BASE_URL change can never silently create, replace, duplicate, or
+    // modify a Stripe webhook at startup. When enabled it manages only
+    // WEBHOOK_BASE_URL/api/stripe/webhook. Webhook secrets are never logged.
+    if (!MANAGE_STRIPE_WEBHOOK) {
+      console.log(
+        'Skipping managed Stripe webhook provisioning (MANAGE_STRIPE_WEBHOOK is off). ' +
+        'Incoming webhook processing at POST /api/stripe/webhook is unaffected.',
+      );
+    } else {
+      console.log('Setting up managed webhook...');
+      // Webhook host is an explicit config (WEBHOOK_BASE_URL), not REPLIT_DOMAINS[0],
+      // so the endpoint is intentional and stable across the two-hostname setup.
+      // In dev this resolves to the Replit dev domain; in production it defaults
+      // to https://consentease.io.
+      const webhookUrl = `${WEBHOOK_BASE_URL}/api/stripe/webhook`;
+      const hasPublicWebhookHost = !/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(WEBHOOK_BASE_URL);
       if (!hasPublicWebhookHost) {
-        throw new Error('webhook URL unavailable (no public WEBHOOK_BASE_URL host)');
+        console.warn('WEBHOOK_BASE_URL has no public host, skipping managed webhook setup');
+        // Still kick off the data sync below so the dev environment has Stripe data.
       }
-      const webhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
-      if (webhook?.url) {
-        console.log(`Webhook configured: ${webhook.url} (id: ${webhook.id}, status: ${webhook.status})`);
-      } else if (webhook?.id) {
-        console.log(`Webhook configured with id: ${webhook.id}`);
-      } else {
-        console.log('Webhook setup completed but no webhook details returned');
-      }
-    } catch (webhookError: any) {
-      console.error('Webhook setup failed:', webhookError.message);
-      if (webhookError.message?.includes('No such webhook endpoint')) {
-        console.log('Stale webhook reference detected. Retrying webhook creation...');
-        try {
-          if (!webhookUrl) throw new Error('webhook URL unavailable');
-          const retryWebhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
-          if (retryWebhook?.url) {
-            console.log(`Webhook configured on retry: ${retryWebhook.url} (id: ${retryWebhook.id})`);
+      try {
+        if (!hasPublicWebhookHost) {
+          throw new Error('webhook URL unavailable (no public WEBHOOK_BASE_URL host)');
+        }
+        const webhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
+        if (webhook?.url) {
+          console.log(`Webhook configured: ${webhook.url} (id: ${webhook.id}, status: ${webhook.status})`);
+        } else if (webhook?.id) {
+          console.log(`Webhook configured with id: ${webhook.id}`);
+        } else {
+          console.log('Webhook setup completed but no webhook details returned');
+        }
+      } catch (webhookError: any) {
+        console.error('Webhook setup failed:', webhookError.message);
+        if (webhookError.message?.includes('No such webhook endpoint')) {
+          console.log('Stale webhook reference detected. Retrying webhook creation...');
+          try {
+            if (!webhookUrl) throw new Error('webhook URL unavailable');
+            const retryWebhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
+            if (retryWebhook?.url) {
+              console.log(`Webhook configured on retry: ${retryWebhook.url} (id: ${retryWebhook.id})`);
+            }
+          } catch (retryError: any) {
+            console.error('Webhook retry also failed:', retryError.message);
           }
-        } catch (retryError: any) {
-          console.error('Webhook retry also failed:', retryError.message);
         }
       }
     }

@@ -1,0 +1,42 @@
+Fix two blockers in the app.consentease.io implementation. Do not deploy, change DNS, enable redirects, touch the database, or modify Stripe webhooks.
+
+Before editing:
+1. Create a checkpoint.
+2. Inspect the latest commit and confirm the exact files you will change.
+
+Blocker 1: app subdomain root routing
+- Current behavior would redirect https://app.consentease.io/ to the public website.
+- Required behavior:
+  - https://app.consentease.io/ must redirect to /dashboard.
+  - The dashboard’s existing auth check may then send unauthenticated users to /login.
+  - Keep marketing routes on app.consentease.io redirecting to the same path on https://consentease.io.
+  - Preserve querystrings.
+  - Do not introduce cross-domain session sharing.
+- Add tests for:
+  - app.consentease.io/ → app.consentease.io/dashboard
+  - app.consentease.io/pricing → consentease.io/pricing
+  - consentease.io/dashboard/settings → app.consentease.io/dashboard/settings
+  - tokenized auth URLs preserve their querystrings
+  - www.consentease.io/* → consentease.io/*
+
+Blocker 2: Stripe managed webhook safety
+- Application startup must never silently create, replace, duplicate, or modify a Stripe webhook because WEBHOOK_BASE_URL changed.
+- Separate “process incoming webhook requests” from “provision/manage a Stripe webhook endpoint.”
+- Keep POST /api/stripe/webhook working unchanged.
+- Add an explicit opt-in environment flag such as MANAGE_STRIPE_WEBHOOK=true.
+- Default must be false.
+- When false, startup must skip findOrCreateManagedWebhook entirely and log a short safe message.
+- When true, it may manage exactly WEBHOOK_BASE_URL/api/stripe/webhook.
+- Never log webhook secrets.
+- Do not change the current Stripe endpoint or Dashboard configuration during this task.
+
+Validation:
+- Run npm run check.
+- Run npm run build.
+- Run or add focused tests for the pure host-routing decision function.
+- Confirm ENABLE_HOST_REDIRECTS remains off by default.
+- Confirm MANAGE_STRIPE_WEBHOOK remains off by default.
+- Confirm there are no database/schema changes and no customer embed changes.
+- Create a final checkpoint and summarize changed files, test results, remaining risks, and required environment flags.
+
+Stop before deployment or any live configuration change.

@@ -24,6 +24,12 @@ export function isAppPath(pathname: string): boolean {
   return APP_AUTH_PATHS.has(p);
 }
 
+/** Returns the querystring (including the leading '?') from an originalUrl, or "". */
+function queryOf(originalUrl: string): string {
+  const i = originalUrl.indexOf("?");
+  return i >= 0 ? originalUrl.slice(i) : "";
+}
+
 export interface HostRedirectDecision {
   status: number;
   location: string;
@@ -66,6 +72,18 @@ export function decideHostRedirect(
   // App subdomain: only app/auth/dashboard pages belong here. Everything else
   // is marketing and moves permanently to the public site.
   if (host === cfg.appHost) {
+    // The app subdomain has no marketing home page, so its root sends the user
+    // to the dashboard (whose own client-side auth check may then bounce an
+    // unauthenticated user to /login). This is a same-host redirect, so no
+    // cross-domain session sharing is involved. 302 because the real landing
+    // depends on auth state and must not be cached as permanent.
+    if (pathname === "/") {
+      return {
+        status: 302,
+        location: `${cfg.appBaseUrl}/dashboard${queryOf(originalUrl)}`,
+        reason: "app-host-root->dashboard",
+      };
+    }
     if (!isAppPath(pathname)) {
       return {
         status: 301,
