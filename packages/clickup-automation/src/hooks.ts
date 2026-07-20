@@ -62,9 +62,9 @@ export async function onPush(): Promise<void> {
 
   const pending = queue.getUnprocessedCount();
   if (pending > 0) {
-    console.log(`🔄 ClickUp: Processing ${pending} queued event(s)...`);
-    const result = await sync.processQueue();
-    console.log(`✅ ClickUp: Processed queue (${result.updated.length} updated, ${result.errors.length} errors)`);
+    console.log(`🔄 ClickUp: Processing up to 25 of ${pending} queued event(s)...`);
+    const result = await sync.processQueue({ maxEvents: 25, maxDurationMs: 5000 });
+    console.log(`✅ ClickUp: Queue pass finished (${result.updated.length} updated, ${result.errors.length} errors)`);
   }
 }
 
@@ -73,18 +73,22 @@ export function installGitHooks(): void {
   const path = require('path');
 
   const hooksDir = path.join(process.cwd(), '.git', 'hooks');
-  
+
   if (!fs.existsSync(hooksDir)) {
     console.log('⚠️ .git/hooks directory not found');
     return;
   }
 
+  // Git lifecycle commands must never depend on ClickUp or network health.
+  // Run automation detached, silence its output, and always let Git continue.
   const postCommitHook = `#!/bin/sh
-npx tsx -e "require('./packages/clickup-automation').onPostCommit()"
+(npx tsx -e "require('./packages/clickup-automation').onPostCommit()" >/dev/null 2>&1 &) || true
+exit 0
 `;
 
   const prePushHook = `#!/bin/sh
-npx tsx -e "require('./packages/clickup-automation').onPush()"
+(npx tsx -e "require('./packages/clickup-automation').onPush()" >/dev/null 2>&1 &) || true
+exit 0
 `;
 
   fs.writeFileSync(path.join(hooksDir, 'post-commit'), postCommitHook);
@@ -93,7 +97,7 @@ npx tsx -e "require('./packages/clickup-automation').onPush()"
   fs.writeFileSync(path.join(hooksDir, 'pre-push'), prePushHook);
   fs.chmodSync(path.join(hooksDir, 'pre-push'), '755');
 
-  console.log('✅ Git hooks installed');
+  console.log('✅ Non-blocking Git hooks installed');
 }
 
 export function uninstallGitHooks(): void {
@@ -101,7 +105,7 @@ export function uninstallGitHooks(): void {
   const path = require('path');
 
   const hooksDir = path.join(process.cwd(), '.git', 'hooks');
-  
+
   try {
     fs.unlinkSync(path.join(hooksDir, 'post-commit'));
     fs.unlinkSync(path.join(hooksDir, 'pre-push'));
