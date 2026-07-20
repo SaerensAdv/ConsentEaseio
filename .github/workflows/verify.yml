@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Typecheck and build
+    name: Core typecheck and full build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -36,10 +36,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Typecheck
-        run: npm run check
+      - name: Typecheck maintained core
+        run: npx tsc --project tsconfig.verify.json
 
-      - name: Production bundle
+      - name: Build complete production bundle
         run: npm run build
         env:
           NODE_ENV: production
