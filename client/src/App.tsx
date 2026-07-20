@@ -12,103 +12,55 @@ const APP_BASE_URL = "https://app.consentease.io";
 const PUBLIC_HOST = "consentease.io";
 const APP_HOST = "app.consentease.io";
 
-// Demo must start on the app host so its host-only session cookie remains
-// available when the flow enters the dashboard.
 const APP_AUTH_PATHS = new Set([
-  "/login",
-  "/onboarding",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-  "/verify-email-change",
-  "/demo",
+  "/login", "/onboarding", "/forgot-password", "/reset-password",
+  "/verify-email", "/verify-email-change", "/demo",
 ]);
 
 function isAppRoute(pathname: string): boolean {
   const normalized = pathname.replace(/\/+$/, "") || "/";
-  return (
-    normalized === "/dashboard" ||
-    normalized.startsWith("/dashboard/") ||
-    APP_AUTH_PATHS.has(normalized)
-  );
+  return normalized === "/dashboard" || normalized.startsWith("/dashboard/") || APP_AUTH_PATHS.has(normalized);
 }
 
 function getHostNavigationTarget(): string | null {
   const { hostname, pathname, search, hash } = window.location;
   const suffix = `${pathname}${search}${hash}`;
-
-  if (hostname === PUBLIC_HOST && isAppRoute(pathname)) {
-    return `${APP_BASE_URL}${suffix}`;
-  }
-
+  if (hostname === PUBLIC_HOST && isAppRoute(pathname)) return `${APP_BASE_URL}${suffix}`;
   if (hostname === APP_HOST) {
-    if (pathname === "/") {
-      return `${APP_BASE_URL}/dashboard${search}${hash}`;
-    }
-
-    if (!isAppRoute(pathname)) {
-      return `${PUBLIC_BASE_URL}${suffix}`;
-    }
+    if (pathname === "/") return `${APP_BASE_URL}/dashboard${search}${hash}`;
+    if (!isAppRoute(pathname)) return `${PUBLIC_BASE_URL}${suffix}`;
   }
-
   return null;
 }
 
-/**
- * Wouter navigation stays client-side and therefore never reaches the server's
- * host redirect middleware. Gate child routes while crossing hosts so pages
- * cannot fire API requests and create host-only sessions on the wrong domain.
- */
 function HostNavigationBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const target = getHostNavigationTarget();
-
-  useEffect(() => {
-    if (target) window.location.assign(target);
-  }, [location, target]);
-
+  useEffect(() => { if (target) window.location.assign(target); }, [location, target]);
   if (target) return <PageLoader />;
   return <>{children}</>;
 }
 
 function ScrollToTop() {
   const [location] = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location]);
-
+  useEffect(() => { window.scrollTo(0, 0); }, [location]);
   return null;
 }
 
 function PageLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Spinner variant="brand" size={32} className="text-primary" />
-    </div>
-  );
+  return <div className="flex items-center justify-center min-h-screen"><Spinner variant="brand" size={32} className="text-primary" /></div>;
 }
 
-// Helper that turns a lazy import into a route-ready component, wrapping it
-// in Suspense so the page loader is shown while the chunk is fetched.
 function lazyPage<P extends Record<string, any> = Record<string, any>>(
   importer: () => Promise<{ default: ComponentType<P> }>,
 ): ComponentType<P> {
   const Lazy = lazy(importer);
-  return (props: P) => (
-    <Suspense fallback={<PageLoader />}>
-      <Lazy {...props} />
-    </Suspense>
-  );
+  return (props: P) => <Suspense fallback={<PageLoader />}><Lazy {...props} /></Suspense>;
 }
 
-// Eager: the homepage is the dominant entry route — keep it in the main bundle
-// so first paint never shows a loader.
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 
-// Lazy: everything else. Each of these becomes its own JS chunk so visitors
-// only download the page they actually navigate to.
 const PricingPage = lazyPage(() => import("@/pages/pricing"));
 const BusinessPricingPage = lazyPage(() => import("@/pages/business"));
 const CompareIndex = lazyPage(() => import("@/pages/compare/index"));
@@ -147,6 +99,7 @@ const RoadmapPage = lazyPage(() => import("@/pages/roadmap"));
 const BlogIndex = lazyPage(() => import("@/pages/blog/index"));
 const BlogPost = lazyPage(() => import("@/pages/blog/[slug]"));
 
+const DashboardOverview = lazyPage(() => import("@/pages/dashboard/overview"));
 const DashboardWebsites = lazyPage(() => import("@/pages/dashboard/websites"));
 const BannerConfigurator = lazyPage(() => import("@/pages/dashboard/banner"));
 const Analytics = lazyPage(() => import("@/pages/dashboard/analytics"));
@@ -164,31 +117,17 @@ const Onboarding = lazyPage(() => import("@/pages/onboarding"));
 import { DemoProvider } from "@/contexts/DemoContext";
 import { DemoTour } from "@/components/DemoTour";
 import { CursorTrail } from "@/components/CursorTrail";
-const ChatWidget = lazy(() =>
-  import("@/components/ChatWidget").then((m) => ({ default: m.ChatWidget })),
-);
+const ChatWidget = lazy(() => import("@/components/ChatWidget").then((m) => ({ default: m.ChatWidget })));
 
 const HIDDEN_CHAT_PREFIXES = [
-  "/dashboard",
-  "/login",
-  "/onboarding",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-  "/demo",
+  "/dashboard", "/login", "/onboarding", "/forgot-password", "/reset-password", "/verify-email", "/demo",
 ];
 
 function PublicChat() {
   const [location] = useLocation();
-  const hidden = HIDDEN_CHAT_PREFIXES.some(
-    (prefix) => location === prefix || location.startsWith(prefix + "/"),
-  );
+  const hidden = HIDDEN_CHAT_PREFIXES.some((prefix) => location === prefix || location.startsWith(prefix + "/"));
   if (hidden) return null;
-  return (
-    <Suspense fallback={null}>
-      <ChatWidget />
-    </Suspense>
-  );
+  return <Suspense fallback={null}><ChatWidget /></Suspense>;
 }
 
 function Router() {
@@ -233,7 +172,7 @@ function Router() {
       <Route path="/solutions" component={SolutionsIndex} />
       <Route path="/solutions/:slug" component={PlatformSolutionPage} />
       <Route path="/compliance/:slug" component={CountrySolutionPage} />
-      <Route path="/dashboard" component={DashboardWebsites} />
+      <Route path="/dashboard" component={DashboardOverview} />
       <Route path="/dashboard/websites" component={DashboardWebsites} />
       <Route path="/dashboard/banner" component={BannerConfigurator} />
       <Route path="/dashboard/cookies" component={CookiesManagement} />
@@ -246,18 +185,13 @@ function Router() {
       <Route path="/dashboard/policy/:id" component={PolicyView} />
       <Route path="/dashboard/support" component={SupportPage} />
       <Route path="/dashboard/settings" component={Settings} />
-      {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function SkipLink() {
-  return (
-    <a href="#main-content" className="skip-link">
-      Skip to main content
-    </a>
-  );
+  return <a href="#main-content" className="skip-link">Skip to main content</a>;
 }
 
 function App() {
