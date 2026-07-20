@@ -7,7 +7,7 @@
     "noEmit": true
   },
   "files": [
-    "client/src/App.tsx",
+    "client/src/typechecks/lazy-route-contract.tsx",
     "client/src/contexts/WebsiteContext.tsx",
     "client/src/lib/website-status.ts",
     "client/src/pages/solutions/index.tsx",
