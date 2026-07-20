@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe, WarningCircle } from "@phosphor-icons/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Website } from "@shared/schema";
@@ -32,6 +32,7 @@ function storedWebsiteId(): string | null {
 }
 
 export function WebsiteProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [selection, setSelection] = useState<string | null>(() => requestedWebsiteId() || storedWebsiteId());
   const [selectionReady, setSelectionReady] = useState(false);
 
@@ -69,8 +70,17 @@ export function WebsiteProvider({ children }: { children: ReactNode }) {
       url.searchParams.set("websiteId", selectedWebsiteId);
       window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     }
+
+    // Older dashboard pages default to websites[0]. Keep the selected website
+    // first in the shared cache until those pages migrate to this context.
+    queryClient.setQueryData<Website[]>(["/api/websites"], (current = []) => {
+      const index = current.findIndex((website) => website.id === selectedWebsiteId);
+      if (index <= 0) return current;
+      return [current[index], ...current.slice(0, index), ...current.slice(index + 1)];
+    });
+
     setSelectionReady(true);
-  }, [isLoading, selectedWebsiteId]);
+  }, [isLoading, queryClient, selectedWebsiteId]);
 
   const selectWebsite = (websiteId: string) => {
     const websiteExists = websites.some((website) => website.id === websiteId);
