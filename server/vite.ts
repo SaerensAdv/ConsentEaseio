@@ -52,7 +52,23 @@ export async function setupVite(server: Server, app: Express) {
       // Run vite plugins first (HMR, react refresh, build-time meta plugin),
       // then apply our per-page SEO meta on top so it always wins.
       const transformed = await vite.transformIndexHtml(url, template);
-      const page = injectMetaTags(transformed, url.split("?")[0]);
+      const pathname = url.split("?")[0] || "/";
+
+      // Mirror production: private app/auth routes are never indexed or cached.
+      const isPrivate =
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/onboarding") ||
+        pathname.startsWith("/forgot-password") ||
+        pathname.startsWith("/reset-password") ||
+        pathname.startsWith("/verify-email") ||
+        pathname.startsWith("/account");
+      if (isPrivate) {
+        res.setHeader("X-Robots-Tag", "noindex, nofollow");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+
+      const page = injectMetaTags(transformed, pathname);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

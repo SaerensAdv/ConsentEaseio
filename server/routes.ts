@@ -27,6 +27,7 @@ import { UAParser } from "ua-parser-js";
 import { clickup } from "./clickup-service";
 import { registerIrisRoutes } from "./iris";
 import { canUserAccessWebsite } from "./api/authz";
+import { PUBLIC_BASE_URL, APP_BASE_URL } from "./base-urls";
 import { mintApiKey, toPublicApiKey } from "./services/apiKeyService";
 import { isApiScope } from "@shared/api-scopes";
 
@@ -536,7 +537,7 @@ export async function registerRoutes(
 
   // XML Sitemap for SEO
   app.get("/sitemap.xml", (req, res) => {
-    const baseUrl = "https://consentease.io";
+    const baseUrl = PUBLIC_BASE_URL;
     
     const staticPages = [
       { url: "/", priority: "1.0", changefreq: "weekly", lastmod: "2025-03-15" },
@@ -952,9 +953,7 @@ ${staticPages.map(page => `  <url>
         const soloPriceId = getPriceId('solo', 'monthly');
         
         if (soloPriceId) {
-          const baseUrl = process.env.NODE_ENV === 'production' 
-            ? 'https://consentease.io' 
-            : `${req.protocol}://${req.get('host')}`;
+          const baseUrl = APP_BASE_URL;
           const session = await stripeService.createCheckoutSession(
             customer.id,
             soloPriceId,
@@ -2473,9 +2472,7 @@ ${staticPages.map(page => `  <url>
         ? { trialEnd: trialEndSec }
         : { trialDays: 7 };
 
-      const baseUrl = process.env.NODE_ENV === 'production'
-        ? 'https://consentease.io'
-        : `${req.protocol}://${req.get('host')}`;
+      const baseUrl = APP_BASE_URL;
       const session = await stripeService.createCheckoutSession(
         customerId,
         finalPriceId,
@@ -2522,9 +2519,7 @@ ${staticPages.map(page => `  <url>
         return res.status(400).json({ error: "No subscription found" });
       }
 
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://consentease.io' 
-        : `${req.protocol}://${req.get('host')}`;
+      const baseUrl = APP_BASE_URL;
       const session = await stripeService.createCustomerPortalSession(
         user.stripeCustomerId,
         `${baseUrl}/dashboard/settings`
@@ -3353,8 +3348,9 @@ ${staticPages.map(page => `  <url>
       });
       
       // Send invite email
-      const { sendAgencyClientInviteEmail, getBaseUrl } = await import('./email');
-      const inviteUrl = `${getBaseUrl()}/agency/${agency.slug}?invite=${invite.id}`;
+      const { sendAgencyClientInviteEmail } = await import('./email');
+      // Agency invites land on the PUBLIC marketing route /agency/:slug.
+      const inviteUrl = `${PUBLIC_BASE_URL}/agency/${agency.slug}?invite=${invite.id}`;
       
       await sendAgencyClientInviteEmail(email, agency.name, inviteUrl, message);
       
@@ -3758,9 +3754,7 @@ ${staticPages.map(page => `  <url>
         return;
       }
       
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://consentease.io' 
-        : `${req.protocol}://${req.get('host')}`;
+      const baseUrl = PUBLIC_BASE_URL;
       
       // Use JSON.stringify for safe string escaping
       const safeSlug = JSON.stringify(agency.slug);
@@ -3808,9 +3802,7 @@ ${staticPages.map(page => `  <url>
         return res.status(404).json({ error: "Partner not found" });
       }
       
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://consentease.io' 
-        : `${req.protocol}://${req.get('host')}`;
+      const baseUrl = PUBLIC_BASE_URL;
       
       const embedCodes = {
         script: `<!-- ConsentEase Partner Badge -->
@@ -4401,9 +4393,7 @@ ${staticPages.map(page => `  <url>
         bundle: 'Generate unlimited privacy and cookie policies for your websites',
       };
       
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://consentease.io' 
-        : `${req.protocol}://${req.get('host')}`;
+      const baseUrl = APP_BASE_URL;
       
       const session = await stripeService.createOneTimeCheckoutSession(
         customerId,
@@ -4517,9 +4507,7 @@ ${staticPages.map(page => `  <url>
     }
     
     const results: { type: string; success: boolean; error?: string }[] = [];
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-      : 'http://localhost:5000';
+    const baseUrl = APP_BASE_URL;
     
     try {
       const { 

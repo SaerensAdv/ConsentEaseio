@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { injectMetaTags, getMetaForPath } from "./seo-meta";
+import { APP_HOST, PUBLIC_HOST } from "./base-urls";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
@@ -70,7 +71,17 @@ export function serveStatic(app: Express) {
       typeof req.headers.cookie === "string" &&
       /(connect\.sid|session|sid)=/.test(req.headers.cookie);
 
-    if (isPrivate || hasSessionCookie) {
+    // Everything served from the app subdomain (app.consentease.io) is private
+    // application shell — never cache it and keep it out of search indexes.
+    const hostname = (req.headers.host || "").split(":")[0].toLowerCase();
+    const isAppHost = APP_HOST !== PUBLIC_HOST && hostname === APP_HOST;
+
+    // Private/app-host HTML must never be indexed by search engines.
+    if (isPrivate || isAppHost) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    if (isPrivate || hasSessionCookie || isAppHost) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');

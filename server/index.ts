@@ -11,6 +11,8 @@ import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
 import { startTrialScheduler } from './trialScheduler';
 import { startPaymentFailureScheduler } from './paymentFailureScheduler';
+import { WEBHOOK_BASE_URL } from './base-urls';
+import { hostRedirects } from './middleware/hostRedirects';
 
 // Boot-time guardrails. Fail fast in production rather than silently falling
 // back to weak defaults that break analytics continuity (see auth.ts and
@@ -88,16 +90,19 @@ async function initStripe() {
     const stripeSync = await getStripeSync();
 
     console.log('Setting up managed webhook...');
-    const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0];
-    if (!replitDomain) {
-      console.warn('REPLIT_DOMAINS not set, skipping managed webhook setup');
+    // Webhook host is an explicit config (WEBHOOK_BASE_URL), not REPLIT_DOMAINS[0],
+    // so the endpoint is intentional and stable across the two-hostname setup.
+    // In dev this resolves to the Replit dev domain (unchanged from before); in
+    // production it defaults to https://consentease.io.
+    const webhookUrl = `${WEBHOOK_BASE_URL}/api/stripe/webhook`;
+    const hasPublicWebhookHost = !/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(WEBHOOK_BASE_URL);
+    if (!hasPublicWebhookHost) {
+      console.warn('WEBHOOK_BASE_URL has no public host, skipping managed webhook setup');
       // Still kick off the data sync below so the dev environment has Stripe data.
     }
-    const webhookBaseUrl = replitDomain ? `https://${replitDomain}` : null;
-    const webhookUrl = webhookBaseUrl ? `${webhookBaseUrl}/api/stripe/webhook` : null;
     try {
-      if (!webhookUrl) {
-        throw new Error('webhook URL unavailable (REPLIT_DOMAINS missing)');
+      if (!hasPublicWebhookHost) {
+        throw new Error('webhook URL unavailable (no public WEBHOOK_BASE_URL host)');
       }
       const webhook = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
       if (webhook?.url) {
@@ -228,6 +233,11 @@ app.use((req, res, next) => {
   
   startTrialScheduler();
   startPaymentFailureScheduler();
+
+  // Host-aware redirects between the public marketing site and the app
+  // subdomain. Flag-gated (ENABLE_HOST_REDIRECTS) and a no-op until enabled;
+  // must run before the SPA/static fallback and it never touches /api/* traffic.
+  app.use(hostRedirects);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

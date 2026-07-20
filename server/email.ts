@@ -17,14 +17,18 @@ function getResendClient() {
   };
 }
 
+import { APP_BASE_URL } from './base-urls';
+
+/**
+ * Base URL for links that live on the app/dashboard subdomain
+ * (app.consentease.io): login, onboarding, password reset, email verification,
+ * email-change verification, billing, and every /dashboard/* destination.
+ *
+ * NOTE: public marketing links (e.g. /agency/:slug) must NOT use this — build
+ * them from PUBLIC_BASE_URL instead.
+ */
 export function getBaseUrl(): string {
-  if (process.env.REPLIT_DOMAINS) {
-    return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
-  }
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-  return 'http://localhost:5000';
+  return APP_BASE_URL;
 }
 
 export async function sendPasswordResetEmail(email: string, resetToken: string, resetUrl: string) {

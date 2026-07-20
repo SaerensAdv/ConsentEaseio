@@ -6,6 +6,7 @@
 - **Typecheck:** `npm run check`
 - **DB Push:** `npm run db:push` (updates DB schema)
 - **Required Env Vars:** `SESSION_SECRET`, `DATABASE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CLICKUP_API_KEY`, `AI_INTEGRATIONS_OPENAI_BASE_URL`, `AI_INTEGRATIONS_OPENAI_API_KEY`, `CHROMIUM_PATH` (optional for cookie scanner).
+- **Optional Host/Base-URL Env Vars (see `server/base-urls.ts`):** `PUBLIC_BASE_URL` (default `https://consentease.io`), `APP_BASE_URL` (default `https://app.consentease.io`), `WEBHOOK_BASE_URL` (default `https://consentease.io`) override the intentional base URLs for marketing links, dashboard/auth/Stripe-return links, and the Stripe managed webhook respectively (defaults apply only in production; dev falls back to the Replit dev domain). `ENABLE_HOST_REDIRECTS` (default off) is the master switch that turns on production host redirects between `consentease.io` and `app.consentease.io` — keep it OFF until DNS for `app.consentease.io` is live.
 
 ## Stack
 - **Frontend:** React, TypeScript, TailwindCSS v4, Shadcn UI, wouter
