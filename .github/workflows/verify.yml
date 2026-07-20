@@ -42,6 +42,9 @@ jobs:
       - name: Test host-routing contract
         run: npx tsx --test server/middleware/hostRedirects.test.ts
 
+      - name: Test website-status contract
+        run: npx tsx --test client/src/lib/website-status.test.ts
+
       - name: Build complete production bundle
         run: npm run build
         env:
