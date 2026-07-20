@@ -7,6 +7,61 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { IconContext } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
 
+const PUBLIC_BASE_URL = "https://consentease.io";
+const APP_BASE_URL = "https://app.consentease.io";
+const PUBLIC_HOST = "consentease.io";
+const APP_HOST = "app.consentease.io";
+
+const APP_AUTH_PATHS = new Set([
+  "/login",
+  "/onboarding",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/verify-email-change",
+]);
+
+function isAppRoute(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  return (
+    normalized === "/dashboard" ||
+    normalized.startsWith("/dashboard/") ||
+    APP_AUTH_PATHS.has(normalized)
+  );
+}
+
+/**
+ * Wouter navigation stays client-side and therefore never reaches the server's
+ * host redirect middleware. This boundary catches both links and programmatic
+ * setLocation calls and performs a full navigation as soon as a route belongs
+ * on the other ConsentEase host.
+ */
+function HostNavigationBoundary() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const { hostname, pathname, search, hash } = window.location;
+    const suffix = `${pathname}${search}${hash}`;
+
+    if (hostname === PUBLIC_HOST && isAppRoute(pathname)) {
+      window.location.assign(`${APP_BASE_URL}${suffix}`);
+      return;
+    }
+
+    if (hostname === APP_HOST) {
+      if (pathname === "/") {
+        window.location.assign(`${APP_BASE_URL}/dashboard${search}${hash}`);
+        return;
+      }
+
+      if (!isAppRoute(pathname)) {
+        window.location.assign(`${PUBLIC_BASE_URL}${suffix}`);
+      }
+    }
+  }, [location]);
+
+  return null;
+}
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -201,6 +256,7 @@ function App() {
     <IconContext.Provider value={{ weight: "duotone" }}>
       <QueryClientProvider client={queryClient}>
         <DemoProvider>
+          <HostNavigationBoundary />
           <SkipLink />
           <CursorTrail />
           <ScrollToTop />
