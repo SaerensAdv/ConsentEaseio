@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect, lazy, Suspense, type ComponentType } from "react";
+import { useEffect, lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -33,37 +33,42 @@ function isAppRoute(pathname: string): boolean {
   );
 }
 
-/**
- * Wouter navigation stays client-side and therefore never reaches the server's
- * host redirect middleware. This boundary catches both links and programmatic
- * setLocation calls and performs a full navigation as soon as a route belongs
- * on the other ConsentEase host.
- */
-function HostNavigationBoundary() {
-  const [location] = useLocation();
+function getHostNavigationTarget(): string | null {
+  const { hostname, pathname, search, hash } = window.location;
+  const suffix = `${pathname}${search}${hash}`;
 
-  useEffect(() => {
-    const { hostname, pathname, search, hash } = window.location;
-    const suffix = `${pathname}${search}${hash}`;
+  if (hostname === PUBLIC_HOST && isAppRoute(pathname)) {
+    return `${APP_BASE_URL}${suffix}`;
+  }
 
-    if (hostname === PUBLIC_HOST && isAppRoute(pathname)) {
-      window.location.assign(`${APP_BASE_URL}${suffix}`);
-      return;
+  if (hostname === APP_HOST) {
+    if (pathname === "/") {
+      return `${APP_BASE_URL}/dashboard${search}${hash}`;
     }
 
-    if (hostname === APP_HOST) {
-      if (pathname === "/") {
-        window.location.assign(`${APP_BASE_URL}/dashboard${search}${hash}`);
-        return;
-      }
-
-      if (!isAppRoute(pathname)) {
-        window.location.assign(`${PUBLIC_BASE_URL}${suffix}`);
-      }
+    if (!isAppRoute(pathname)) {
+      return `${PUBLIC_BASE_URL}${suffix}`;
     }
-  }, [location]);
+  }
 
   return null;
+}
+
+/**
+ * Wouter navigation stays client-side and therefore never reaches the server's
+ * host redirect middleware. Gate child routes while crossing hosts so pages
+ * cannot fire API requests and create host-only sessions on the wrong domain.
+ */
+function HostNavigationBoundary({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  const target = getHostNavigationTarget();
+
+  useEffect(() => {
+    if (target) window.location.assign(target);
+  }, [location, target]);
+
+  if (target) return <PageLoader />;
+  return <>{children}</>;
 }
 
 function ScrollToTop() {
@@ -260,15 +265,16 @@ function App() {
     <IconContext.Provider value={{ weight: "duotone" }}>
       <QueryClientProvider client={queryClient}>
         <DemoProvider>
-          <HostNavigationBoundary />
-          <SkipLink />
-          <CursorTrail />
-          <ScrollToTop />
-          <Toaster />
-          <SonnerToaster position="top-right" richColors closeButton />
-          <Router />
-          <DemoTour />
-          <PublicChat />
+          <HostNavigationBoundary>
+            <SkipLink />
+            <CursorTrail />
+            <ScrollToTop />
+            <Toaster />
+            <SonnerToaster position="top-right" richColors closeButton />
+            <Router />
+            <DemoTour />
+            <PublicChat />
+          </HostNavigationBoundary>
         </DemoProvider>
       </QueryClientProvider>
     </IconContext.Provider>
