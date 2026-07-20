@@ -10,24 +10,24 @@ export interface CommitInfo {
   author?: string;
 }
 
+export interface QueueProcessingOptions {
+  maxEvents?: number;
+  maxDurationMs?: number;
+}
+
 export function parseCommitMessage(message: string): { prefix: string; taskName: string | null; body: string } | null {
   const config = getConfig();
-  
+
   for (const rule of config.commitRules) {
     if (message.toLowerCase().startsWith(rule.prefix.toLowerCase())) {
       const afterPrefix = message.slice(rule.prefix.length).trim();
-      
       const taskMatch = afterPrefix.match(/\[([^\]]+)\]/);
       const taskName = taskMatch ? taskMatch[1] : null;
-      
-      const body = taskMatch 
-        ? afterPrefix.replace(taskMatch[0], '').trim()
-        : afterPrefix;
-      
+      const body = taskMatch ? afterPrefix.replace(taskMatch[0], '').trim() : afterPrefix;
       return { prefix: rule.prefix, taskName, body };
     }
   }
-  
+
   return null;
 }
 
@@ -38,15 +38,13 @@ export function getCommitRule(prefix: string): CommitRule | null {
 
 export async function processCommit(commit: CommitInfo): Promise<SyncResult> {
   const result: SyncResult = { success: true, created: [], updated: [], errors: [] };
-  
   const parsed = parseCommitMessage(commit.message);
   if (!parsed) return result;
-  
+
   const rule = getCommitRule(parsed.prefix);
   if (!rule) return result;
-  
+
   let taskName = parsed.taskName;
-  
   if (!taskName && commit.branch) {
     const config = getConfig();
     for (const pattern of config.branchPatterns || []) {
@@ -58,18 +56,15 @@ export async function processCommit(commit: CommitInfo): Promise<SyncResult> {
       }
     }
   }
-  
   if (!taskName) return result;
-  
+
   try {
     const task = await client.findTaskFuzzy(taskName);
-    
     if (task) {
       if (rule.status && task.status !== rule.status) {
         await client.setStatus(task.id, rule.status);
         result.updated.push(task.name);
       }
-      
       if (rule.commentTemplate) {
         const comment = rule.commentTemplate
           .replace('{{message}}', parsed.body || commit.message)
@@ -88,30 +83,31 @@ export async function processCommit(commit: CommitInfo): Promise<SyncResult> {
       });
     }
   } catch (error) {
-    result.errors.push({ 
-      task: taskName, 
-      error: error instanceof Error ? error.message : String(error) 
-    });
+    result.errors.push({ task: taskName, error: error instanceof Error ? error.message : String(error) });
     result.success = false;
   }
-  
+
   return result;
 }
 
-export async function processQueue(): Promise<SyncResult> {
+export async function processQueue(options: QueueProcessingOptions = {}): Promise<SyncResult> {
   const result: SyncResult = { success: true, created: [], updated: [], errors: [] };
-  
-  let event: TaskEvent | null;
-  while ((event = queue.dequeue()) !== null) {
+  const maxEvents = Math.max(1, options.maxEvents ?? 25);
+  const maxDurationMs = Math.max(250, options.maxDurationMs ?? 5000);
+  const startedAt = Date.now();
+  let processed = 0;
+
+  while (processed < maxEvents && Date.now() - startedAt < maxDurationMs) {
+    const event: TaskEvent | null = queue.dequeue();
+    if (!event) break;
+
     try {
       if (event.taskId) {
         if (event.status) {
           await client.setStatus(event.taskId, event.status);
           result.updated.push(event.taskId);
         }
-        if (event.comment) {
-          await client.addComment(event.taskId, event.comment);
-        }
+        if (event.comment) await client.addComment(event.taskId, event.comment);
       } else if (event.taskName) {
         const task = await client.findTaskFuzzy(event.taskName);
         if (task) {
@@ -119,52 +115,44 @@ export async function processQueue(): Promise<SyncResult> {
             await client.setStatus(task.id, event.status);
             result.updated.push(task.name);
           }
-          if (event.comment) {
-            await client.addComment(task.id, event.comment);
-          }
+          if (event.comment) await client.addComment(task.id, event.comment);
         }
       }
-      
+
       queue.markProcessed(event.id);
-      await new Promise(r => setTimeout(r, 150));
+      processed += 1;
+      await new Promise(resolve => setTimeout(resolve, 150));
     } catch (error) {
       result.errors.push({
         task: event.taskName || event.taskId || 'unknown',
         error: error instanceof Error ? error.message : String(error),
       });
+      result.success = false;
+      // Leave the failed event pending for a later retry, but stop this pass.
+      // Continuing would dequeue the same event forever.
+      break;
     }
   }
-  
+
   return result;
 }
 
-export async function syncTask(
-  taskName: string, 
-  status: TaskStatus, 
-  comment?: string
-): Promise<boolean> {
+export async function syncTask(taskName: string, status: TaskStatus, comment?: string): Promise<boolean> {
   if (!client.isConfigured()) {
     queue.enqueue({ type: 'status_change', taskName, status, comment });
     return true;
   }
-  
+
   try {
     const task = await client.findTaskFuzzy(taskName);
     if (!task) {
       queue.enqueue({ type: 'status_change', taskName, status, comment });
       return false;
     }
-    
-    if (task.status !== status) {
-      await client.setStatus(task.id, status);
-    }
-    
-    if (comment) {
-      await client.addComment(task.id, comment);
-    }
-    
+    if (task.status !== status) await client.setStatus(task.id, status);
+    if (comment) await client.addComment(task.id, comment);
     return true;
-  } catch (error) {
+  } catch {
     queue.enqueue({ type: 'status_change', taskName, status, comment });
     return false;
   }

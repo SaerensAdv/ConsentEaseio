@@ -4,3 +4,6 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local ClickUp automation state. Never commit runtime queue events.
+.clickup-queue.json
