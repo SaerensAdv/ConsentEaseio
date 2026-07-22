@@ -668,13 +668,13 @@ gtag('set', 'url_passthrough', true);
                     <div className="text-center sm:text-left">
                       <p className="text-xs text-muted-foreground mb-0.5">Accept Rate</p>
                       <p className={`text-sm font-semibold ${summary.acceptRate >= 60 ? 'text-green-600 dark:text-green-400' : summary.acceptRate >= 30 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`} data-testid={`text-accept-rate-${site.id}`}>
-                        {summary.totalViews > 0 ? `${summary.acceptRate}%` : '—'}
+                        {summary.totalViews > 0 ? `${summary.acceptRate.toFixed(1)}%` : '—'}
                       </p>
                     </div>
                     <div className="text-center sm:text-left">
                       <p className="text-xs text-muted-foreground mb-0.5">Reject Rate</p>
                       <p className="text-sm font-semibold" data-testid={`text-reject-rate-${site.id}`}>
-                        {summary.totalViews > 0 ? `${summary.rejectRate}%` : '—'}
+                        {summary.totalViews > 0 ? `${summary.rejectRate.toFixed(1)}%` : '—'}
                       </p>
                     </div>
                     <div className="text-center sm:text-left">
