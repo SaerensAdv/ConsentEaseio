@@ -54,6 +54,9 @@ jobs:
       - name: Test website-summary format contract
         run: npx tsx --test client/src/pages/dashboard/website-summary-format-contract.test.ts
 
+      - name: Test explicit database-change contract
+        run: npx tsx --test script/no-automatic-db-push-contract.test.ts
+
       - name: Build complete production bundle
         run: npm run build
         env:
